@@ -74,16 +74,24 @@ export function RightSidebar() {
         <CardHeader>
           <CardTitle>What’s happening</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {trends.map((trend) => (
-            <div key={trend.topic}>
-              <p className="text-sm text-muted-foreground">{trend.category}</p>
-              <p className="font-bold">{trend.topic}</p>
-              <p className="text-sm text-muted-foreground">
-                {trend.posts} posts
-              </p>
-            </div>
-          ))}
+        <CardContent className="p-0">
+          <div className="flex flex-col">
+            {trends.map((trend) => (
+              <Link
+                key={trend.topic}
+                href="#"
+                className="border-b px-6 py-4 transition-colors last:border-b-0 hover:bg-accent/50"
+              >
+                <p className="text-sm text-muted-foreground">
+                  {trend.category}
+                </p>
+                <p className="font-bold">{trend.topic}</p>
+                <p className="text-sm text-muted-foreground">
+                  {trend.posts} posts
+                </p>
+              </Link>
+            ))}
+          </div>
         </CardContent>
       </Card>
       <Card>

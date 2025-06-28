@@ -3,11 +3,11 @@ import type { ElementType } from 'react';
 export type User = {
   id: string;
   name: string;
-  username: string;
-  avatarUrl: string;
+  username?: string;
+  avatarUrl?: string;
   'data-ai-hint'?: string;
-  trustScore: number;
-  isVerified: boolean;
+  trustScore?: number;
+  isVerified?: boolean;
   bio?: string;
   awards?: Award[];
   nominations?: number;
@@ -88,7 +88,7 @@ export type Dispute = {
 };
 
 export type FlaggedContent = {
-  id: string;
+  id:string;
   content: string;
   contentType: 'post' | 'comment';
   author: User;

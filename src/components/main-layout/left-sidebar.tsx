@@ -5,6 +5,7 @@ import {
   Bookmark,
   Home,
   Landmark,
+  LogOut,
   Mail,
   MoreHorizontal,
   PenSquare,
@@ -14,10 +15,17 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ShameLogo } from '../shame-logo';
-import { UserAvatar } from '../user-avatar';
-import { mockUsers } from '@/lib/mock-data';
-import { CreatePostDialog } from '../create-post-dialog';
+import { ClarityLogo } from '@/components/shame-logo';
+import { UserAvatar } from '@/components/user-avatar';
+import { CreatePostDialog } from '@/components/create-post-dialog';
+import { useAuth } from '@/hooks/use-auth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const navItems = [
   { href: '/home', icon: Home, text: 'Home' },
@@ -31,14 +39,23 @@ const navItems = [
 ];
 
 export function LeftSidebar() {
-  const currentUser = mockUsers['user1'];
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
+  const getUsername = (email: string | null) => {
+    if (!email) return 'user';
+    return email.split('@')[0];
+  };
 
   return (
     <aside className="sticky top-0 flex h-screen w-64 flex-col justify-between p-2">
       <div>
         <div className="p-4">
           <Link href="/home">
-            <ShameLogo />
+            <ClarityLogo />
           </Link>
         </div>
         <nav className="flex flex-col">
@@ -62,21 +79,36 @@ export function LeftSidebar() {
         />
       </div>
       <div className="p-4">
-        <Button
-          variant="ghost"
-          className="flex h-auto w-full items-center justify-between rounded-full p-2 text-left hover:bg-accent/50"
-        >
-          <div className="flex items-center gap-2">
-            <UserAvatar user={currentUser} className="h-10 w-10" />
-            <div>
-              <p className="font-bold">{currentUser.name}</p>
-              <p className="text-sm text-muted-foreground">
-                @{currentUser.username}
-              </p>
-            </div>
-          </div>
-          <MoreHorizontal className="h-5 w-5" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="flex h-auto w-full items-center justify-between rounded-full p-2 text-left hover:bg-accent/50"
+            >
+              <div className="flex items-center gap-2">
+                <Avatar className="h-10 w-10">
+                  <AvatarFallback>
+                    {user?.displayName?.charAt(0) || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div>
+                  <p className="font-bold">{user?.displayName}</p>
+                  <p className="text-sm text-muted-foreground">
+                    @{getUsername(user?.email)}
+                  </p>
+                </div>
+              </div>
+              <MoreHorizontal className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </aside>
   );

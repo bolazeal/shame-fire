@@ -14,6 +14,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { suggestCategories } from '@/ai/flows/suggest-categories';
+import { detectHarmfulContent } from '@/ai/flows/detect-harmful-content';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -206,6 +207,25 @@ export function CreatePostForm({
 
   async function onSubmit(values: z.infer<typeof createPostFormSchema>) {
     setIsSubmitting(true);
+
+    try {
+      const moderationResult = await detectHarmfulContent({ text: values.text });
+      if (moderationResult.isHarmful) {
+        toast({
+          title: 'Post Flagged for Review',
+          description: `Our AI moderation has flagged this content: ${moderationResult.reason}. A human moderator will assess it shortly.`,
+          variant: 'destructive',
+        });
+        setIsSubmitting(false);
+        return;
+      }
+    } catch (error) {
+      console.error('Failed to run moderation check:', error);
+      // Decide if you want to block the post or allow it if moderation fails.
+      // For now, we'll allow it but log the error.
+    }
+
+
     // In a real app, you would submit this data to your backend,
     // potentially after running sentiment analysis AI flows.
     console.log('Form submitted:', values);

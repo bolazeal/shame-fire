@@ -1,3 +1,5 @@
+'use client';
+
 import type { Post } from '@/lib/types';
 import { UserAvatar } from './user-avatar';
 import { Button } from './ui/button';
@@ -41,6 +43,7 @@ import {
 } from './ui/alert-dialog';
 import React from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { mockUsers } from '@/lib/mock-data';
 
 interface PostCardProps {
   post: Post;
@@ -81,6 +84,12 @@ export function PostCard({ post }: PostCardProps) {
     });
   };
 
+  const currentUser = mockUsers.user1;
+  const canEscalate =
+    post.type === 'report' &&
+    (post.entity === currentUser.name ||
+      post.text.includes(`@${currentUser.username}`));
+
   return (
     <Link
       href={`/post/${post.id}`}
@@ -114,7 +123,7 @@ export function PostCard({ post }: PostCardProps) {
               </span>
             </div>
             <div className="flex items-center">
-              {post.type === 'report' && (
+              {canEscalate && (
                 <AlertDialog>
                   <AlertDialogTrigger
                     asChild

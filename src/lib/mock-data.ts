@@ -189,6 +189,27 @@ export const mockPosts: Post[] = [
     reposts: 10,
     bookmarks: 15,
   },
+  {
+    id: 'post8',
+    type: 'report',
+    author: mockUsers.user5, // Emily Carter
+    postingAs: 'verified',
+    entity: 'Alex Doe', // Reporting user1
+    text: "I hired Alex Doe for a web design project, but the final product was not as promised and delivered late. Communication was also poor throughout the process. I would not recommend working with @alexdoe.",
+    category: 'Services',
+    createdAt: '4d',
+    commentsCount: 18,
+    upvotes: 2,
+    downvotes: 10,
+    reposts: 0,
+    bookmarks: 1,
+    sentiment: {
+      score: -0.6,
+      biasDetected: false,
+    },
+    summary:
+      "A negative review of Alex Doe's web design services, citing late delivery and poor communication.",
+  },
 ];
 
 export const mockDisputes: Dispute[] = [

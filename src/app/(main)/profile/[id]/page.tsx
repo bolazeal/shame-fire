@@ -59,7 +59,7 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
         <Card className="mt-4">
           <CardHeader>
             <CardTitle className="font-headline text-lg">
-              Clarity Trust Score
+              Trust Score
             </CardTitle>
           </CardHeader>
           <CardContent>

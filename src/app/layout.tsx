@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'Clarity',
+  title: 'Shame',
   description: 'A platform for transparent feedback and accountability.',
 };
 
@@ -27,7 +27,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className={cn('min-h-screen bg-background font-body antialiased')}>
+      <body
+        className={cn('min-h-screen bg-background font-body antialiased')}
+      >
         {children}
         <Toaster />
       </body>

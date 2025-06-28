@@ -8,10 +8,11 @@ import {
   MoreHorizontal,
   PenSquare,
   User,
+  Landmark,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ClarityLogo } from '../clarity-logo';
+import { ShameLogo } from '../shame-logo';
 import { UserAvatar } from '../user-avatar';
 import { mockUsers } from '@/lib/mock-data';
 import { CreatePostDialog } from '../create-post-dialog';
@@ -21,6 +22,7 @@ const navItems = [
   { href: '/explore', icon: Bell, text: 'Notifications' },
   { href: '/messages', icon: Mail, text: 'Messages' },
   { href: '/bookmarks', icon: Bookmark, text: 'Bookmarks' },
+  { href: '/village-square', icon: Landmark, text: 'Village Square' },
   { href: '/profile/user1', icon: User, text: 'Profile' },
 ];
 
@@ -32,7 +34,7 @@ export function LeftSidebar() {
       <div>
         <div className="p-4">
           <Link href="/home">
-            <ClarityLogo />
+            <ShameLogo />
           </Link>
         </div>
         <nav className="flex flex-col">

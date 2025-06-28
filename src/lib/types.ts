@@ -13,8 +13,7 @@ export type Comment = {
   author: User;
   text: string;
   createdAt: string;
-  upvotes: number;
-  downvotes: number;
+  shameRank: number; // 0-10 rating
   replies?: Comment[];
 };
 
@@ -37,4 +36,30 @@ export type Post = {
     biasExplanation?: string;
   };
   summary?: string;
+};
+
+export type Poll = {
+  question: string;
+  options: {
+    text: string;
+    votes: number;
+  }[];
+};
+
+export type Verdict = {
+  moderator: User;
+  decision: string;
+  reason: string;
+};
+
+export type Dispute = {
+  id: string;
+  title: string;
+  description: string;
+  involvedParties: User[];
+  createdAt: string;
+  status: 'open' | 'voting' | 'closed';
+  commentsCount: number;
+  poll: Poll;
+  verdict: Verdict | null;
 };

@@ -1,4 +1,4 @@
-import type { User, Post } from '@/lib/types';
+import type { User, Post, Dispute } from '@/lib/types';
 
 export const mockUsers: Record<string, User> = {
   user1: {
@@ -30,9 +30,10 @@ export const mockUsers: Record<string, User> = {
   },
   user4: {
     id: 'user4',
-    name: 'Clarity Official',
-    username: 'clarity',
-    avatarUrl: '/clarity-logo.svg',
+    name: 'Shame Official',
+    username: 'shame',
+    avatarUrl: 'https://placehold.co/100x100.png',
+    'data-ai-hint': 'shield logo',
     trustScore: 100,
     isVerified: true,
   },
@@ -108,4 +109,46 @@ export const mockPosts: Post[] = [
       biasExplanation: 'The language used is strong and subjective, which may indicate a personal bias against the company or speaker.'
     }
   }
+];
+
+export const mockDisputes: Dispute[] = [
+  {
+    id: 'dispute1',
+    title: 'Dispute over "Speedy Shippers" report accuracy',
+    description: 'The company "Speedy Shippers" is disputing the report made by @samgreen, claiming the delivery was delayed due to weather conditions not mentioned in the report. They have provided shipping logs as evidence.',
+    involvedParties: [mockUsers.user3, mockUsers.user4],
+    createdAt: '1d',
+    status: 'voting',
+    commentsCount: 56,
+    poll: {
+      question: 'Whose account do you find more credible?',
+      options: [
+        { text: '@samgreen\'s report', votes: 102 },
+        { text: 'Speedy Shipper\'s rebuttal', votes: 45 },
+        { text: 'Need more information', votes: 33 },
+      ],
+    },
+    verdict: null,
+  },
+  {
+    id: 'dispute2',
+    title: 'Community review of "Innovate Inc." workshop report',
+    description: 'The report against "Innovate Inc." by @janesmith has been flagged for potential bias. The Village Square is now open for community discussion and polling to determine the fairness of the initial report.',
+    involvedParties: [mockUsers.user2, mockUsers.user4],
+    createdAt: '3d',
+    status: 'closed',
+    commentsCount: 123,
+    poll: {
+      question: 'Is the report on "Innovate Inc." fair and unbiased?',
+      options: [
+        { text: 'Yes, it is fair', votes: 88 },
+        { text: 'No, it shows significant bias', votes: 154 },
+      ],
+    },
+    verdict: {
+      moderator: mockUsers.user4,
+      decision: 'The original report by @janesmith will be marked with a "Community Disputed" tag.',
+      reason: 'Based on the community poll and discussion, the majority found the report to contain strong subjective language that could indicate bias. While the negative experience is valid, the post will be flagged to encourage readers to view comments for a balanced perspective.',
+    },
+  },
 ];

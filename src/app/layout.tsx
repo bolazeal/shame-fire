@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { AuthProvider } from '@/context/auth-context';
 
 export const metadata: Metadata = {
-  title: 'Clarity',
+  title: 'Shame',
   description: 'A platform for transparent feedback and accountability.',
   icons: {},
 };

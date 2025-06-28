@@ -5,6 +5,7 @@ export type User = {
   name: string;
   username?: string;
   avatarUrl?: string;
+  bannerUrl?: string;
   'data-ai-hint'?: string;
   trustScore?: number;
   isVerified?: boolean;

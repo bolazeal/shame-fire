@@ -51,7 +51,7 @@ export default function ProfilePage() {
     <div>
       <div className="relative h-48 bg-muted">
         <Image
-          src="https://placehold.co/1500x500.png"
+          src={currentUser.bannerUrl || "https://placehold.co/1500x500.png"}
           alt="Profile banner"
           layout="fill"
           objectFit="cover"

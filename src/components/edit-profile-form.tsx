@@ -16,8 +16,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from '@/lib/types';
-import { Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { Camera, Loader2 } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { UserAvatar } from './user-avatar';
+import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -29,6 +32,8 @@ const profileFormSchema = z.object({
       message: 'Bio must not be longer than 160 characters.',
     })
     .optional(),
+  avatarUrl: z.string().optional(),
+  bannerUrl: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -41,15 +46,36 @@ interface EditProfileFormProps {
 export function EditProfileForm({ user, onSave }: EditProfileFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       name: user.name || '',
       bio: user.bio || '',
+      avatarUrl: user.avatarUrl || '',
+      bannerUrl: user.bannerUrl || '',
     },
     mode: 'onChange',
   });
+
+  const handleFileChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    field: 'avatarUrl' | 'bannerUrl'
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        form.setValue(field, reader.result as string, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   async function onSubmit(data: ProfileFormValues) {
     setIsSubmitting(true);
@@ -65,9 +91,74 @@ export function EditProfileForm({ user, onSave }: EditProfileFormProps) {
     setIsSubmitting(false);
   }
 
+  const watchedAvatarUrl = form.watch('avatarUrl');
+  const watchedBannerUrl = form.watch('bannerUrl');
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {/* Banner Image Input */}
+        <div className="space-y-2">
+          <FormLabel>Banner Image</FormLabel>
+          <div className="relative h-32 w-full overflow-hidden rounded-md bg-muted">
+            <Image
+              src={watchedBannerUrl || 'https://placehold.co/1200x400.png'}
+              alt="Banner preview"
+              layout="fill"
+              objectFit="cover"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+              onClick={() => bannerInputRef.current?.click()}
+            >
+              <Camera />
+            </Button>
+            <input
+              type="file"
+              ref={bannerInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={(e) => handleFileChange(e, 'bannerUrl')}
+            />
+          </div>
+        </div>
+
+        {/* Avatar Image Input */}
+        <FormField
+          control={form.control}
+          name="avatarUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Profile Picture</FormLabel>
+              <div className="relative mx-auto h-24 w-24">
+                <UserAvatar
+                  user={{ ...user, avatarUrl: watchedAvatarUrl }}
+                  className="h-24 w-24"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="absolute bottom-0 right-0 rounded-full"
+                  onClick={() => avatarInputRef.current?.click()}
+                >
+                  <Camera />
+                </Button>
+                <input
+                  type="file"
+                  ref={avatarInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={(e) => handleFileChange(e, 'avatarUrl')}
+                />
+              </div>
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="name"
@@ -98,7 +189,7 @@ export function EditProfileForm({ user, onSave }: EditProfileFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Save changes
         </Button>

@@ -15,6 +15,7 @@ import { z } from 'zod';
 
 import { suggestCategories } from '@/ai/flows/suggest-categories';
 import { detectHarmfulContent } from '@/ai/flows/detect-harmful-content';
+import { analyzeSentiment } from '@/ai/flows/analyze-sentiment';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -36,13 +37,6 @@ import {
   TooltipTrigger,
 } from './ui/tooltip';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select';
 import { generateEndorsementSummary } from '@/ai/flows/generate-endorsement-summary';
 
 export const createPostFormSchema = z
@@ -88,21 +82,6 @@ export const createPostFormSchema = z
       path: ['category'],
     }
   );
-
-const reportCategories = [
-  'Artisan',
-  'Business',
-  'Restaurant',
-  'Transportation',
-  'Government',
-  'School',
-  'Landlord',
-  'Tenant',
-  'Employee',
-  'Product',
-  'Services',
-  'Boss',
-];
 
 export function CreatePostForm({
   onPostCreated,
@@ -179,8 +158,8 @@ export function CreatePostForm({
   };
 
   const handleSuggestCategories = async () => {
-    const reportText = form.getValues('text');
-    if (reportText.length < 20) {
+    const text = form.getValues('text');
+    if (text.length < 20) {
       toast({
         title: 'Text too short',
         description:
@@ -192,7 +171,7 @@ export function CreatePostForm({
     setIsSuggestingCategories(true);
     setSuggestedCategories([]);
     try {
-      const result = await suggestCategories({ reportText });
+      const result = await suggestCategories({ reportText: text });
       setSuggestedCategories(result.suggestedCategories);
     } catch (error) {
       console.error('Failed to suggest categories:', error);
@@ -228,6 +207,16 @@ export function CreatePostForm({
       // For now, we'll allow it but log the error.
     }
 
+    let sentimentAnalysisResult;
+    if (values.type !== 'post') {
+      try {
+        sentimentAnalysisResult = await analyzeSentiment({ text: values.text });
+      } catch (error) {
+        console.error('Failed to analyze sentiment:', error);
+        // Continue without sentiment analysis if it fails
+      }
+    }
+
     let summary = '';
     if (values.type !== 'post') {
       try {
@@ -241,9 +230,12 @@ export function CreatePostForm({
       }
     }
 
-    // In a real app, you would submit this data to your backend,
-    // potentially after running sentiment analysis AI flows.
-    console.log('Form submitted:', { ...values, summary });
+    // In a real app, you would submit this data to your backend.
+    console.log('Form submitted:', {
+      ...values,
+      summary,
+      sentiment: sentimentAnalysisResult,
+    });
 
     // Simulate network request
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -357,39 +349,19 @@ export function CreatePostForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    {activeTab === 'report' ? (
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a report category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {reportCategories.map((category) => (
-                            <SelectItem key={category} value={category}>
-                              {category}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <FormControl>
-                        <Input
-                          placeholder="e.g., Customer Service, Product Quality"
-                          {...field}
-                        />
-                      </FormControl>
-                    )}
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., Customer Service, Product Quality"
+                        {...field}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             )}
 
-            {activeTab === 'endorsement' && (
+            {(activeTab === 'report' || activeTab === 'endorsement') && (
               <div className="space-y-2">
                 <Button
                   type="button"

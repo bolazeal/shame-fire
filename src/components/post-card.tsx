@@ -274,7 +274,7 @@ export function PostCard({ post }: PostCardProps) {
               >
                 Trust Score: {(post.sentiment.score * 100).toFixed(0)}
               </Badge>
-              {post.sentiment.biasDetected && (
+              {post.sentiment.biasDetected ? (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
@@ -287,8 +287,7 @@ export function PostCard({ post }: PostCardProps) {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-              )}
-              {!post.sentiment.biasDetected && (
+              ) : (
                 <Badge
                   variant="outline"
                   className="border-none bg-green-500/20 text-green-400"

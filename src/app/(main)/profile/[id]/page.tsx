@@ -20,8 +20,10 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { EditProfileDialog } from '@/components/edit-profile-dialog';
 import { CreatePostDialog } from '@/components/create-post-dialog';
+import { useParams } from 'next/navigation';
 
-export default function ProfilePage({ params }: { params: { id: string } }) {
+export default function ProfilePage() {
+  const params = useParams<{ id: string }>();
   const user =
     Object.values(mockUsers).find((u) => u.id === params.id) ||
     mockUsers.user1;

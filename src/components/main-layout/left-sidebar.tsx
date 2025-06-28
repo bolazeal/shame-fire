@@ -9,6 +9,7 @@ import {
   PenSquare,
   User,
   Landmark,
+  Trophy,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ const navItems = [
   { href: '/messages', icon: Mail, text: 'Messages' },
   { href: '/bookmarks', icon: Bookmark, text: 'Bookmarks' },
   { href: '/village-square', icon: Landmark, text: 'Village Square' },
+  { href: '/hall-of-honour', icon: Trophy, text: 'Hall of Honour' },
   { href: '/profile/user1', icon: User, text: 'Profile' },
 ];
 

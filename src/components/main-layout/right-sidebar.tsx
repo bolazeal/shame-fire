@@ -49,21 +49,27 @@ export function RightSidebar() {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-1">
-          <Button variant="ghost" className="justify-start">
-            <Medal className="mr-2 h-4 w-4" />
-            View Past Winners
-          </Button>
-          <Button variant="ghost" className="justify-start">
-            <FileText className="mr-2 h-4 w-4" />
-            See Nomination Status
-          </Button>
-          <Button variant="ghost" className="justify-start">
-            <Info className="mr-2 h-4 w-4" />
-            Learn About Medal Criteria
-          </Button>
+          <Link href="/hall-of-honour#past-winners" asChild>
+            <Button variant="ghost" className="justify-start">
+              <Medal className="mr-2 h-4 w-4" />
+              View Past Winners
+            </Button>
+          </Link>
+          <Link href="/hall-of-honour" asChild>
+            <Button variant="ghost" className="justify-start">
+              <FileText className="mr-2 h-4 w-4" />
+              See Nomination Status
+            </Button>
+          </Link>
+          <Link href="/hall-of-honour#nomination-criteria" asChild>
+            <Button variant="ghost" className="justify-start">
+              <Info className="mr-2 h-4 w-4" />
+              Learn About Medal Criteria
+            </Button>
+          </Link>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>What’s happening</CardTitle>

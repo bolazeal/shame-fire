@@ -20,6 +20,12 @@ export type Award = {
   icon: ElementType;
 };
 
+export type MedalInfo = {
+  title: string;
+  description: string;
+  icon: ElementType;
+};
+
 export type Comment = {
   id: string;
   author: User;

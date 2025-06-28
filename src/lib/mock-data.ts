@@ -1,4 +1,5 @@
-import type { User, Post, Dispute } from '@/lib/types';
+import type { User, Post, Dispute, Award } from '@/lib/types';
+import { Medal, Star } from 'lucide-react';
 
 export const mockUsers: Record<string, User> = {
   user1: {
@@ -10,6 +11,10 @@ export const mockUsers: Record<string, User> = {
     trustScore: 85,
     isVerified: true,
     bio: 'Digital craftsman, coffee enthusiast, and advocate for clarity on the web.',
+    awards: [
+      { name: 'Community Pillar 2023', year: 2023, icon: Medal },
+      { name: 'Top Contributor', year: 2022, icon: Star },
+    ],
   },
   user2: {
     id: 'user2',
@@ -20,6 +25,7 @@ export const mockUsers: Record<string, User> = {
     trustScore: 92,
     isVerified: true,
     bio: 'Building beautiful and accessible user experiences. Cat lover. Tea drinker.',
+    awards: [{ name: 'Beacon of Trust 2023', year: 2023, icon: Medal }],
   },
   user3: {
     id: 'user3',

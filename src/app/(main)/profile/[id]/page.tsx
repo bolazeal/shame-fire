@@ -14,6 +14,7 @@ import {
   Flag,
   Link as LinkIcon,
   MapPin,
+  Medal,
   ShieldCheck,
   ThumbsUp,
 } from 'lucide-react';
@@ -99,8 +100,8 @@ export default function ProfilePage() {
           <p>{currentUser.bio}</p>
         </div>
 
-        <div className="mt-4 flex items-stretch gap-4">
-          <Card className="flex-grow">
+        <div className="mt-4 flex flex-wrap items-stretch gap-4">
+          <Card className="flex-1">
             <CardHeader>
               <CardTitle className="font-headline text-lg">
                 Trust Score
@@ -120,32 +121,59 @@ export default function ProfilePage() {
               </div>
             </CardContent>
           </Card>
-          {params.id !== 'user1' && (
-            <div className="flex shrink-0 flex-col justify-center gap-2">
-              <CreatePostDialog
-                dialogTitle={`Endorse ${currentUser.name}`}
-                initialValues={{
-                  type: 'endorsement',
-                  entity: currentUser.name,
-                }}
-                trigger={
-                  <Button variant="outline" className="w-full font-bold">
-                    <ThumbsUp className="mr-2 h-4 w-4" /> Endorse
-                  </Button>
-                }
-              />
-              <CreatePostDialog
-                dialogTitle={`Report ${currentUser.name}`}
-                initialValues={{ type: 'report', entity: currentUser.name }}
-                trigger={
-                  <Button variant="destructive" className="w-full font-bold">
-                    <Flag className="mr-2 h-4 w-4" /> Report
-                  </Button>
-                }
-              />
-            </div>
-          )}
+          <div className="flex shrink-0 flex-col justify-center gap-2">
+            {params.id === 'user1' ? null : (
+              <>
+                <CreatePostDialog
+                  dialogTitle={`Endorse ${currentUser.name}`}
+                  initialValues={{
+                    type: 'endorsement',
+                    entity: currentUser.name,
+                  }}
+                  trigger={
+                    <Button variant="outline" className="w-full font-bold">
+                      <ThumbsUp className="mr-2 h-4 w-4" /> Endorse
+                    </Button>
+                  }
+                />
+                <CreatePostDialog
+                  dialogTitle={`Report ${currentUser.name}`}
+                  initialValues={{ type: 'report', entity: currentUser.name }}
+                  trigger={
+                    <Button variant="destructive" className="w-full font-bold">
+                      <Flag className="mr-2 h-4 w-4" /> Report
+                    </Button>
+                  }
+                />
+              </>
+            )}
+          </div>
         </div>
+        
+        {currentUser.awards && currentUser.awards.length > 0 && (
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 font-headline text-lg">
+                <Medal className="h-5 w-5" />
+                Awards & Recognition
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3">
+                {currentUser.awards.map((award, index) => (
+                  <li key={index} className="flex items-center gap-3">
+                    <award.icon className="h-6 w-6 text-amber-500" />
+                    <div>
+                      <p className="font-semibold">{award.name}</p>
+                      <p className="text-sm text-muted-foreground">{award.year}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+
 
         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-muted-foreground">
           <div className="flex items-center gap-1">

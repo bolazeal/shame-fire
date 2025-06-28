@@ -1,3 +1,5 @@
+import type { ElementType } from 'react';
+
 export type User = {
   id: string;
   name: string;
@@ -7,6 +9,13 @@ export type User = {
   trustScore: number;
   isVerified: boolean;
   bio?: string;
+  awards?: Award[];
+};
+
+export type Award = {
+  name: string;
+  year: number;
+  icon: ElementType;
 };
 
 export type Comment = {

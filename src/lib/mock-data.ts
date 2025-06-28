@@ -41,6 +41,16 @@ export const mockUsers: Record<string, User> = {
     isVerified: true,
     bio: 'The official account for the Shame platform. Promoting transparency and accountability.',
   },
+  user5: {
+    id: 'user5',
+    name: 'Emily Carter',
+    username: 'emilycarter',
+    avatarUrl: 'https://placehold.co/100x100.png',
+    'data-ai-hint': 'woman artist',
+    trustScore: 88,
+    isVerified: false,
+    bio: 'Artist, dreamer, and creator of things. Finding beauty in the chaos.',
+  },
 };
 
 export const mockPosts: Post[] = [
@@ -162,6 +172,22 @@ export const mockPosts: Post[] = [
     },
     summary:
       'A strong professional endorsement for Alex Doe, highlighting collaboration and attention to detail.',
+  },
+  {
+    id: 'post7',
+    type: 'post',
+    author: mockUsers.user5,
+    postingAs: 'verified',
+    text: 'Finished a new painting today! So happy with how the colors turned out. 🎨',
+    mediaUrl: 'https://placehold.co/600x400.png',
+    'data-ai-hint': 'abstract painting',
+    mediaType: 'image',
+    createdAt: '1h',
+    commentsCount: 22,
+    upvotes: 150,
+    downvotes: 3,
+    reposts: 10,
+    bookmarks: 15,
   },
 ];
 

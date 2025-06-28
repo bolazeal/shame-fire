@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { UserAvatar } from '@/components/user-avatar';
 import { mockUsers } from '@/lib/mock-data';
 import { Search } from 'lucide-react';
+import Link from 'next/link';
 
 const trends = [
   { category: 'Technology', topic: '#AI_Ethics', posts: '12.5K' },
@@ -15,7 +16,12 @@ const trends = [
 ];
 
 export function RightSidebar() {
-  const initialUsers = [mockUsers.user2, mockUsers.user3, mockUsers.user4];
+  const initialUsers = [
+    mockUsers.user2,
+    mockUsers.user3,
+    mockUsers.user4,
+    mockUsers.user5,
+  ];
   const [usersToFollow, setUsersToFollow] = React.useState(
     initialUsers.map((u) => ({ ...u, isFollowing: false }))
   );
@@ -58,15 +64,18 @@ export function RightSidebar() {
           {usersToFollow.map((user, index) => (
             <React.Fragment key={user.id}>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <Link
+                  href={`/profile/${user.id}`}
+                  className="flex items-center gap-2"
+                >
                   <UserAvatar user={user} className="h-10 w-10" />
                   <div>
-                    <p className="font-bold">{user.name}</p>
+                    <p className="font-bold hover:underline">{user.name}</p>
                     <p className="text-sm text-muted-foreground">
                       @{user.username}
                     </p>
                   </div>
-                </div>
+                </Link>
                 <Button
                   variant={user.isFollowing ? 'secondary' : 'outline'}
                   size="sm"

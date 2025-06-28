@@ -28,7 +28,7 @@ export type MedalInfo = {
 };
 
 export type Comment = {
-  id: string;
+  id:string;
   author: User;
   text: string;
   createdAt: string;
@@ -96,3 +96,10 @@ export type FlaggedContent = {
   reason: string;
   flaggedAt: string;
 };
+
+export interface ModerationContextType {
+  flaggedContent: FlaggedContent[];
+  addFlaggedItem: (item: Omit<FlaggedContent, 'id' | 'flaggedAt'>) => void;
+  dismissFlaggedItem: (id: string) => void;
+  removeFlaggedItem: (id: string) => void;
+}

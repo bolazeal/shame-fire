@@ -23,9 +23,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
-import { mockDisputes, mockFlaggedContent } from '@/lib/mock-data';
-import type { FlaggedContent } from '@/lib/types';
+import { mockDisputes } from '@/lib/mock-data';
 import {
   AlertCircle,
   CheckCircle,
@@ -36,28 +34,18 @@ import {
   View,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useModeration } from '@/hooks/use-moderation';
 
 export default function ModerationPage() {
-  const [flaggedContent, setFlaggedContent] =
-    useState<FlaggedContent[]>(mockFlaggedContent);
-  const { toast } = useToast();
+  const { flaggedContent, dismissFlaggedItem, removeFlaggedItem } =
+    useModeration();
 
   const handleDismiss = (id: string) => {
-    setFlaggedContent((prev) => prev.filter((item) => item.id !== id));
-    toast({
-      title: 'Flag Dismissed',
-      description: 'The content is no longer flagged.',
-    });
+    dismissFlaggedItem(id);
   };
 
   const handleRemove = (id: string) => {
-    setFlaggedContent((prev) => prev.filter((item) => item.id !== id));
-    toast({
-      title: 'Content Removed',
-      description: 'The content has been removed from the platform.',
-      variant: 'destructive',
-    });
+    removeFlaggedItem(id);
   };
 
   const activeDisputes = mockDisputes.filter((d) => d.status !== 'closed');

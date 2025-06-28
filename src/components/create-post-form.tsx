@@ -38,6 +38,9 @@ import {
 } from './ui/tooltip';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { generateEndorsementSummary } from '@/ai/flows/generate-endorsement-summary';
+import { useAuth } from '@/hooks/use-auth';
+import { useModeration } from '@/hooks/use-moderation';
+import type { User as AppUser } from '@/lib/types';
 
 export const createPostFormSchema = z
   .object({
@@ -97,6 +100,8 @@ export function CreatePostForm({
   const [isSuggestingCategories, setIsSuggestingCategories] = useState(false);
   const [suggestedCategories, setSuggestedCategories] = useState<string[]>([]);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { addFlaggedItem } = useModeration();
   const [mediaPreview, setMediaPreview] = useState<{
     url: string;
     type: 'image' | 'video';
@@ -193,18 +198,31 @@ export function CreatePostForm({
         text: values.text,
       });
       if (moderationResult.isHarmful) {
+        if (user) {
+          const authorForQueue: AppUser = {
+            id: user.uid,
+            name: user.displayName || 'Anonymous',
+            username: user.email?.split('@')[0] || 'anonymous',
+            avatarUrl: user.photoURL || undefined,
+          };
+          addFlaggedItem({
+            content: values.text,
+            contentType: 'post',
+            author: authorForQueue,
+            reason: moderationResult.reason,
+          });
+        }
         toast({
-          title: 'Post Flagged for Review',
+          title: 'Post Held for Review',
           description: `Our AI moderation has flagged this content: ${moderationResult.reason}. A human moderator will assess it shortly.`,
           variant: 'destructive',
         });
         setIsSubmitting(false);
+        onPostCreated(); // Close the dialog
         return;
       }
     } catch (error) {
       console.error('Failed to run moderation check:', error);
-      // Decide if you want to block the post or allow it if moderation fails.
-      // For now, we'll allow it but log the error.
     }
 
     let sentimentAnalysisResult;
@@ -213,7 +231,6 @@ export function CreatePostForm({
         sentimentAnalysisResult = await analyzeSentiment({ text: values.text });
       } catch (error) {
         console.error('Failed to analyze sentiment:', error);
-        // Continue without sentiment analysis if it fails
       }
     }
 
@@ -226,18 +243,15 @@ export function CreatePostForm({
         summary = summaryResult.summary;
       } catch (error) {
         console.error('Failed to generate summary:', error);
-        // Continue without a summary if it fails
       }
     }
 
-    // In a real app, you would submit this data to your backend.
     console.log('Form submitted:', {
       ...values,
       summary,
       sentiment: sentimentAnalysisResult,
     });
 
-    // Simulate network request
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     toast({

@@ -16,7 +16,10 @@ import {
   MapPin,
   Medal,
   ShieldCheck,
+  Star,
   ThumbsUp,
+  Trophy,
+  Users,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -145,6 +148,12 @@ export default function ProfilePage() {
                     </Button>
                   }
                 />
+                {currentUser.trustScore > 80 && (
+                  <Button variant="outline" className="w-full font-bold">
+                    <Trophy className="mr-2 h-4 w-4 text-amber-500" /> Nominate
+                    for Medal
+                  </Button>
+                )}
               </>
             )}
           </div>
@@ -154,8 +163,8 @@ export default function ProfilePage() {
           <Card className="mt-4">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 font-headline text-lg">
-                <Medal className="h-5 w-5" />
-                Awards & Recognition
+                <Medal className="h-5 w-5 text-amber-500" />
+                Awards & Recognition ({currentUser.awards.length || 0})
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -189,6 +198,24 @@ export default function ProfilePage() {
           <div className="flex items-center gap-1">
             <Calendar className="h-4 w-4" />
             <span>Joined June 2023</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Star className="h-4 w-4" />
+            <span>
+              <span className="font-bold text-foreground">
+                {currentUser.nominations || 0}
+              </span>{' '}
+              Nominations
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Users className="h-4 w-4" />
+            <span>
+              <span className="font-bold text-foreground">
+                {currentUser.publicVotes?.toLocaleString() || 0}
+              </span>{' '}
+              Votes
+            </span>
           </div>
         </div>
 

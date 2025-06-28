@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { UserAvatar } from '@/components/user-avatar';
 import { mockUsers } from '@/lib/mock-data';
-import { Search } from 'lucide-react';
+import { Search, Trophy, Medal, Info, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 const trends = [
@@ -40,6 +40,30 @@ export function RightSidebar() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
         <Input placeholder="Search" className="rounded-full pl-10" />
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 font-headline">
+            <Trophy className="h-5 w-5 text-amber-500" />
+            Hall of Honour
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-1">
+          <Button variant="ghost" className="justify-start">
+            <Medal className="mr-2 h-4 w-4" />
+            View Past Winners
+          </Button>
+          <Button variant="ghost" className="justify-start">
+            <FileText className="mr-2 h-4 w-4" />
+            See Nomination Status
+          </Button>
+          <Button variant="ghost" className="justify-start">
+            <Info className="mr-2 h-4 w-4" />
+            Learn About Medal Criteria
+          </Button>
+        </CardContent>
+      </Card>
+      
       <Card>
         <CardHeader>
           <CardTitle>What’s happening</CardTitle>

@@ -10,6 +10,8 @@ export type User = {
   isVerified: boolean;
   bio?: string;
   awards?: Award[];
+  nominations?: number;
+  publicVotes?: number;
 };
 
 export type Award = {

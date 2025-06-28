@@ -18,6 +18,7 @@ import {
   Gavel,
   UserCircle,
   Megaphone,
+  Trophy,
 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import Image from 'next/image';
@@ -219,6 +220,19 @@ export function PostCard({ post }: PostCardProps) {
                   className="h-full w-full bg-black object-contain"
                 />
               )}
+            </div>
+          )}
+
+          {post.type === 'endorsement' && (
+            <div className="mt-4 flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full font-bold"
+              >
+                <Trophy className="mr-2 h-4 w-4 text-amber-500" />
+                Nominate {post.entity} for Medal
+              </Button>
             </div>
           )}
 

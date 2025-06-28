@@ -1,5 +1,5 @@
 import type { User, Post, Dispute, Award } from '@/lib/types';
-import { Medal, Star } from 'lucide-react';
+import { Award as AwardIcon, Medal, Shield, Star, Users } from 'lucide-react';
 
 export const mockUsers: Record<string, User> = {
   user1: {
@@ -12,9 +12,11 @@ export const mockUsers: Record<string, User> = {
     isVerified: true,
     bio: 'Digital craftsman, coffee enthusiast, and advocate for clarity on the web.',
     awards: [
-      { name: 'Community Pillar 2023', year: 2023, icon: Medal },
-      { name: 'Top Contributor', year: 2022, icon: Star },
+      { name: 'Community Builder Medal', year: 2023, icon: Users },
+      { name: 'Digital Citizen Medal', year: 2022, icon: Shield },
     ],
+    nominations: 5,
+    publicVotes: 1200,
   },
   user2: {
     id: 'user2',
@@ -25,7 +27,9 @@ export const mockUsers: Record<string, User> = {
     trustScore: 92,
     isVerified: true,
     bio: 'Building beautiful and accessible user experiences. Cat lover. Tea drinker.',
-    awards: [{ name: 'Beacon of Trust 2023', year: 2023, icon: Medal }],
+    awards: [{ name: "The People's Integrity Medal", year: 2023, icon: Medal }],
+    nominations: 12,
+    publicVotes: 3450,
   },
   user3: {
     id: 'user3',
@@ -36,6 +40,8 @@ export const mockUsers: Record<string, User> = {
     trustScore: 78,
     isVerified: false,
     bio: 'Exploring the intersection of technology and society. All opinions are my own.',
+    nominations: 2,
+    publicVotes: 450,
   },
   user4: {
     id: 'user4',
@@ -46,6 +52,8 @@ export const mockUsers: Record<string, User> = {
     trustScore: 100,
     isVerified: true,
     bio: 'The official account for the Shame platform. Promoting transparency and accountability.',
+    nominations: 0,
+    publicVotes: 0,
   },
   user5: {
     id: 'user5',
@@ -56,6 +64,8 @@ export const mockUsers: Record<string, User> = {
     trustScore: 88,
     isVerified: false,
     bio: 'Artist, dreamer, and creator of things. Finding beauty in the chaos.',
+    nominations: 8,
+    publicVotes: 2100,
   },
 };
 

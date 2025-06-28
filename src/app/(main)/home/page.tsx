@@ -10,6 +10,9 @@ export default function HomePage() {
   const [filter, setFilter] = useState('foryou');
 
   const filteredPosts = mockPosts.filter((post) => {
+    if (filter === 'posts') {
+      return post.type === 'post';
+    }
     if (filter === 'reports') {
       return post.type === 'report';
     }
@@ -26,12 +29,18 @@ export default function HomePage() {
       </header>
 
       <Tabs defaultValue="foryou" onValueChange={setFilter} className="w-full">
-        <TabsList className="grid h-auto w-full grid-cols-3 rounded-none border-b bg-transparent p-0">
+        <TabsList className="grid h-auto w-full grid-cols-4 rounded-none border-b bg-transparent p-0">
           <TabsTrigger
             value="foryou"
             className="rounded-none py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-accent/50 data-[state=active]:shadow-none"
           >
             For You
+          </TabsTrigger>
+          <TabsTrigger
+            value="posts"
+            className="rounded-none py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-accent/50 data-[state=active]:shadow-none"
+          >
+            Posts
           </TabsTrigger>
           <TabsTrigger
             value="reports"
@@ -51,6 +60,18 @@ export default function HomePage() {
             {filteredPosts.map((post) => (
               <PostCard key={post.id} post={post} />
             ))}
+          </section>
+        </TabsContent>
+        <TabsContent value="posts">
+          <section className="flex flex-col">
+            {filteredPosts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
+            {filteredPosts.length === 0 && (
+              <p className="p-4 text-center text-muted-foreground">
+                No posts yet.
+              </p>
+            )}
           </section>
         </TabsContent>
         <TabsContent value="reports">

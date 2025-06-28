@@ -19,17 +19,19 @@ export type Comment = {
 
 export type Post = {
   id: string;
-  type: 'report' | 'endorsement';
+  type: 'report' | 'endorsement' | 'post';
   author: User;
-  entity: string;
+  entity?: string;
   text: string;
   mediaUrl?: string;
   mediaType?: 'image' | 'video';
-  category: string;
+  category?: string;
   createdAt: string;
   commentsCount: number;
-  likes: number;
-  shares: number;
+  upvotes: number;
+  downvotes: number;
+  reposts: number;
+  bookmarks: number;
   sentiment?: {
     score: number;
     biasDetected: boolean;

@@ -4,7 +4,9 @@ import { Button } from './ui/button';
 import {
   MessageCircle,
   Repeat,
-  Heart,
+  ThumbsUp,
+  ThumbsDown,
+  Bookmark,
   Share,
   MoreHorizontal,
   ShieldAlert,
@@ -34,13 +36,18 @@ export function PostCard({ post }: PostCardProps) {
       : 'bg-green-500/20 text-green-400';
 
   return (
-    <Link href={`/post/${post.id}`} className="block transition-colors hover:bg-accent/10">
+    <Link
+      href={`/post/${post.id}`}
+      className="block transition-colors hover:bg-accent/10"
+    >
       <div className="flex gap-4 border-b p-4">
         <UserAvatar user={post.author} />
         <div className="flex-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm">
-              <span className="font-bold hover:underline">{post.author.name}</span>
+              <span className="font-bold hover:underline">
+                {post.author.name}
+              </span>
               <span className="text-muted-foreground">
                 @{post.author.username}
               </span>
@@ -49,29 +56,41 @@ export function PostCard({ post }: PostCardProps) {
                 {post.createdAt}
               </span>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full"
+            >
               <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
             </Button>
           </div>
-          
-          <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-            {post.type === 'report' ? (
-              <FileWarning className="h-4 w-4 text-destructive/80" />
-            ) : (
-              <Award className="h-4 w-4 text-green-500" />
-            )}
-            <p>
-              <span className="font-medium capitalize">{post.type}</span> on{' '}
-              <span className="font-semibold text-foreground">{post.entity}</span>{' '}
-              in <span className="font-semibold text-foreground">{post.category}</span>
-            </p>
-          </div>
+
+          {post.type !== 'post' && (
+            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+              {post.type === 'report' ? (
+                <FileWarning className="h-4 w-4 text-destructive/80" />
+              ) : (
+                <Award className="h-4 w-4 text-green-500" />
+              )}
+              <p>
+                <span className="font-medium capitalize">{post.type}</span> on{' '}
+                <span className="font-semibold text-foreground">
+                  {post.entity}
+                </span>{' '}
+                in{' '}
+                <span className="font-semibold text-foreground">
+                  {post.category}
+                </span>
+              </p>
+            </div>
+          )}
 
           <p className="mt-1 whitespace-pre-wrap text-base">{post.text}</p>
-          
-          {post.summary && (
+
+          {post.summary && post.type !== 'post' && (
             <p className="mt-2 rounded-lg bg-muted/50 p-2 text-sm italic text-muted-foreground">
-              <span className='font-bold not-italic'>AI Summary:</span> {post.summary}
+              <span className="font-bold not-italic">AI Summary:</span>{' '}
+              {post.summary}
             </p>
           )}
 
@@ -86,9 +105,12 @@ export function PostCard({ post }: PostCardProps) {
             </div>
           )}
 
-          {post.sentiment && (
+          {post.sentiment && post.type !== 'post' && (
             <div className="mt-2 flex items-center gap-2">
-              <Badge variant="outline" className={cn('border-none', sentimentScoreColor)}>
+              <Badge
+                variant="outline"
+                className={cn('border-none', sentimentScoreColor)}
+              >
                 Trust Score: {(post.sentiment.score * 100).toFixed(0)}
               </Badge>
               {post.sentiment.biasDetected && (
@@ -131,23 +153,41 @@ export function PostCard({ post }: PostCardProps) {
               className="flex items-center gap-2 rounded-full hover:text-green-500"
             >
               <Repeat className="h-5 w-5" />
-              <span>{post.shares}</span>
+              <span>{post.reposts}</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-2 rounded-full hover:text-sky-500"
+            >
+              <ThumbsUp className="h-5 w-5" />
+              <span>{post.upvotes}</span>
             </Button>
             <Button
               variant="ghost"
               size="sm"
               className="flex items-center gap-2 rounded-full hover:text-red-500"
             >
-              <Heart className="h-5 w-5" />
-              <span>{post.likes}</span>
+              <ThumbsDown className="h-5 w-5" />
+              <span>{post.downvotes}</span>
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="rounded-full hover:text-primary"
-            >
-              <Share className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-2 rounded-full hover:text-amber-500"
+              >
+                <Bookmark className="h-5 w-5" />
+                {post.bookmarks > 0 && <span>{post.bookmarks}</span>}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-full hover:text-primary"
+              >
+                <Share className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>

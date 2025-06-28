@@ -59,26 +59,72 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
             user={currentUser}
             className="-mt-20 h-32 w-32 border-4 border-background"
           />
-          {params.id === 'user1' && ( // Assuming 'user1' is the logged-in user
-            <EditProfileDialog
-              user={currentUser}
-              onProfileUpdate={handleProfileUpdate}
-            >
-              <Button variant="outline" className="rounded-full font-bold">
-                Edit profile
-              </Button>
-            </EditProfileDialog>
-          )}
-        </div>
-        <div className="mt-2">
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-bold font-headline">
-              {currentUser.name}
-            </h2>
-            {currentUser.isVerified && (
-              <ShieldCheck className="h-6 w-6 text-primary" />
+            {params.id === 'user1' ? ( // Assuming 'user1' is the logged-in user
+              <EditProfileDialog
+                user={currentUser}
+                onProfileUpdate={handleProfileUpdate}
+              >
+                <Button variant="outline" className="rounded-full font-bold">
+                  Edit profile
+                </Button>
+              </EditProfileDialog>
+            ) : (
+              <Button
+                variant={isFollowing ? 'secondary' : 'outline'}
+                className="rounded-full font-bold"
+                onClick={() => setIsFollowing(!isFollowing)}
+              >
+                {isFollowing ? 'Following' : 'Follow'}
+              </Button>
             )}
           </div>
+        </div>
+        <div className="mt-2">
+          <div className="flex w-full items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-bold font-headline">
+                {currentUser.name}
+              </h2>
+              {currentUser.isVerified && (
+                <ShieldCheck className="h-6 w-6 text-primary" />
+              )}
+            </div>
+            {params.id !== 'user1' && (
+              <div className="flex items-center gap-2">
+                <CreatePostDialog
+                  dialogTitle={`Endorse ${currentUser.name}`}
+                  initialValues={{
+                    type: 'endorsement',
+                    entity: currentUser.name,
+                  }}
+                  trigger={
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full font-bold"
+                    >
+                      <ThumbsUp /> Endorse
+                    </Button>
+                  }
+                />
+                <CreatePostDialog
+                  dialogTitle={`Report ${currentUser.name}`}
+                  initialValues={{ type: 'report', entity: currentUser.name }}
+                  trigger={
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="rounded-full font-bold"
+                    >
+                      <Flag /> Report
+                    </Button>
+                  }
+                />
+              </div>
+            )}
+          </div>
+
           <p className="text-muted-foreground">@{currentUser.username}</p>
         </div>
         <div className="mt-4 text-base">
@@ -123,36 +169,6 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
           </div>
         </div>
 
-        {params.id !== 'user1' && (
-          <div className="mt-4 flex items-center gap-2">
-            <CreatePostDialog
-              dialogTitle={`Praise ${currentUser.name}`}
-              initialValues={{ type: 'endorsement', entity: currentUser.name }}
-              trigger={
-                <Button variant="outline" className="rounded-full font-bold">
-                  <ThumbsUp /> Praise
-                </Button>
-              }
-            />
-            <CreatePostDialog
-              dialogTitle={`Flag content from ${currentUser.name}`}
-              initialValues={{ type: 'report', entity: currentUser.name }}
-              trigger={
-                <Button variant="destructive" className="rounded-full font-bold">
-                  <Flag /> Flag
-                </Button>
-              }
-            />
-            <Button
-              variant={isFollowing ? 'secondary' : 'outline'}
-              className="rounded-full font-bold"
-              onClick={() => setIsFollowing(!isFollowing)}
-            >
-              {isFollowing ? 'Following' : 'Follow'}
-            </Button>
-          </div>
-        )}
-        
       </div>
       <Tabs defaultValue="posts" className="w-full">
         <TabsList className="grid w-full grid-cols-4 rounded-none border-b border-border bg-transparent">

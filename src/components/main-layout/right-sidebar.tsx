@@ -43,24 +43,24 @@ export function RightSidebar() {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-1">
-          <Link href="/hall-of-honour#past-winners" asChild>
-            <Button variant="ghost" className="justify-start">
+          <Button asChild variant="ghost" className="justify-start">
+            <Link href="/hall-of-honour#past-winners">
               <Medal className="mr-2 h-4 w-4" />
               View Past Winners
-            </Button>
-          </Link>
-          <Link href="/hall-of-honour" asChild>
-            <Button variant="ghost" className="justify-start">
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" className="justify-start">
+            <Link href="/hall-of-honour">
               <FileText className="mr-2 h-4 w-4" />
               See Nomination Status
-            </Button>
-          </Link>
-          <Link href="/hall-of-honour#nomination-criteria" asChild>
-            <Button variant="ghost" className="justify-start">
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" className="justify-start">
+            <Link href="/hall-of-honour#nomination-criteria">
               <Info className="mr-2 h-4 w-4" />
               Learn About Medal Criteria
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </CardContent>
       </Card>
 

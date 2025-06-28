@@ -295,12 +295,12 @@ export default function AdminPage() {
                           {dispute.involvedParties.map((p) => p.name).join(', ')}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Link href={`/dispute/${dispute.id}`} passHref>
-                            <Button variant="outline" size="sm">
+                          <Button asChild variant="outline" size="sm">
+                            <Link href={`/dispute/${dispute.id}`}>
                               <View className="mr-2 h-4 w-4" />
                               View Dispute
-                            </Button>
-                          </Link>
+                            </Link>
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}

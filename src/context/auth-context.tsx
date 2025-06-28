@@ -16,29 +16,64 @@ export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
 );
 
+const mockUserTemplate = {
+  emailVerified: true,
+  isAnonymous: false,
+  metadata: {},
+  providerData: [],
+  providerId: 'password',
+  tenantId: null,
+  delete: async () => {},
+  getIdToken: async () => '',
+  getIdTokenResult: async () => ({} as any),
+  reload: async () => {},
+  toJSON: () => ({}),
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!auth) {
-      setLoading(false);
-      return;
+    // If Firebase is configured, use it.
+    if (auth) {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setUser(user);
+        setLoading(false);
+      });
+      return () => unsubscribe();
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    // Otherwise, run in mock mode for a better demo experience.
+    // Start with a default logged-in user.
+    setUser({
+      uid: 'user1',
+      email: 'alexdoe@example.com',
+      displayName: 'Alex Doe',
+      photoURL: 'https://placehold.co/100x100.png',
+      ...mockUserTemplate,
+    } as User);
+    setLoading(false);
   }, []);
 
   const signup = async (email: string, password, displayName: string) => {
-    if (!auth) {
-      throw new Error('Firebase is not configured.');
-    }
     setLoading(true);
+    // Handle mock signup if Firebase isn't configured.
+    if (!auth) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const newUser = {
+        uid: `mock-user-${Date.now()}`,
+        email,
+        displayName,
+        photoURL: `https://placehold.co/100x100.png`,
+        ...mockUserTemplate,
+      } as User;
+      setUser(newUser);
+      setLoading(false);
+      return newUser;
+    }
+
+    // Handle real signup.
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -46,8 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         password
       );
       await updateProfile(userCredential.user, { displayName });
-      // This will be updated by onAuthStateChanged listener
-      // setUser(userCredential.user);
+      // The onAuthStateChanged listener will set the user.
       return userCredential.user;
     } finally {
       setLoading(false);
@@ -55,18 +89,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (email, password) => {
-    if (!auth) {
-      throw new Error('Firebase is not configured.');
-    }
     setLoading(true);
+    // Handle mock login if Firebase isn't configured.
+    if (!auth) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const mockUser = {
+        uid: 'user1',
+        email,
+        displayName: 'Alex Doe',
+        photoURL: 'https://placehold.co/100x100.png',
+        ...mockUserTemplate,
+      } as User;
+      setUser(mockUser);
+      setLoading(false);
+      return mockUser;
+    }
+
+    // Handle real login.
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
         password
       );
-      // This will be updated by onAuthStateChanged listener
-      // setUser(userCredential.user);
+      // The onAuthStateChanged listener will set the user.
       return userCredential.user;
     } finally {
       setLoading(false);
@@ -74,14 +120,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    if (!auth) {
-      throw new Error('Firebase is not configured.');
-    }
     setLoading(true);
+    // Handle mock logout if Firebase isn't configured.
+    if (!auth) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
+    // Handle real logout.
     try {
       await signOut(auth);
-      // This will be updated by onAuthStateChanged listener
-      // setUser(null);
+      // The onAuthStateChanged listener will set the user to null.
     } finally {
       setLoading(false);
     }

@@ -9,12 +9,12 @@ import { UserAvatar } from '@/components/user-avatar';
 import { mockPosts, mockUsers } from '@/lib/mock-data';
 import type { User } from '@/lib/types';
 import {
-  Award,
   Calendar,
-  FileWarning,
+  Flag,
   Link as LinkIcon,
   MapPin,
   ShieldCheck,
+  ThumbsUp,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -59,7 +59,7 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
             user={currentUser}
             className="-mt-20 h-32 w-32 border-4 border-background"
           />
-          {params.id === 'user1' ? ( // Assuming 'user1' is the logged-in user
+          {params.id === 'user1' && ( // Assuming 'user1' is the logged-in user
             <EditProfileDialog
               user={currentUser}
               onProfileUpdate={handleProfileUpdate}
@@ -68,34 +68,6 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
                 Edit profile
               </Button>
             </EditProfileDialog>
-          ) : (
-            <div className="flex items-center gap-2">
-               <CreatePostDialog
-                dialogTitle={`Endorse ${currentUser.name}`}
-                initialValues={{ type: 'endorsement', entity: currentUser.name }}
-                trigger={
-                  <Button variant="outline" className="rounded-full font-bold">
-                    <Award /> Endorse
-                  </Button>
-                }
-              />
-               <CreatePostDialog
-                dialogTitle={`Report on ${currentUser.name}`}
-                initialValues={{ type: 'report', entity: currentUser.name }}
-                trigger={
-                  <Button variant="destructive" className="rounded-full font-bold">
-                    <FileWarning /> Report
-                  </Button>
-                }
-              />
-              <Button
-                variant={isFollowing ? 'secondary' : 'outline'}
-                className="rounded-full font-bold"
-                onClick={() => setIsFollowing(!isFollowing)}
-              >
-                {isFollowing ? 'Following' : 'Follow'}
-              </Button>
-            </div>
           )}
         </div>
         <div className="mt-2">
@@ -150,16 +122,37 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
             <span>Joined June 2023</span>
           </div>
         </div>
-        <div className="mt-4 flex gap-4">
-          <p>
-            <span className="font-bold">123</span>{' '}
-            <span className="text-muted-foreground">Following</span>
-          </p>
-          <p>
-            <span className="font-bold">456</span>{' '}
-            <span className="text-muted-foreground">Followers</span>
-          </p>
-        </div>
+
+        {params.id !== 'user1' && (
+          <div className="mt-4 flex items-center gap-2">
+            <CreatePostDialog
+              dialogTitle={`Praise ${currentUser.name}`}
+              initialValues={{ type: 'endorsement', entity: currentUser.name }}
+              trigger={
+                <Button variant="outline" className="rounded-full font-bold">
+                  <ThumbsUp /> Praise
+                </Button>
+              }
+            />
+            <CreatePostDialog
+              dialogTitle={`Flag content from ${currentUser.name}`}
+              initialValues={{ type: 'report', entity: currentUser.name }}
+              trigger={
+                <Button variant="destructive" className="rounded-full font-bold">
+                  <Flag /> Flag
+                </Button>
+              }
+            />
+            <Button
+              variant={isFollowing ? 'secondary' : 'outline'}
+              className="rounded-full font-bold"
+              onClick={() => setIsFollowing(!isFollowing)}
+            >
+              {isFollowing ? 'Following' : 'Follow'}
+            </Button>
+          </div>
+        )}
+        
       </div>
       <Tabs defaultValue="posts" className="w-full">
         <TabsList className="grid w-full grid-cols-4 rounded-none border-b border-border bg-transparent">

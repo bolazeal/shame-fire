@@ -42,7 +42,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from './ui/alert-dialog';
-import React from 'react';
+import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { mockUsers } from '@/lib/mock-data';
 
@@ -52,6 +52,9 @@ interface PostCardProps {
 
 export function PostCard({ post }: PostCardProps) {
   const { toast } = useToast();
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [bookmarkCount, setBookmarkCount] = useState(post.bookmarks);
+
   const sentimentScoreColor =
     post.sentiment && post.sentiment.score < 0
       ? 'bg-red-500/20 text-red-400'
@@ -82,6 +85,33 @@ export function PostCard({ post }: PostCardProps) {
       title: 'Post Escalated',
       description:
         'This report is now a public dispute in the Village Square.',
+    });
+  };
+
+  const handleBookmarkClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isBookmarked) {
+      setBookmarkCount(bookmarkCount - 1);
+      toast({
+        title: 'Bookmark Removed',
+      });
+    } else {
+      setBookmarkCount(bookmarkCount + 1);
+      toast({
+        title: 'Post Bookmarked',
+      });
+    }
+    setIsBookmarked(!isBookmarked);
+  };
+
+  const handleShareClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigator.clipboard.writeText(`${window.location.origin}/post/${post.id}`);
+    toast({
+      title: 'Link Copied',
+      description: 'The link to the post has been copied to your clipboard.',
     });
   };
 
@@ -306,15 +336,22 @@ export function PostCard({ post }: PostCardProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex items-center gap-2 rounded-full hover:text-amber-500"
+                className={cn(
+                  'flex items-center gap-2 rounded-full hover:text-amber-500',
+                  isBookmarked && 'text-amber-500'
+                )}
+                onClick={handleBookmarkClick}
               >
-                <Bookmark className="h-5 w-5" />
-                {post.bookmarks > 0 && <span>{post.bookmarks}</span>}
+                <Bookmark
+                  className={cn('h-5 w-5', isBookmarked && 'fill-current')}
+                />
+                {bookmarkCount > 0 && <span>{bookmarkCount}</span>}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 className="rounded-full hover:text-primary"
+                onClick={handleShareClick}
               >
                 <Share className="h-5 w-5" />
               </Button>

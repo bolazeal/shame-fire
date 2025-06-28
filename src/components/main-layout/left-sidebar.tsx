@@ -29,7 +29,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const navItems = [
   { href: '/home', icon: Home, text: 'Home' },
-  { href: '/explore', icon: Bell, text: 'Notifications' },
+  { href: '/notifications', icon: Bell, text: 'Notifications' },
   { href: '/messages', icon: Mail, text: 'Messages' },
   { href: '/bookmarks', icon: Bookmark, text: 'Bookmarks' },
   { href: '/village-square', icon: Landmark, text: 'Village Square' },

@@ -1,8 +1,15 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import {
+  Loader2,
+  Sparkles,
+  Image as ImageIcon,
+  Video as VideoIcon,
+  X,
+} from 'lucide-react';
+import Image from 'next/image';
+import React, { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -21,6 +28,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from './ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip';
 
 const formSchema = z
   .object({
@@ -30,6 +43,8 @@ const formSchema = z
       message: "This field can't be empty.",
     }),
     category: z.string().optional(),
+    mediaUrl: z.string().optional(),
+    mediaType: z.enum(['image', 'video']).optional(),
   })
   .refine(
     (data) => {
@@ -75,6 +90,12 @@ export function CreatePostForm({
   const [isSuggestingCategories, setIsSuggestingCategories] = useState(false);
   const [suggestedCategories, setSuggestedCategories] = useState<string[]>([]);
   const { toast } = useToast();
+  const [mediaPreview, setMediaPreview] = useState<{
+    url: string;
+    type: 'image' | 'video';
+  } | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -83,8 +104,34 @@ export function CreatePostForm({
       entity: '',
       text: '',
       category: '',
+      mediaUrl: '',
+      mediaType: undefined,
     },
   });
+
+  const handleFileSelect = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    type: 'image' | 'video'
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setMediaPreview({ url: reader.result as string, type });
+        form.setValue('mediaUrl', reader.result as string);
+        form.setValue('mediaType', type);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const clearMedia = () => {
+    setMediaPreview(null);
+    form.setValue('mediaUrl', '');
+    form.setValue('mediaType', undefined);
+    if (imageInputRef.current) imageInputRef.current.value = '';
+    if (videoInputRef.current) videoInputRef.current.value = '';
+  };
 
   const handleTabChange = (value: string) => {
     const newType = value as 'report' | 'endorsement' | 'post';
@@ -98,6 +145,7 @@ export function CreatePostForm({
     });
     form.clearErrors();
     setSuggestedCategories([]);
+    clearMedia();
   };
 
   const handleSuggestCategories = async () => {
@@ -209,6 +257,37 @@ export function CreatePostForm({
               )}
             />
 
+            <div className="relative mt-2">
+              {mediaPreview && (
+                <>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute -right-2 -top-2 z-10 h-6 w-6 rounded-full"
+                    onClick={clearMedia}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                  {mediaPreview.type === 'image' ? (
+                    <Image
+                      src={mediaPreview.url}
+                      alt="Preview"
+                      width={500}
+                      height={300}
+                      className="max-h-60 w-full rounded-lg object-cover"
+                    />
+                  ) : (
+                    <video
+                      src={mediaPreview.url}
+                      controls
+                      className="max-h-60 w-full rounded-lg"
+                    />
+                  )}
+                </>
+              )}
+            </div>
+
             {activeTab !== 'post' && (
               <>
                 <FormField
@@ -268,7 +347,59 @@ export function CreatePostForm({
               </>
             )}
 
-            <div className="flex justify-end pt-2">
+            <div className="flex items-center justify-between border-t pt-4">
+              <div className="flex items-center gap-1">
+                <input
+                  type="file"
+                  ref={imageInputRef}
+                  onChange={(e) => handleFileSelect(e, 'image')}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <input
+                  type="file"
+                  ref={videoInputRef}
+                  onChange={(e) => handleFileSelect(e, 'video')}
+                  accept="video/*"
+                  className="hidden"
+                />
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => imageInputRef.current?.click()}
+                      >
+                        <ImageIcon className="h-5 w-5 text-primary" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Add Image</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => videoInputRef.current?.click()}
+                      >
+                        <VideoIcon className="h-5 w-5 text-primary" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Add Video</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

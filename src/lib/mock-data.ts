@@ -66,6 +66,7 @@ export const mockPosts: Post[] = [
     entity: 'Speedy Shippers',
     text: "My package from 'Speedy Shippers' arrived two weeks late and the box was damaged. Their tracking system was also down for the entire duration. Very frustrating experience.",
     mediaUrl: 'https://placehold.co/600x400.png',
+    'data-ai-hint': 'damaged package',
     mediaType: 'image',
     category: 'Logistics',
     createdAt: '5h',

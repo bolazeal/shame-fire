@@ -25,6 +25,7 @@ export type Post = {
   text: string;
   mediaUrl?: string;
   mediaType?: 'image' | 'video';
+  'data-ai-hint'?: string;
   category?: string;
   createdAt: string;
   commentsCount: number;

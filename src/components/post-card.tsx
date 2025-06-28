@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   FileWarning,
   Award,
+  Gavel,
 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import Image from 'next/image';
@@ -56,13 +57,34 @@ export function PostCard({ post }: PostCardProps) {
                 {post.createdAt}
               </span>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full"
-            >
-              <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
-            </Button>
+            <div className="flex items-center">
+              {post.type === 'report' && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mr-2 flex items-center gap-1 rounded-full px-2 text-xs"
+                      >
+                        <Gavel className="h-4 w-4" />
+                        Escalate
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Escalate to Village Square</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+              >
+                <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
+              </Button>
+            </div>
           </div>
 
           {post.type !== 'post' && (
@@ -94,14 +116,23 @@ export function PostCard({ post }: PostCardProps) {
             </p>
           )}
 
-          {post.mediaUrl && post.mediaType === 'image' && (
+          {post.mediaUrl && (
             <div className="relative mt-2 aspect-video w-full overflow-hidden rounded-xl border">
-              <Image
-                src={post.mediaUrl}
-                alt="Post media"
-                layout="fill"
-                objectFit="cover"
-              />
+              {post.mediaType === 'image' ? (
+                <Image
+                  src={post.mediaUrl}
+                  alt="Post media"
+                  layout="fill"
+                  objectFit="cover"
+                  data-ai-hint={post['data-ai-hint']}
+                />
+              ) : (
+                <video
+                  src={post.mediaUrl}
+                  controls
+                  className="h-full w-full bg-black object-contain"
+                />
+              )}
             </div>
           )}
 

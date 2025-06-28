@@ -86,3 +86,12 @@ export type Dispute = {
   verdict: Verdict | null;
   comments?: Comment[];
 };
+
+export type FlaggedContent = {
+  id: string;
+  content: string;
+  contentType: 'post' | 'comment';
+  author: User;
+  reason: string;
+  flaggedAt: string;
+};

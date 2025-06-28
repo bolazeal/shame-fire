@@ -4,12 +4,13 @@ import {
   Bell,
   Bookmark,
   Home,
+  Landmark,
   Mail,
   MoreHorizontal,
   PenSquare,
-  User,
-  Landmark,
+  Shield,
   Trophy,
+  User,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ const navItems = [
   { href: '/village-square', icon: Landmark, text: 'Village Square' },
   { href: '/hall-of-honour', icon: Trophy, text: 'Hall of Honour' },
   { href: '/profile/user1', icon: User, text: 'Profile' },
+  { href: '/moderation', icon: Shield, text: 'Moderation' },
 ];
 
 export function LeftSidebar() {

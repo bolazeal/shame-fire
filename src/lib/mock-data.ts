@@ -1,4 +1,4 @@
-import type { User, Post, Dispute, Award } from '@/lib/types';
+import type { User, Post, Dispute, Award, FlaggedContent } from '@/lib/types';
 import { Award as AwardIcon, Medal, Shield, Star, Users } from 'lucide-react';
 
 export const mockUsers: Record<string, User> = {
@@ -47,7 +47,8 @@ export const mockUsers: Record<string, User> = {
     id: 'user4',
     name: 'Shame Official',
     username: 'shame',
-    avatarUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAARlSURBVHhe7ZxLyxtREMf/i6gYxElIyEEiDxA8eHGgKMiLgiAPehA8ePAgeA8ePCh48CDkIIpX0IN4QchXhBwh6kFBiR4Ekd/PajfN9u/u3t2e3Wl2sz7pB+dOd1V1dVdXdXW11JRTp07V8+fP66+//loLFy7UDx8+tA4dOlR79+7dWrZsmSsoKLDi4uKa5557riUlJWlBQUFaTk6OFRUV1Rw6dGjasmVLe/Xqlc7OzhbY2tq2ysrKGjg4OFgFBQX1q1evag8ePGgdOnRo/fTpU338+FFnZ2eLYGFhQQcHB8v8/PwaAIsXL6516dKl4jh69Ch9/PhR+vbtW1p//fXXYjzy8/O1WbNmla1bt9bs27evJiYm1PDw8Co/P7/y6dOnOnnyZEVFRUXhHjhwoHbu3Fn79u1b+vDhQ3327Fl9+fJlXVRUREVERHgCgYGB2rx5c+3Vq1fd3d2t+fn5mpeXV7t69Sq1trZqOztbbWxsjN+1a1ePHz++yM7OVp8+faoHDx5oERER0rVr1+rw8LCGhoaK/z169Kjy8/M1Pz+/dujQoXr69GkNGDBAzp8/b0lJSQp/nz592gcPHjQ1NTXpwoUL+vHjR2VnZ2e9e/eu/vjxQwUGBsrmzZvL6dOnLdi9e/fKyMgI9/T07Jk3b17y6dOnmj9/vhQUFLR8+fLFiIgIHhAQIN26dat+9uxZTUtLo0VFRRXHxsZq27ZtOzg4WAcGBjR//vxy8eLFys/Pt3z06FGtW7euzpo1S1u3bi2zZ88u8/LyfPXs2TMsFovV1tYWt2/fPszOzvbOnz9vCQkJLUNDg+L4+HgPHz68wMvLK+LxeHfs2LHc/Pw829/f33Pw4ME6ODhY+vr1a/ny5csKDw9XAQEB3tPTs1u3bl3Kycmx/Pr1axkYGNCbN2+0Tz/9VAoLCx0QECBbtmwpmzdvLr///rsMHz5cW7ZsKaNHj24hISEKzMjIUJKTk328vJxD5eXlzXv37hXPnj2bMjMzXb16tWzdupUGBQXJBQsWeDk5OY4uLi79nTt3dOrUqWpwcLDy8/M1b29vFRQUhGvWrCmDBg1quXHjht6/f1/z589f8d9//92VK1fKjRs3Su/evRseHh7y+fPnHB8fH2ZmZuqPP/7QOjo6nL+/v9u4cWMJCAhwb29vCQ0N1fLz85UaGhrq4eFhHThwQIWEhMjevXs9Li5OFBYW1pKSkqT+/vstPDxc/v33X7l161ZFR0c7LS0t3djYKjU1NSk0NFTS0tJUa2urvLy8lNraWhUfH2/hcDiHDx8+0MLCQnl4eHDEx8d7fn6+xMbGysKFC8vff//du3fvygcPHsjs2bMlNzdXpkyZojx+/FjLysoUExMj3r9/X/L06VN5+PBhxcTEyM6dO8tLL720YWBgIHf06FEXFxfr9evXZdSoUaW3t9du2rSpjBgxQn379tXatWurefPmjZqamtT27dt19+7dds+ePXK9evWUoqKiOHr0KEVERCgdHR2yfft2OXXqlCQkJCgnT55Uo0aN0uDgIFlfX69t27al//znP+XOnTvS1tZWMjIyZPDgweXgwYOysLBARo0alWbNmlXm5uZqVlaWvL29Nf3yyy+K49ChQ+K+vr6OiooKISEhKj09Xd69e1fV1tZKV1eX/v333xQWFqaPHz9Wfn5+vHnz5h2wWCzOjo4O+/79u7Nnz56yMzOlR48exZOTE6WmpmbNnDlD8vLyxN+uXbvy7du3snPnTvnu3TuVlZUl7e3tMmbMGCkqKlKnTp2qqKioz549o/T0dAkNDY2/v38bHh6uRUVFCjk5ORITE6Nz5861Bw8e7PDw8Pr17verbwL+A/gfg5Q9Xh5L3bQAAAABJRU5ErkJggg==',
+    avatarUrl:
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAARlSURBVHhe7ZxLyxtREMf/i6gYxElIyEEiDxA8eHGgKMiLgiAPehA8ePAgeA8ePCh48CDkIIpX0IN4QchXhBwh6kFBiR4Ekd/PajfN9u/u3t2e3Wl2sz7pB+dOd1V1dVdXdXW11JRTp07V8+fP66+//loLFy7UDx8+tA4dOlR79+7dWrZsmSsoKLDi4uKa5557riUlJWlBQUFaTk6OFRUV1Rw6dGjasmVLe/Xqlc7OzhbY2tq2ysrKGjg4OFgFBQX1q1evag8ePGgdOnRo/fTpU338+FFnZ2eLYGFhQQcHB8v8/PwaAIsXL6516dKl4jh69Ch9/PhR+vbtW1p//fXXYjzy8/O1WbNmla1bt9bs27evJiYm1PDw8Co/P7/y6dOnOnnyZEVFRUXhHjhwoHbu3Fn79u1b+vDhQ3327Fl9+fJlXVRUREVERHgCgYGB2rx5c+3Vq1fd3d2t+fn5mpeXV7t69Sq1trZqOztbbWxsjN+1a1ePHz++yM7OVp8+faoHDx5oERER0rVr1+rw8LCGhoaK/z169Kjy8/M1Pz+/dujQoXr69GkNGDBAzp8/b0lJSQp/nz592gcPHjQ1NTXpwoUL+vHjR2VnZ2e9e/eu/vjxQwUGBsrmzZvL6dOnLdi9e/fKyMgI9/T07Jk3b17y6dOnmj9/vhQUFLR8+fLFiIgIHhAQIN26dat+9uxZTUtLo0VFRRXHxsZq27ZtOzg4WAcGBjR//vxy8eLFys/Pt3z06FGtW7euzpo1S1u3bi2zZ88u8/LyfPXs2TMsFovV1tYWt2/fPszOzvbOnz9vCQkJLUNDg+L4+HgPHz68wMvLK+LxeHfs2LHc/Pw829/f33Pw4ME6ODhY+vr1a/ny5csKDw9XAQEB3tPTs1u3bl3Kycmx/Pr1axkYGNCbN2+0Tz/9VAoLCx0QECBbtmwpmzdvLr///rsMHz5cW7ZsKaNHj24hISEKzMjIUJKTk328vJxD5eXlzXv37hXPnj2bMjMzXb16tWzdupUGBQXJBQsWeDk5OY4uLi79nTt3dOrUqWpwcLDy8/M1b29vFRQUhGvWrCmDBg1quXHjht6/f1/z589f8d9//92VK1fKjRs3Su/evRseHh7y+fPnHB8fH2ZmZuqPP/7QOjo6nL+/v9u4cWMJCAhwb29vCQ0N1fLz85UaGhrq4eFhHThwQIWEhMjevXs9Li5OFBYW1pKSkqT+/vstPDxc/v33X7l161ZFR0c7LS0t3djYKjU1NSk0NFTS0tJUa2urvLy8lNraWhUfH2/hcDiHDx8+0MLCQnl4eHDEx8d7fn6+xMbGysKFC8vff//du3fvygcPHsjs2bMlNzdXpkyZojx+/FjLysoUExMj3r9/X/L06VN5+PBhxcTEyM6dO8tLL720YWBgIHf06FEXFxfr9evXZdSoUaW3t9du2rSpjBgxQn379tXatWurefPmjZqamtT27dt19+7dds+ePXK9evWUoqKiOHr0KEVERCgdHR2yfft2OXXqlCQkJCgnT55Uo0aN0uDgIFlfX69t27al//znP+XOnTvS1tZWMjIyZPDgweXgwYOysLBARo0alWbNmlXm5uZqVlaWvL29Nf3yyy+K49ChQ+K+vr6OiooKISEhKj09Xd69e1fV1tZKV1eX/v333xQWFqaPHz9Wfn5+vHnz5h2wWCzOjo4O+/79u7Nnz56yMzOlR48exZOTE6WmpmbNnDlD8vLyxN+uXbvy7du3snPnTvnu3TuVlZUl7e3tMmbMGCkqKlKnTp2qqKioz549o/T0dAkNDY2/v38bHh6uRUVFCjk5ORITE6Nz5861Bw8e7PDw8Pr17verbwL+A/gfg5Q9Xh5L3bQAAAABJRU5ErkJggg==',
     'data-ai-hint': 'shield logo',
     trustScore: 100,
     isVerified: true,
@@ -76,7 +77,7 @@ export const mockPosts: Post[] = [
     author: mockUsers.user2,
     postingAs: 'verified',
     entity: 'The Local Cafe',
-    text: "Just had the best customer service experience at The Local Cafe. The staff was incredibly friendly and helpful. Highly recommend their cortado!",
+    text: 'Just had the best customer service experience at The Local Cafe. The staff was incredibly friendly and helpful. Highly recommend their cortado!',
     category: 'Customer Service',
     createdAt: '2h',
     commentsCount: 12,
@@ -88,7 +89,8 @@ export const mockPosts: Post[] = [
       score: 0.9,
       biasDetected: false,
     },
-    summary: "A glowing review of The Local Cafe's customer service and coffee.",
+    summary:
+      "A glowing review of The Local Cafe's customer service and coffee.",
   },
   {
     id: 'post2',
@@ -146,7 +148,8 @@ export const mockPosts: Post[] = [
       score: 0.95,
       biasDetected: false,
     },
-    summary: 'Positive feedback on the new update for the "Productivity Pro" app.'
+    summary:
+      'Positive feedback on the new update for the "Productivity Pro" app.',
   },
   {
     id: 'post4',
@@ -165,8 +168,9 @@ export const mockPosts: Post[] = [
     sentiment: {
       score: -0.7,
       biasDetected: true,
-      biasExplanation: 'The language used is strong and subjective, which may indicate a personal bias against the company or speaker.'
-    }
+      biasExplanation:
+        'The language used is strong and subjective, which may indicate a personal bias against the company or speaker.',
+    },
   },
   {
     id: 'post6',
@@ -211,7 +215,7 @@ export const mockPosts: Post[] = [
     author: mockUsers.user5, // Emily Carter
     postingAs: 'verified',
     entity: 'Alex Doe', // Reporting user1
-    text: "I hired Alex Doe for a web design project, but the final product was not as promised and delivered late. Communication was also poor throughout the process. I would not recommend working with @alexdoe.",
+    text: 'I hired Alex Doe for a web design project, but the final product was not as promised and delivered late. Communication was also poor throughout the process. I would not recommend working with @alexdoe.',
     category: 'Services',
     createdAt: '4d',
     commentsCount: 18,
@@ -232,7 +236,8 @@ export const mockDisputes: Dispute[] = [
   {
     id: 'dispute1',
     title: 'Dispute over "Speedy Shippers" report accuracy',
-    description: 'The company "Speedy Shippers" is disputing the report made by @samgreen, claiming the delivery was delayed due to weather conditions not mentioned in the report. They have provided shipping logs as evidence.',
+    description:
+      'The company "Speedy Shippers" is disputing the report made by @samgreen, claiming the delivery was delayed due to weather conditions not mentioned in the report. They have provided shipping logs as evidence.',
     involvedParties: [mockUsers.user3, mockUsers.user4],
     createdAt: '1d',
     status: 'voting',
@@ -240,8 +245,8 @@ export const mockDisputes: Dispute[] = [
     poll: {
       question: 'Whose account do you find more credible?',
       options: [
-        { text: '@samgreen\'s report', votes: 102 },
-        { text: 'Speedy Shipper\'s rebuttal', votes: 45 },
+        { text: "@samgreen's report", votes: 102 },
+        { text: "Speedy Shipper's rebuttal", votes: 45 },
         { text: 'Need more information', votes: 33 },
       ],
     },
@@ -275,7 +280,8 @@ export const mockDisputes: Dispute[] = [
   {
     id: 'dispute2',
     title: 'Community review of "Innovate Inc." workshop report',
-    description: 'The report against "Innovate Inc." by @janesmith has been flagged for potential bias. The Village Square is now open for community discussion and polling to determine the fairness of the initial report.',
+    description:
+      'The report against "Innovate Inc." by @janesmith has been flagged for potential bias. The Village Square is now open for community discussion and polling to determine the fairness of the initial report.',
     involvedParties: [mockUsers.user2, mockUsers.user4],
     createdAt: '3d',
     status: 'closed',
@@ -289,8 +295,10 @@ export const mockDisputes: Dispute[] = [
     },
     verdict: {
       moderator: mockUsers.user4,
-      decision: 'The original report by @janesmith will be marked with a "Community Disputed" tag.',
-      reason: 'Based on the community poll and discussion, the majority found the report to contain strong subjective language that could indicate bias. While the negative experience is valid, the post will be flagged to encourage readers to view comments for a balanced perspective.',
+      decision:
+        'The original report by @janesmith will be marked with a "Community Disputed" tag.',
+      reason:
+        'Based on the community poll and discussion, the majority found the report to contain strong subjective language that could indicate bias. While the negative experience is valid, the post will be flagged to encourage readers to view comments for a balanced perspective.',
     },
     comments: [
       {
@@ -308,5 +316,33 @@ export const mockDisputes: Dispute[] = [
         shameRank: 2,
       },
     ],
+  },
+];
+
+export const mockFlaggedContent: FlaggedContent[] = [
+  {
+    id: 'flag1',
+    content:
+      'This whole company is a scam, avoid at all costs! They are all criminals.',
+    contentType: 'comment',
+    author: mockUsers.user3,
+    reason: 'Hate speech policy violation',
+    flaggedAt: '1h ago',
+  },
+  {
+    id: 'flag2',
+    content: "I'm going to find where you live.",
+    contentType: 'post',
+    author: mockUsers.user5,
+    reason: 'Threats of violence',
+    flaggedAt: '3h ago',
+  },
+  {
+    id: 'flag3',
+    content: 'This is an obviously fake review trying to manipulate ratings.',
+    contentType: 'post',
+    author: mockUsers.user2,
+    reason: 'Spam/Misleading',
+    flaggedAt: '1d ago',
   },
 ];

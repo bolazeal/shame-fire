@@ -35,6 +35,13 @@ import {
   TooltipTrigger,
 } from './ui/tooltip';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
 
 const formSchema = z
   .object({
@@ -72,13 +79,28 @@ const formSchema = z
   .refine(
     (data) => {
       if (data.type === 'post') return true;
-      return data.category && data.category.length >= 2;
+      return data.category && data.category.length > 0;
     },
     {
-      message: 'Category must be at least 2 characters.',
+      message: 'A category must be selected.',
       path: ['category'],
     }
   );
+
+const reportCategories = [
+  'Artisan',
+  'Business',
+  'Restaurant',
+  'Transportation',
+  'Government',
+  'School',
+  'Landlord',
+  'Tenant',
+  'Employee',
+  'Product',
+  'Services',
+  'Boss',
+];
 
 export function CreatePostForm({
   onPostCreated,
@@ -218,28 +240,26 @@ export function CreatePostForm({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {activeTab !== 'post' && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="entity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {activeTab === 'report'
-                          ? 'Who are you reporting?'
-                          : 'Who are you endorsing?'}
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g., Company Name or Person's Name"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
+              <FormField
+                control={form.control}
+                name="entity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {activeTab === 'report'
+                        ? 'Who are you reporting?'
+                        : 'Who are you endorsing?'}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., Company Name or Person's Name"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
 
             <FormField
@@ -293,62 +313,82 @@ export function CreatePostForm({
             </div>
 
             {activeTab !== 'post' && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    {activeTab === 'report' ? (
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a report category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {reportCategories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
                       <FormControl>
                         <Input
                           placeholder="e.g., Customer Service, Product Quality"
                           {...field}
                         />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="space-y-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSuggestCategories}
-                    disabled={isSuggestingCategories}
-                  >
-                    {isSuggestingCategories ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="mr-2 h-4 w-4" />
                     )}
-                    Suggest Categories with AI
-                  </Button>
-                  {suggestedCategories.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      <p className="w-full text-sm text-muted-foreground">
-                        Click to use a suggestion:
-                      </p>
-                      {suggestedCategories.map((cat) => (
-                        <Badge
-                          key={cat}
-                          variant="secondary"
-                          className="cursor-pointer hover:bg-primary/20"
-                          onClick={() =>
-                            form.setValue('category', cat, {
-                              shouldValidate: true,
-                            })
-                          }
-                        >
-                          {cat}
-                        </Badge>
-                      ))}
-                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {activeTab === 'endorsement' && (
+              <div className="space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSuggestCategories}
+                  disabled={isSuggestingCategories}
+                >
+                  {isSuggestingCategories ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-2 h-4 w-4" />
                   )}
-                </div>
-              </>
+                  Suggest Categories with AI
+                </Button>
+                {suggestedCategories.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    <p className="w-full text-sm text-muted-foreground">
+                      Click to use a suggestion:
+                    </p>
+                    {suggestedCategories.map((cat) => (
+                      <Badge
+                        key={cat}
+                        variant="secondary"
+                        className="cursor-pointer hover:bg-primary/20"
+                        onClick={() =>
+                          form.setValue('category', cat, {
+                            shouldValidate: true,
+                          })
+                        }
+                      >
+                        {cat}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
 
             {activeTab === 'report' && (

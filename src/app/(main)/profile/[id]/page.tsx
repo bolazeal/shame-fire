@@ -23,11 +23,12 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
     Object.values(mockUsers).find((u) => u.id === params.id) ||
     mockUsers.user1;
 
-  const userPosts = mockPosts.filter((p) => p.author.id === user.id);
-  const userEndorsements = mockPosts.filter(
-    (p) => p.type === 'endorsement' && p.entity === user.name
-  );
-  const userMediaPosts = userPosts.filter((p) => p.mediaUrl);
+  const userPostsAll = mockPosts.filter((p) => p.author.id === user.id);
+  const userPosts = userPostsAll.filter((p) => p.type === 'post');
+  const userReports = userPostsAll.filter((p) => p.type === 'report');
+  const userEndorsements = userPostsAll.filter((p) => p.type === 'endorsement');
+  const userMediaPosts = userPostsAll.filter((p) => p.mediaUrl);
+
 
   const [isFollowing, setIsFollowing] = useState(false);
   const [currentUser, setCurrentUser] = useState(user);
@@ -140,7 +141,7 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
       <Tabs defaultValue="posts" className="w-full">
         <TabsList className="grid w-full grid-cols-4 rounded-none border-b border-border bg-transparent">
           <TabsTrigger value="posts">Posts</TabsTrigger>
-          <TabsTrigger value="replies">Replies</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
           <TabsTrigger value="endorsements">Endorsements</TabsTrigger>
           <TabsTrigger value="media">Media</TabsTrigger>
         </TabsList>
@@ -154,10 +155,15 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
             </p>
           )}
         </TabsContent>
-        <TabsContent value="replies">
-          <p className="p-4 text-center text-muted-foreground">
-            Replies will be shown here.
-          </p>
+        <TabsContent value="reports">
+          {userReports.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
+          {userReports.length === 0 && (
+            <p className="p-4 text-center text-muted-foreground">
+              No reports yet.
+            </p>
+          )}
         </TabsContent>
         <TabsContent value="endorsements">
           {userEndorsements.map((post) => (

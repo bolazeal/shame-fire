@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 export const metadata: Metadata = {
   title: 'Shame',
   description: 'A platform for transparent feedback and accountability.',
+  icons: {},
 };
 
 export default function RootLayout({
@@ -14,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" className="dark">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -29,6 +30,7 @@ export default function RootLayout({
       </head>
       <body
         className={cn('min-h-screen bg-background font-body antialiased')}
+        suppressHydrationWarning={true}
       >
         {children}
         <Toaster />

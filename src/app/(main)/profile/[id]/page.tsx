@@ -39,8 +39,6 @@ export default function ProfilePage() {
   const [currentUser, setCurrentUser] = useState(user);
 
   const handleProfileUpdate = (updatedUser: Partial<User>) => {
-    // In a real app, this would be a PATCH request to an API
-    // For now, we just update the local state to see changes reflected
     setCurrentUser((prev) => ({ ...prev, ...updatedUser }));
   };
 
@@ -62,7 +60,7 @@ export default function ProfilePage() {
             className="-mt-20 h-32 w-32 border-4 border-background"
           />
           <div className="flex items-center gap-2">
-            {params.id === 'user1' ? ( // Assuming 'user1' is the logged-in user
+            {params.id === 'user1' ? (
               <EditProfileDialog
                 user={currentUser}
                 onProfileUpdate={handleProfileUpdate}
@@ -92,39 +90,6 @@ export default function ProfilePage() {
                 <ShieldCheck className="h-6 w-6 text-primary" />
               )}
             </div>
-            {params.id !== 'user1' && (
-              <div className="flex items-center gap-2">
-                <CreatePostDialog
-                  dialogTitle={`Endorse ${currentUser.name}`}
-                  initialValues={{
-                    type: 'endorsement',
-                    entity: currentUser.name,
-                  }}
-                  trigger={
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="rounded-full font-bold"
-                    >
-                      <ThumbsUp /> Endorse
-                    </Button>
-                  }
-                />
-                <CreatePostDialog
-                  dialogTitle={`Report ${currentUser.name}`}
-                  initialValues={{ type: 'report', entity: currentUser.name }}
-                  trigger={
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="rounded-full font-bold"
-                    >
-                      <Flag /> Report
-                    </Button>
-                  }
-                />
-              </div>
-            )}
           </div>
 
           <p className="text-muted-foreground">@{currentUser.username}</p>
@@ -133,26 +98,53 @@ export default function ProfilePage() {
           <p>{currentUser.bio}</p>
         </div>
 
-        <Card className="mt-4">
-          <CardHeader>
-            <CardTitle className="font-headline text-lg">
-              Trust Score
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <span className="text-4xl font-bold text-primary">
-                {currentUser.trustScore}
-              </span>
-              <div className="flex-1">
-                <Progress value={currentUser.trustScore} className="h-3" />
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Based on community endorsements and reports.
-                </p>
+        <div className="mt-4 flex items-stretch gap-4">
+          <Card className="flex-grow">
+            <CardHeader>
+              <CardTitle className="font-headline text-lg">
+                Trust Score
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <span className="text-4xl font-bold text-primary">
+                  {currentUser.trustScore}
+                </span>
+                <div className="flex-1">
+                  <Progress value={currentUser.trustScore} className="h-3" />
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Based on community endorsements and reports.
+                  </p>
+                </div>
               </div>
+            </CardContent>
+          </Card>
+          {params.id !== 'user1' && (
+            <div className="flex shrink-0 flex-col justify-center gap-2">
+              <CreatePostDialog
+                dialogTitle={`Endorse ${currentUser.name}`}
+                initialValues={{
+                  type: 'endorsement',
+                  entity: currentUser.name,
+                }}
+                trigger={
+                  <Button variant="outline" className="w-full font-bold">
+                    <ThumbsUp className="mr-2 h-4 w-4" /> Endorse
+                  </Button>
+                }
+              />
+              <CreatePostDialog
+                dialogTitle={`Report ${currentUser.name}`}
+                initialValues={{ type: 'report', entity: currentUser.name }}
+                trigger={
+                  <Button variant="destructive" className="w-full font-bold">
+                    <Flag className="mr-2 h-4 w-4" /> Report
+                  </Button>
+                }
+              />
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </div>
 
         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-muted-foreground">
           <div className="flex items-center gap-1">

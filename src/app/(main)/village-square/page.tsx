@@ -1,5 +1,6 @@
 import { DisputeCard } from '@/components/dispute-card';
 import { mockDisputes } from '@/lib/mock-data';
+import { Separator } from '@/components/ui/separator';
 
 export default function VillageSquarePage() {
   return (
@@ -9,7 +10,7 @@ export default function VillageSquarePage() {
       </header>
 
       <section className="flex flex-col">
-        {mockDisputes.map((dispute) => (
+        {mockDisputes.map((dispute, index) => (
           <DisputeCard key={dispute.id} dispute={dispute} />
         ))}
         {mockDisputes.length === 0 && (

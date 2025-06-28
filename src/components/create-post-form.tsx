@@ -43,6 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select';
+import { generateEndorsementSummary } from '@/ai/flows/generate-endorsement-summary';
 
 export const createPostFormSchema = z
   .object({
@@ -209,7 +210,9 @@ export function CreatePostForm({
     setIsSubmitting(true);
 
     try {
-      const moderationResult = await detectHarmfulContent({ text: values.text });
+      const moderationResult = await detectHarmfulContent({
+        text: values.text,
+      });
       if (moderationResult.isHarmful) {
         toast({
           title: 'Post Flagged for Review',
@@ -225,10 +228,22 @@ export function CreatePostForm({
       // For now, we'll allow it but log the error.
     }
 
+    let summary = '';
+    if (values.type !== 'post') {
+      try {
+        const summaryResult = await generateEndorsementSummary({
+          endorsementText: values.text,
+        });
+        summary = summaryResult.summary;
+      } catch (error) {
+        console.error('Failed to generate summary:', error);
+        // Continue without a summary if it fails
+      }
+    }
 
     // In a real app, you would submit this data to your backend,
     // potentially after running sentiment analysis AI flows.
-    console.log('Form submitted:', values);
+    console.log('Form submitted:', { ...values, summary });
 
     // Simulate network request
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -243,7 +258,8 @@ export function CreatePostForm({
 
   const getPlaceholder = () => {
     if (activeTab === 'report') return 'Describe the incident...';
-    if (activeTab === 'endorsement') return 'Describe the positive experience...';
+    if (activeTab === 'endorsement')
+      return 'Describe the positive experience...';
     return "What's happening?";
   };
 

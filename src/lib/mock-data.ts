@@ -117,6 +117,8 @@ export const mockPosts: Post[] = [
       score: -0.8,
       biasDetected: false,
     },
+    summary:
+      "A user reports a frustrating experience with 'Speedy Shippers' due to a two-week delivery delay and a damaged package.",
   },
   {
     id: 'post5',
@@ -175,6 +177,8 @@ export const mockPosts: Post[] = [
       biasExplanation:
         'The language used is strong and subjective, which may indicate a personal bias against the company or speaker.',
     },
+    summary:
+      "The user reports that a workshop by 'Innovate Inc.' was outdated and the speaker was unprepared.",
   },
   {
     id: 'post6',

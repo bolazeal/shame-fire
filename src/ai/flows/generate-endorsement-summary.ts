@@ -1,27 +1,29 @@
 'use server';
 
 /**
- * @fileOverview An AI agent that summarizes endorsements.
+ * @fileOverview An AI agent that summarizes endorsements and reports.
  *
- * - generateEndorsementSummary - A function that handles the endorsement summarization process.
+ * - generateEndorsementSummary - A function that handles the content summarization process.
  * - GenerateEndorsementSummaryInput - The input type for the generateEndorsementSummary function.
  * - GenerateEndorsementSummaryOutput - The return type for the generateEndorsementSummary function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const GenerateEndorsementSummaryInputSchema = z.object({
   endorsementText: z
     .string()
-    .describe('The full text of the endorsement to be summarized.'),
+    .describe('The full text of the endorsement or report to be summarized.'),
 });
 export type GenerateEndorsementSummaryInput = z.infer<
   typeof GenerateEndorsementSummaryInputSchema
 >;
 
 const GenerateEndorsementSummaryOutputSchema = z.object({
-  summary: z.string().describe('A short summary of the endorsement.'),
+  summary: z
+    .string()
+    .describe('A short, single-sentence summary of the content.'),
 });
 export type GenerateEndorsementSummaryOutput = z.infer<
   typeof GenerateEndorsementSummaryOutputSchema
@@ -37,11 +39,11 @@ const prompt = ai.definePrompt({
   name: 'generateEndorsementSummaryPrompt',
   input: {schema: GenerateEndorsementSummaryInputSchema},
   output: {schema: GenerateEndorsementSummaryOutputSchema},
-  prompt: `You are an AI assistant that summarizes endorsements.
+  prompt: `You are an AI assistant that summarizes user-submitted content.
 
-  Summarize the following endorsement in a single sentence:
+  Summarize the following report or endorsement in a single, neutral sentence:
 
-  {{endorsementText}}`,
+  {{{endorsementText}}}`,
 });
 
 const generateEndorsementSummaryFlow = ai.defineFlow(

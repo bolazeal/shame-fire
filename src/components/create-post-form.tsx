@@ -43,7 +43,7 @@ import {
   SelectValue,
 } from './ui/select';
 
-const formSchema = z
+export const createPostFormSchema = z
   .object({
     type: z.enum(['report', 'endorsement', 'post']),
     postingAs: z.enum(['verified', 'anonymous', 'whistleblower']),
@@ -104,11 +104,13 @@ const reportCategories = [
 
 export function CreatePostForm({
   onPostCreated,
+  initialValues,
 }: {
   onPostCreated: () => void;
+  initialValues?: Partial<z.infer<typeof createPostFormSchema>>;
 }) {
   const [activeTab, setActiveTab] = useState<'report' | 'endorsement' | 'post'>(
-    'post'
+    initialValues?.type || 'post'
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuggestingCategories, setIsSuggestingCategories] = useState(false);
@@ -121,8 +123,8 @@ export function CreatePostForm({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof createPostFormSchema>>({
+    resolver: zodResolver(createPostFormSchema),
     defaultValues: {
       type: 'post',
       postingAs: 'verified',
@@ -131,6 +133,7 @@ export function CreatePostForm({
       category: '',
       mediaUrl: '',
       mediaType: undefined,
+      ...initialValues,
     },
   });
 
@@ -161,11 +164,10 @@ export function CreatePostForm({
   const handleTabChange = (value: string) => {
     const newType = value as 'report' | 'endorsement' | 'post';
     setActiveTab(newType);
-    form.setValue('type', newType);
     form.reset({
       type: newType,
       postingAs: 'verified',
-      entity: '',
+      entity: newType !== 'post' ? initialValues?.entity || '' : '',
       text: '',
       category: '',
     });
@@ -202,7 +204,7 @@ export function CreatePostForm({
     }
   };
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof createPostFormSchema>) {
     setIsSubmitting(true);
     // In a real app, you would submit this data to your backend,
     // potentially after running sentiment analysis AI flows.
@@ -227,7 +229,7 @@ export function CreatePostForm({
 
   return (
     <Tabs
-      defaultValue="post"
+      value={activeTab}
       className="w-full"
       onValueChange={handleTabChange}
     >

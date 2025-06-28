@@ -9,7 +9,9 @@ import { UserAvatar } from '@/components/user-avatar';
 import { mockPosts, mockUsers } from '@/lib/mock-data';
 import type { User } from '@/lib/types';
 import {
+  Award,
   Calendar,
+  FileWarning,
   Link as LinkIcon,
   MapPin,
   ShieldCheck,
@@ -17,6 +19,7 @@ import {
 import Image from 'next/image';
 import { useState } from 'react';
 import { EditProfileDialog } from '@/components/edit-profile-dialog';
+import { CreatePostDialog } from '@/components/create-post-dialog';
 
 export default function ProfilePage({ params }: { params: { id: string } }) {
   const user =
@@ -66,13 +69,33 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
               </Button>
             </EditProfileDialog>
           ) : (
-            <Button
-              variant={isFollowing ? 'secondary' : 'outline'}
-              className="rounded-full font-bold"
-              onClick={() => setIsFollowing(!isFollowing)}
-            >
-              {isFollowing ? 'Following' : 'Follow'}
-            </Button>
+            <div className="flex items-center gap-2">
+               <CreatePostDialog
+                dialogTitle={`Endorse ${currentUser.name}`}
+                initialValues={{ type: 'endorsement', entity: currentUser.name }}
+                trigger={
+                  <Button variant="outline" className="rounded-full font-bold">
+                    <Award /> Endorse
+                  </Button>
+                }
+              />
+               <CreatePostDialog
+                dialogTitle={`Report on ${currentUser.name}`}
+                initialValues={{ type: 'report', entity: currentUser.name }}
+                trigger={
+                  <Button variant="destructive" className="rounded-full font-bold">
+                    <FileWarning /> Report
+                  </Button>
+                }
+              />
+              <Button
+                variant={isFollowing ? 'secondary' : 'outline'}
+                className="rounded-full font-bold"
+                onClick={() => setIsFollowing(!isFollowing)}
+              >
+                {isFollowing ? 'Following' : 'Follow'}
+              </Button>
+            </div>
           )}
         </div>
         <div className="mt-2">

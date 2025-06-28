@@ -2,11 +2,10 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { UserAvatar } from '@/components/user-avatar';
 import { mockUsers } from '@/lib/mock-data';
-import { Search, Trophy, Medal, Info, FileText } from 'lucide-react';
+import { Trophy, Medal, Info, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 const trends = [
@@ -36,11 +35,6 @@ export function RightSidebar() {
 
   return (
     <aside className="sticky top-0 hidden h-screen w-80 flex-col gap-4 p-4 lg:flex">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-        <Input placeholder="Search" className="rounded-full pl-10" />
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-headline">

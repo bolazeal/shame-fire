@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { ReactNode, useEffect } from 'react';
 import { ModerationProvider } from '@/context/moderation-context';
+import { MobileBottomNav } from '@/components/main-layout/mobile-bottom-nav';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
@@ -21,7 +22,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   if (loading || !user) {
     return (
       <div className="container mx-auto flex min-h-screen">
-        <aside className="sticky top-0 flex h-screen w-64 flex-col justify-between p-2">
+        <aside className="sticky top-0 hidden h-screen w-64 flex-col justify-between p-2 lg:flex">
           <div className="space-y-4 p-4">
             <Skeleton className="h-8 w-32" />
             <div className="space-y-2">
@@ -44,7 +45,6 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           </div>
         </main>
         <aside className="sticky top-0 hidden h-screen w-80 flex-col gap-4 p-4 lg:flex">
-          <Skeleton className="h-10 w-full" />
           <Skeleton className="h-40 w-full" />
           <Skeleton className="h-40 w-full" />
           <Skeleton className="h-64 w-full" />
@@ -57,9 +57,10 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     <ModerationProvider>
       <div className="container mx-auto flex min-h-screen">
         <LeftSidebar />
-        <main className="flex-1 border-x border-border">{children}</main>
+        <main className="flex-1 border-x border-border pb-16 lg:pb-0">{children}</main>
         <RightSidebar />
       </div>
+      <MobileBottomNav />
     </ModerationProvider>
   );
 }

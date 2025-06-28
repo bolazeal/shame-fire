@@ -51,7 +51,7 @@ export function LeftSidebar() {
   };
 
   return (
-    <aside className="sticky top-0 flex h-screen w-64 flex-col justify-between p-2">
+    <aside className="sticky top-0 hidden h-screen w-64 flex-col justify-between p-2 lg:flex">
       <div>
         <div className="p-4">
           <Link href="/home">

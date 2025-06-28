@@ -21,6 +21,7 @@ export type Post = {
   id: string;
   type: 'report' | 'endorsement' | 'post';
   author: User;
+  postingAs?: 'verified' | 'anonymous' | 'whistleblower';
   entity?: string;
   text: string;
   mediaUrl?: string;

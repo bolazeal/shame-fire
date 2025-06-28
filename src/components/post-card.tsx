@@ -14,6 +14,8 @@ import {
   FileWarning,
   Award,
   Gavel,
+  UserCircle,
+  Megaphone,
 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import Image from 'next/image';
@@ -25,6 +27,7 @@ import {
   TooltipTrigger,
 } from './ui/tooltip';
 import Link from 'next/link';
+import { Avatar, AvatarFallback } from './ui/avatar';
 
 interface PostCardProps {
   post: Post;
@@ -36,22 +39,51 @@ export function PostCard({ post }: PostCardProps) {
       ? 'bg-red-500/20 text-red-400'
       : 'bg-green-500/20 text-green-400';
 
+  const isAnonymous = post.postingAs === 'anonymous';
+  const isWhistleblower = post.postingAs === 'whistleblower';
+
+  const authorName = isAnonymous
+    ? 'Anonymous'
+    : isWhistleblower
+    ? 'Whistleblower'
+    : post.author.name;
+
+  const authorUsername = isAnonymous
+    ? 'anonymous'
+    : isWhistleblower
+    ? 'whistleblower'
+    : post.author.username;
+
+  const showVerifiedBadge =
+    post.author.isVerified && !isAnonymous && !isWhistleblower;
+
   return (
     <Link
       href={`/post/${post.id}`}
       className="block transition-colors hover:bg-accent/10"
     >
       <div className="flex gap-4 border-b p-4">
-        <UserAvatar user={post.author} />
+        {isAnonymous || isWhistleblower ? (
+          <Avatar className="h-12 w-12">
+            <AvatarFallback className="bg-muted">
+              {isAnonymous ? (
+                <UserCircle className="h-6 w-6 text-muted-foreground" />
+              ) : (
+                <Megaphone className="h-6 w-6 text-muted-foreground" />
+              )}
+            </AvatarFallback>
+          </Avatar>
+        ) : (
+          <UserAvatar user={post.author} />
+        )}
         <div className="flex-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm">
-              <span className="font-bold hover:underline">
-                {post.author.name}
-              </span>
-              <span className="text-muted-foreground">
-                @{post.author.username}
-              </span>
+              <span className="font-bold hover:underline">{authorName}</span>
+              {showVerifiedBadge && (
+                <ShieldCheck className="h-4 w-4 text-primary" />
+              )}
+              <span className="text-muted-foreground">@{authorUsername}</span>
               <span className="text-muted-foreground">·</span>
               <span className="text-muted-foreground hover:underline">
                 {post.createdAt}

@@ -34,10 +34,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './ui/tooltip';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 
 const formSchema = z
   .object({
     type: z.enum(['report', 'endorsement', 'post']),
+    postingAs: z.enum(['verified', 'anonymous', 'whistleblower']),
     entity: z.string().optional(),
     text: z.string().min(1, {
       message: "This field can't be empty.",
@@ -101,6 +103,7 @@ export function CreatePostForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       type: 'post',
+      postingAs: 'verified',
       entity: '',
       text: '',
       category: '',
@@ -139,6 +142,7 @@ export function CreatePostForm({
     form.setValue('type', newType);
     form.reset({
       type: newType,
+      postingAs: 'verified',
       entity: '',
       text: '',
       category: '',
@@ -345,6 +349,51 @@ export function CreatePostForm({
                   )}
                 </div>
               </>
+            )}
+
+            {activeTab === 'report' && (
+              <FormField
+                control={form.control}
+                name="postingAs"
+                render={({ field }) => (
+                  <FormItem className="space-y-3 rounded-lg border p-4">
+                    <FormLabel>Post as...</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-1"
+                      >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="verified" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Yourself (Verified Identity)
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="anonymous" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Anonymous
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="whistleblower" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Whistleblower (Anonymous, signals a serious claim)
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
 
             <div className="flex items-center justify-between border-t pt-4">

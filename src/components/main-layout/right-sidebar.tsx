@@ -14,9 +14,20 @@ const trends = [
   { category: 'Health', topic: '#Mindfulness', posts: '23K' },
 ];
 
-const usersToFollow = [mockUsers.user2, mockUsers.user3, mockUsers.user4];
-
 export function RightSidebar() {
+  const initialUsers = [mockUsers.user2, mockUsers.user3, mockUsers.user4];
+  const [usersToFollow, setUsersToFollow] = React.useState(
+    initialUsers.map((u) => ({ ...u, isFollowing: false }))
+  );
+
+  const handleFollowToggle = (userId: string) => {
+    setUsersToFollow((prevUsers) =>
+      prevUsers.map((user) =>
+        user.id === userId ? { ...user, isFollowing: !user.isFollowing } : user
+      )
+    );
+  };
+
   return (
     <aside className="sticky top-0 hidden h-screen w-80 flex-col gap-4 p-4 lg:flex">
       <div className="relative">
@@ -32,7 +43,9 @@ export function RightSidebar() {
             <div key={trend.topic}>
               <p className="text-sm text-muted-foreground">{trend.category}</p>
               <p className="font-bold">{trend.topic}</p>
-              <p className="text-sm text-muted-foreground">{trend.posts} posts</p>
+              <p className="text-sm text-muted-foreground">
+                {trend.posts} posts
+              </p>
             </div>
           ))}
         </CardContent>
@@ -49,10 +62,19 @@ export function RightSidebar() {
                   <UserAvatar user={user} className="h-10 w-10" />
                   <div>
                     <p className="font-bold">{user.name}</p>
-                    <p className="text-sm text-muted-foreground">@{user.username}</p>
+                    <p className="text-sm text-muted-foreground">
+                      @{user.username}
+                    </p>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" className="rounded-full">Follow</Button>
+                <Button
+                  variant={user.isFollowing ? 'secondary' : 'outline'}
+                  size="sm"
+                  className="rounded-full font-bold"
+                  onClick={() => handleFollowToggle(user.id)}
+                >
+                  {user.isFollowing ? 'Following' : 'Follow'}
+                </Button>
               </div>
               {index < usersToFollow.length - 1 && <Separator />}
             </React.Fragment>

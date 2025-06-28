@@ -9,6 +9,7 @@ export const mockUsers: Record<string, User> = {
     'data-ai-hint': 'man portrait',
     trustScore: 85,
     isVerified: true,
+    bio: 'Digital craftsman, coffee enthusiast, and advocate for clarity on the web.',
   },
   user2: {
     id: 'user2',
@@ -18,6 +19,7 @@ export const mockUsers: Record<string, User> = {
     'data-ai-hint': 'woman portrait',
     trustScore: 92,
     isVerified: true,
+    bio: 'Building beautiful and accessible user experiences. Cat lover. Tea drinker.',
   },
   user3: {
     id: 'user3',
@@ -27,6 +29,7 @@ export const mockUsers: Record<string, User> = {
     'data-ai-hint': 'person smiling',
     trustScore: 78,
     isVerified: false,
+    bio: 'Exploring the intersection of technology and society. All opinions are my own.',
   },
   user4: {
     id: 'user4',
@@ -36,6 +39,7 @@ export const mockUsers: Record<string, User> = {
     'data-ai-hint': 'shield logo',
     trustScore: 100,
     isVerified: true,
+    bio: 'The official account for the Shame platform. Promoting transparency and accountability.',
   },
 };
 
@@ -137,7 +141,28 @@ export const mockPosts: Post[] = [
       biasDetected: true,
       biasExplanation: 'The language used is strong and subjective, which may indicate a personal bias against the company or speaker.'
     }
-  }
+  },
+  {
+    id: 'post6',
+    type: 'endorsement',
+    author: mockUsers.user3,
+    postingAs: 'verified',
+    entity: 'Alex Doe', // Target user1 by name
+    text: 'Had a great collaboration with Alex on a recent project. A true professional with a keen eye for detail. Highly recommended!',
+    category: 'Professionalism',
+    createdAt: '3d',
+    commentsCount: 8,
+    upvotes: 62,
+    downvotes: 0,
+    reposts: 4,
+    bookmarks: 2,
+    sentiment: {
+      score: 0.98,
+      biasDetected: false,
+    },
+    summary:
+      'A strong professional endorsement for Alex Doe, highlighting collaboration and attention to detail.',
+  },
 ];
 
 export const mockDisputes: Dispute[] = [

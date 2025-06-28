@@ -6,6 +6,7 @@ export type User = {
   'data-ai-hint'?: string;
   trustScore: number;
   isVerified: boolean;
+  bio?: string;
 };
 
 export type Comment = {

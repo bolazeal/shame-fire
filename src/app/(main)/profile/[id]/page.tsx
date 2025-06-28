@@ -1,3 +1,5 @@
+'use client';
+
 import { PostCard } from '@/components/post-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserAvatar } from '@/components/user-avatar';
 import { mockPosts, mockUsers } from '@/lib/mock-data';
+import type { User } from '@/lib/types';
 import {
   Calendar,
   Link as LinkIcon,
@@ -12,12 +15,28 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import Image from 'next/image';
+import { useState } from 'react';
+import { EditProfileDialog } from '@/components/edit-profile-dialog';
 
 export default function ProfilePage({ params }: { params: { id: string } }) {
   const user =
     Object.values(mockUsers).find((u) => u.id === params.id) ||
     mockUsers.user1;
+
   const userPosts = mockPosts.filter((p) => p.author.id === user.id);
+  const userEndorsements = mockPosts.filter(
+    (p) => p.type === 'endorsement' && p.entity === user.name
+  );
+  const userMediaPosts = userPosts.filter((p) => p.mediaUrl);
+
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [currentUser, setCurrentUser] = useState(user);
+
+  const handleProfileUpdate = (updatedUser: Partial<User>) => {
+    // In a real app, this would be a PATCH request to an API
+    // For now, we just update the local state to see changes reflected
+    setCurrentUser((prev) => ({ ...prev, ...updatedUser }));
+  };
 
   return (
     <div>
@@ -33,27 +52,41 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
       <div className="p-4">
         <div className="flex justify-between">
           <UserAvatar
-            user={user}
+            user={currentUser}
             className="-mt-20 h-32 w-32 border-4 border-background"
           />
-          <Button variant="outline" className="rounded-full font-bold">
-            Edit profile
-          </Button>
+          {params.id === 'user1' ? ( // Assuming 'user1' is the logged-in user
+            <EditProfileDialog
+              user={currentUser}
+              onProfileUpdate={handleProfileUpdate}
+            >
+              <Button variant="outline" className="rounded-full font-bold">
+                Edit profile
+              </Button>
+            </EditProfileDialog>
+          ) : (
+            <Button
+              variant={isFollowing ? 'secondary' : 'outline'}
+              className="rounded-full font-bold"
+              onClick={() => setIsFollowing(!isFollowing)}
+            >
+              {isFollowing ? 'Following' : 'Follow'}
+            </Button>
+          )}
         </div>
         <div className="mt-2">
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-bold font-headline">{user.name}</h2>
-            {user.isVerified && (
+            <h2 className="text-2xl font-bold font-headline">
+              {currentUser.name}
+            </h2>
+            {currentUser.isVerified && (
               <ShieldCheck className="h-6 w-6 text-primary" />
             )}
           </div>
-          <p className="text-muted-foreground">@{user.username}</p>
+          <p className="text-muted-foreground">@{currentUser.username}</p>
         </div>
         <div className="mt-4 text-base">
-          <p>
-            Digital craftsman, coffee enthusiast, and advocate for clarity on
-            the web.
-          </p>
+          <p>{currentUser.bio}</p>
         </div>
 
         <Card className="mt-4">
@@ -65,10 +98,10 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
           <CardContent>
             <div className="flex items-center gap-4">
               <span className="text-4xl font-bold text-primary">
-                {user.trustScore}
+                {currentUser.trustScore}
               </span>
               <div className="flex-1">
-                <Progress value={user.trustScore} className="h-3" />
+                <Progress value={currentUser.trustScore} className="h-3" />
                 <p className="mt-1 text-sm text-muted-foreground">
                   Based on community endorsements and reports.
                 </p>
@@ -118,6 +151,31 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
           {userPosts.length === 0 && (
             <p className="p-4 text-center text-muted-foreground">
               No posts yet.
+            </p>
+          )}
+        </TabsContent>
+        <TabsContent value="replies">
+          <p className="p-4 text-center text-muted-foreground">
+            Replies will be shown here.
+          </p>
+        </TabsContent>
+        <TabsContent value="endorsements">
+          {userEndorsements.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
+          {userEndorsements.length === 0 && (
+            <p className="p-4 text-center text-muted-foreground">
+              No endorsements yet.
+            </p>
+          )}
+        </TabsContent>
+        <TabsContent value="media">
+          {userMediaPosts.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
+          {userMediaPosts.length === 0 && (
+            <p className="p-4 text-center text-muted-foreground">
+              This user hasn't posted any media.
             </p>
           )}
         </TabsContent>

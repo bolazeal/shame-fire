@@ -230,6 +230,31 @@ export const mockDisputes: Dispute[] = [
       ],
     },
     verdict: null,
+    comments: [
+      {
+        id: 'c1',
+        author: mockUsers.user5,
+        text: 'Weather delays are a real thing, but two weeks seems excessive. Speedy Shippers should have been more proactive with communication.',
+        createdAt: '1d',
+        shameRank: 7,
+      },
+      {
+        id: 'c2',
+        author: mockUsers.user1,
+        text: 'I agree with @emilycarter. The core issue seems to be the lack of transparency from the company.',
+        createdAt: '22h',
+        shameRank: 8,
+        replies: [
+          {
+            id: 'c3',
+            author: mockUsers.user3,
+            text: "Thanks for the support. That's exactly what I was trying to highlight.",
+            createdAt: '20h',
+            shameRank: 0,
+          },
+        ],
+      },
+    ],
   },
   {
     id: 'dispute2',
@@ -251,5 +276,14 @@ export const mockDisputes: Dispute[] = [
       decision: 'The original report by @janesmith will be marked with a "Community Disputed" tag.',
       reason: 'Based on the community poll and discussion, the majority found the report to contain strong subjective language that could indicate bias. While the negative experience is valid, the post will be flagged to encourage readers to view comments for a balanced perspective.',
     },
+    comments: [
+      {
+        id: 'c4',
+        author: mockUsers.user1,
+        text: "I've had good experiences with Innovate Inc. before, but every experience is subjective. The language in the report does seem a bit harsh though.",
+        createdAt: '2d',
+        shameRank: 3,
+      },
+    ],
   },
 ];

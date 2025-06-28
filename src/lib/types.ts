@@ -67,4 +67,5 @@ export type Dispute = {
   commentsCount: number;
   poll: Poll;
   verdict: Verdict | null;
+  comments?: Comment[];
 };

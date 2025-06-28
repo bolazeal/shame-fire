@@ -28,12 +28,26 @@ import {
 } from './ui/tooltip';
 import Link from 'next/link';
 import { Avatar, AvatarFallback } from './ui/avatar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from './ui/alert-dialog';
+import React from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 interface PostCardProps {
   post: Post;
 }
 
 export function PostCard({ post }: PostCardProps) {
+  const { toast } = useToast();
   const sentimentScoreColor =
     post.sentiment && post.sentiment.score < 0
       ? 'bg-red-500/20 text-red-400'
@@ -56,6 +70,16 @@ export function PostCard({ post }: PostCardProps) {
 
   const showVerifiedBadge =
     post.author.isVerified && !isAnonymous && !isWhistleblower;
+
+  const handleEscalateConfirm = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toast({
+      title: 'Post Escalated',
+      description:
+        'This report is now a public dispute in the Village Square.',
+    });
+  };
 
   return (
     <Link
@@ -91,23 +115,44 @@ export function PostCard({ post }: PostCardProps) {
             </div>
             <div className="flex items-center">
               {post.type === 'report' && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mr-2 flex items-center gap-1 rounded-full px-2 text-xs"
-                      >
-                        <Gavel className="h-4 w-4" />
-                        Escalate
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Escalate to Village Square</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <AlertDialog>
+                  <AlertDialogTrigger
+                    asChild
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  >
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mr-2 flex items-center gap-1 rounded-full px-2 text-xs"
+                    >
+                      <Gavel className="h-4 w-4" />
+                      Escalate
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Escalate this report to the Village Square?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action will create a public dispute. The community
+                        will be able to discuss and vote on the matter. This
+                        cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel onClick={(e) => e.stopPropagation()}>
+                        Cancel
+                      </AlertDialogCancel>
+                      <AlertDialogAction onClick={handleEscalateConfirm}>
+                        Confirm & Escalate
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
               <Button
                 variant="ghost"

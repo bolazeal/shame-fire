@@ -1,4 +1,5 @@
 'use client';
+import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -27,8 +28,8 @@ export function RightSidebar() {
           <CardTitle>What’s happening</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          {trends.map((trend, index) => (
-            <div key={index}>
+          {trends.map((trend) => (
+            <div key={trend.topic}>
               <p className="text-sm text-muted-foreground">{trend.category}</p>
               <p className="font-bold">{trend.topic}</p>
               <p className="text-sm text-muted-foreground">{trend.posts} posts</p>
@@ -42,8 +43,8 @@ export function RightSidebar() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {usersToFollow.map((user, index) => (
-            <>
-              <div key={user.id} className="flex items-center justify-between">
+            <React.Fragment key={user.id}>
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <UserAvatar user={user} className="h-10 w-10" />
                   <div>
@@ -54,7 +55,7 @@ export function RightSidebar() {
                 <Button variant="outline" size="sm" className="rounded-full">Follow</Button>
               </div>
               {index < usersToFollow.length - 1 && <Separator />}
-            </>
+            </React.Fragment>
           ))}
         </CardContent>
       </Card>

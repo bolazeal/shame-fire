@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -16,7 +17,6 @@ import {
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ShameLogo } from '@/components/shame-logo';
-import { UserAvatar } from '@/components/user-avatar';
 import { CreatePostDialog } from '@/components/create-post-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import {
@@ -35,7 +35,7 @@ const navItems = [
   { href: '/village-square', icon: Landmark, text: 'Village Square' },
   { href: '/hall-of-honour', icon: Trophy, text: 'Hall of Honour' },
   { href: '/profile/user1', icon: User, text: 'Profile' },
-  { href: '/moderation', icon: Shield, text: 'Moderation' },
+  { href: '/admin', icon: Shield, text: 'Admin Panel' },
 ];
 
 export function LeftSidebar() {
@@ -59,16 +59,22 @@ export function LeftSidebar() {
           </Link>
         </div>
         <nav className="flex flex-col">
-          {navItems.map((item) => (
-            <Link
-              key={item.text}
-              href={item.href}
-              className="flex items-center gap-4 rounded-full px-4 py-3 text-lg font-medium transition-colors hover:bg-accent/50"
-            >
-              <item.icon className="h-6 w-6" />
-              <span className="font-sans">{item.text}</span>
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            // In a real app, this would check a role from the user's profile
+            if (item.href === '/admin' && user?.uid !== 'user1') {
+              return null;
+            }
+            return (
+              <Link
+                key={item.text}
+                href={item.href}
+                className="flex items-center gap-4 rounded-full px-4 py-3 text-lg font-medium transition-colors hover:bg-accent/50"
+              >
+                <item.icon className="h-6 w-6" />
+                <span className="font-sans">{item.text}</span>
+              </Link>
+            );
+          })}
         </nav>
         <CreatePostDialog
           trigger={

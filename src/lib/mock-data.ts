@@ -1,3 +1,4 @@
+
 import type { User, Post, Dispute, Award, FlaggedContent } from '@/lib/types';
 import { Award as AwardIcon, Medal, Shield, Star, Users } from 'lucide-react';
 
@@ -48,14 +49,14 @@ export const mockUsers: Record<string, User> = {
   },
   clarityOfficial: {
     id: 'clarityOfficial',
-    name: 'Clarity Official',
-    username: 'clarity',
+    name: 'Shame Official',
+    username: 'shame',
     avatarUrl: 'https://placehold.co/100x100.png',
     bannerUrl: 'https://placehold.co/1200x400.png',
     'data-ai-hint': 'shield logo',
     trustScore: 100,
     isVerified: true,
-    bio: 'The official account for the Clarity platform. Promoting transparency and accountability.',
+    bio: 'The official account for the Shame platform. Promoting transparency and accountability.',
     nominations: 0,
     publicVotes: 0,
   },
@@ -163,7 +164,7 @@ export const mockPosts: Post[] = [
     author: mockUsers.user2,
     postingAs: 'anonymous',
     entity: 'Innovate Inc.',
-    text: 'Attended a workshop by "Innovate Inc." and the content was completely outdated. The speaker seemed unprepared and couldn\'t answer basic questions. Not worth the price of admission.',
+    text: "Attended a workshop by 'Innovate Inc.' and the content was completely outdated. The speaker seemed unprepared and couldn't answer basic questions. Not worth the price of admission.",
     category: 'Education',
     createdAt: '2d',
     commentsCount: 21,
@@ -223,7 +224,7 @@ export const mockPosts: Post[] = [
     author: mockUsers.user5, // Emily Carter
     postingAs: 'verified',
     entity: 'Alex Doe', // Reporting user1
-    text: 'I hired Alex Doe for a web design project, but the final product was not as promised and delivered late. Communication was also poor throughout the process. I would not recommend working with @alexdoe.',
+    text: "I hired Alex Doe for a web design project, but the final product was not as promised and delivered late. Communication was also poor throughout the process. I would not recommend working with @alexdoe.",
     category: 'Services',
     createdAt: '4d',
     commentsCount: 18,
@@ -353,4 +354,14 @@ export const mockFlaggedContent: FlaggedContent[] = [
     reason: 'Spam/Misleading',
     flaggedAt: '1d ago',
   },
+];
+
+export const userActivity = [
+  { date: 'Mon', signups: 5 },
+  { date: 'Tue', signups: 7 },
+  { date: 'Wed', signups: 4 },
+  { date: 'Thu', signups: 8 },
+  { date: 'Fri', signups: 12 },
+  { date: 'Sat', signups: 15 },
+  { date: 'Sun', signups: 10 },
 ];

@@ -44,19 +44,19 @@ export function RightSidebar() {
         </CardHeader>
         <CardContent className="flex flex-col gap-1">
           <Button asChild variant="ghost" className="justify-start">
-            <Link key="/hall-of-honour#past-winners" href="/hall-of-honour#past-winners">
+            <Link href="/hall-of-honour#past-winners">
               <Medal className="mr-2 h-4 w-4" />
               View Past Winners
             </Link>
           </Button>
           <Button asChild variant="ghost" className="justify-start">
-            <Link key="/hall-of-honour" href="/hall-of-honour">
+            <Link href="/hall-of-honour">
               <FileText className="mr-2 h-4 w-4" />
               See Nomination Status
             </Link>
           </Button>
           <Button asChild variant="ghost" className="justify-start">
-            <Link key="/hall-of-honour#nomination-criteria" href="/hall-of-honour#nomination-criteria">
+            <Link href="/hall-of-honour#nomination-criteria">
               <Info className="mr-2 h-4 w-4" />
               Learn About Medal Criteria
             </Link>
@@ -92,10 +92,10 @@ export function RightSidebar() {
         <CardHeader>
           <CardTitle>Who to follow</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {usersToFollow.map((user, index) => (
-            <React.Fragment key={user.id}>
-              <div className="flex items-center justify-between">
+        <CardContent className="flex flex-col">
+          {usersToFollow.flatMap((user, index) => {
+            const userComponent = (
+              <div key={user.id} className="flex items-center justify-between">
                 <Link
                   href={`/profile/${user.id}`}
                   className="flex items-center gap-2"
@@ -117,9 +117,16 @@ export function RightSidebar() {
                   {user.isFollowing ? 'Following' : 'Follow'}
                 </Button>
               </div>
-              {index < usersToFollow.length - 1 && <Separator />}
-            </React.Fragment>
-          ))}
+            );
+
+            if (index < usersToFollow.length - 1) {
+              return [
+                userComponent,
+                <Separator key={`sep-${user.id}`} className="my-4" />,
+              ];
+            }
+            return [userComponent];
+          })}
         </CardContent>
       </Card>
     </aside>

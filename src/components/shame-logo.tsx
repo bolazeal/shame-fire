@@ -1,5 +1,5 @@
 
-export function ShameLogo() {
+export function ClarityLogo() {
   return (
     <div className="flex items-center gap-2">
       <svg
@@ -27,7 +27,7 @@ export function ShameLogo() {
       </svg>
 
       <span className="text-xl font-bold tracking-tight text-foreground">
-        Shame
+        Clarity
       </span>
     </div>
   );

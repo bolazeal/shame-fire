@@ -1,4 +1,4 @@
-# Shame: A Platform for Public Accountability
+# Clarity: A Platform for Public Accountability
 
 This is a Next.js application built in Firebase Studio. It serves as a social platform where users can post public reports and endorsements about individuals and organizations to foster transparency and accountability.
 

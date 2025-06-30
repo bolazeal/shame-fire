@@ -239,7 +239,7 @@ export function PostCard({ post }: PostCardProps) {
                 <Image
                   src={post.mediaUrl}
                   alt="Post media"
-                  layout="fill"
+                  fill={true}
                   objectFit="cover"
                   data-ai-hint={post['data-ai-hint']}
                 />

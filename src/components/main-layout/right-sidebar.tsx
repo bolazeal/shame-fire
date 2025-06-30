@@ -44,19 +44,19 @@ export function RightSidebar() {
         </CardHeader>
         <CardContent className="flex flex-col gap-1">
           <Button asChild variant="ghost" className="justify-start">
-            <Link href="/hall-of-honour#past-winners">
+            <Link key="/hall-of-honour#past-winners" href="/hall-of-honour#past-winners">
               <Medal className="mr-2 h-4 w-4" />
               View Past Winners
             </Link>
           </Button>
           <Button asChild variant="ghost" className="justify-start">
-            <Link href="/hall-of-honour">
+            <Link key="/hall-of-honour" href="/hall-of-honour">
               <FileText className="mr-2 h-4 w-4" />
               See Nomination Status
             </Link>
           </Button>
           <Button asChild variant="ghost" className="justify-start">
-            <Link href="/hall-of-honour#nomination-criteria">
+            <Link key="/hall-of-honour#nomination-criteria" href="/hall-of-honour#nomination-criteria">
               <Info className="mr-2 h-4 w-4" />
               Learn About Medal Criteria
             </Link>

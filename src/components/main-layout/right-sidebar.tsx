@@ -1,4 +1,3 @@
-'use client';
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -93,9 +92,9 @@ export function RightSidebar() {
           <CardTitle>Who to follow</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col">
-          {usersToFollow.flatMap((user, index) => {
-            const userComponent = (
-              <div key={user.id} className="flex items-center justify-between">
+          {usersToFollow.map((user, index) => (
+            <div key={user.id}>
+              <div className="flex items-center justify-between">
                 <Link
                   href={`/profile/${user.id}`}
                   className="flex items-center gap-2"
@@ -117,16 +116,11 @@ export function RightSidebar() {
                   {user.isFollowing ? 'Following' : 'Follow'}
                 </Button>
               </div>
-            );
-
-            if (index < usersToFollow.length - 1) {
-              return [
-                userComponent,
-                <Separator key={`sep-${user.id}`} className="my-4" />,
-              ];
-            }
-            return [userComponent];
-          })}
+              {index < usersToFollow.length - 1 && (
+                <Separator className="my-4" />
+              )}
+            </div>
+          ))}
         </CardContent>
       </Card>
     </aside>

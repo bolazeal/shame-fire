@@ -54,25 +54,20 @@ export function ContentBreakdownChart() {
             nameKey="type"
             innerRadius="60%"
             strokeWidth={5}
-            // @ts-ignore
             labelLine={false}
-            label={({
-              payload,
-              ...props
-            }: {
-              payload: { name: string; value: number };
-            }) => {
+            label={(props: any) => {
+              const { value, cx, cy, x, y, textAnchor, dominantBaseline } =
+                props;
+              if (value === undefined || totalPosts === 0) return null;
               return (
                 <text
-                  cx={props.cx}
-                  cy={props.cy}
-                  x={props.x}
-                  y={props.y}
-                  textAnchor={props.textAnchor}
-                  dominantBaseline={props.dominantBaseline}
+                  x={x}
+                  y={y}
+                  textAnchor={textAnchor}
+                  dominantBaseline={dominantBaseline}
                   fill="hsl(var(--foreground))"
                 >
-                  {`${((payload.value / totalPosts) * 100).toFixed(0)}%`}
+                  {`${((value / totalPosts) * 100).toFixed(0)}%`}
                 </text>
               );
             }}

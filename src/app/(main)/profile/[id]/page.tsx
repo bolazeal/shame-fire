@@ -158,31 +158,6 @@ export default function ProfilePage() {
           </div>
         </div>
         
-        {currentUser.awards && currentUser.awards.length > 0 && (
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-headline text-lg">
-                <Medal className="h-5 w-5 text-amber-500" />
-                Awards & Recognition ({currentUser.awards.length || 0})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3">
-                {currentUser.awards.map((award, index) => (
-                  <li key={index} className="flex items-center gap-3">
-                    <award.icon className="h-6 w-6 text-amber-500" />
-                    <div>
-                      <p className="font-semibold">{award.name}</p>
-                      <p className="text-sm text-muted-foreground">{award.year}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        )}
-
-
         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-muted-foreground">
           <div className="flex items-center gap-1">
             <MapPin className="h-4 w-4" />

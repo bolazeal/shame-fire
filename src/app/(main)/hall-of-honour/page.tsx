@@ -55,14 +55,6 @@ export default function HallOfHonourPage() {
                       <p className="text-muted-foreground">@{user.username}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {user.awards?.map((award, index) => (
-                      <award.icon
-                        key={index}
-                        className="h-7 w-7 text-amber-500"
-                      />
-                    ))}
-                  </div>
                 </Link>
               ))}
             </CardContent>

@@ -10,7 +10,6 @@ export type User = {
   trustScore?: number;
   isVerified?: boolean;
   bio?: string;
-  awards?: Award[];
   nominations?: number;
   publicVotes?: number;
 };

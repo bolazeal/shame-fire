@@ -1,3 +1,5 @@
+'use client';
+
 import type { Dispute } from '@/lib/types';
 import { UserAvatar } from './user-avatar';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';

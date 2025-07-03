@@ -1,6 +1,5 @@
 
 import type { User, Post, Dispute, Award, FlaggedContent } from '@/lib/types';
-import { Award as AwardIcon, Medal, Shield, Star, Users } from 'lucide-react';
 
 export const mockUsers: Record<string, User> = {
   user1: {
@@ -13,10 +12,6 @@ export const mockUsers: Record<string, User> = {
     trustScore: 85,
     isVerified: true,
     bio: 'Digital craftsman, coffee enthusiast, and advocate for clarity on the web.',
-    awards: [
-      { name: 'Community Builder Medal', year: 2023, icon: Users },
-      { name: 'Digital Citizen Medal', year: 2022, icon: Shield },
-    ],
     nominations: 5,
     publicVotes: 1200,
   },
@@ -30,7 +25,6 @@ export const mockUsers: Record<string, User> = {
     trustScore: 92,
     isVerified: true,
     bio: 'Building beautiful and accessible user experiences. Cat lover. Tea drinker.',
-    awards: [{ name: "The People's Integrity Medal", year: 2023, icon: Medal }],
     nominations: 12,
     publicVotes: 3450,
   },

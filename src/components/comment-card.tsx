@@ -1,3 +1,5 @@
+'use client';
+
 import type { Comment } from '@/lib/types';
 import { UserAvatar } from './user-avatar';
 import { Button } from './ui/button';

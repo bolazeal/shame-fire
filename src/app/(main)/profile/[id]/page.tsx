@@ -19,6 +19,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import { EditProfileDialog } from '@/components/edit-profile-dialog';
 import { CreatePostDialog } from '@/components/create-post-dialog';
@@ -79,13 +80,18 @@ export default function ProfilePage() {
   const fetchProfile = useCallback(async () => {
     if (!userId) return;
     setLoadingProfile(true);
-    const userProfile = await getUserProfile(userId as string);
-    setProfileUser(userProfile);
-    if (authUser && authUser.uid !== userId) {
-      const isUserFollowing = await isFollowing(authUser.uid, userId as string);
-      setFollowing(isUserFollowing);
+    try {
+        const userProfile = await getUserProfile(userId as string);
+        setProfileUser(userProfile);
+        if (authUser && authUser.uid !== userId) {
+          const isUserFollowing = await isFollowing(authUser.uid, userId as string);
+          setFollowing(isUserFollowing);
+        }
+    } catch (error) {
+        console.error("Failed to fetch profile", error);
+    } finally {
+        setLoadingProfile(false);
     }
-    setLoadingProfile(false);
   }, [userId, authUser]);
 
   const fetchPosts = useCallback(async () => {
@@ -243,16 +249,20 @@ export default function ProfilePage() {
         </div>
         
         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <MapPin className="h-4 w-4" />
-            <span>San Francisco, CA</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <LinkIcon className="h-4 w-4" />
-            <a href="#" className="text-primary hover:underline">
-              portfolio.dev
-            </a>
-          </div>
+          {profileUser.location && (
+            <div className="flex items-center gap-1">
+                <MapPin className="h-4 w-4" />
+                <span>{profileUser.location}</span>
+            </div>
+          )}
+          {profileUser.website && (
+            <div className="flex items-center gap-1">
+                <LinkIcon className="h-4 w-4" />
+                <a href={profileUser.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    {profileUser.website.replace(/^(https?:\/\/)?(www\.)?/, '')}
+                </a>
+            </div>
+           )}
           <div className="flex items-center gap-1">
             <Calendar className="h-4 w-4" />
             <span>Joined {formatDistanceToNow(joinedDate, { addSuffix: true })}</span>

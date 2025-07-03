@@ -20,7 +20,7 @@ import { Camera, Loader2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { UserAvatar } from './user-avatar';
 import Image from 'next/image';
-import { cn } from '@/lib/utils';
+import { updateUserProfile } from '@/lib/firestore';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -32,6 +32,8 @@ const profileFormSchema = z.object({
       message: 'Bio must not be longer than 160 characters.',
     })
     .optional(),
+  location: z.string().max(50, { message: 'Location must not be longer than 50 characters.'}).optional(),
+  website: z.string().url({ message: 'Please enter a valid URL.'}).optional().or(z.literal('')),
   avatarUrl: z.string().optional(),
   bannerUrl: z.string().optional(),
 });
@@ -54,6 +56,8 @@ export function EditProfileForm({ user, onSave }: EditProfileFormProps) {
     defaultValues: {
       name: user.name || '',
       bio: user.bio || '',
+      location: user.location || '',
+      website: user.website || '',
       avatarUrl: user.avatarUrl || '',
       bannerUrl: user.bannerUrl || '',
     },
@@ -79,16 +83,23 @@ export function EditProfileForm({ user, onSave }: EditProfileFormProps) {
 
   async function onSubmit(data: ProfileFormValues) {
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    onSave(data);
-
-    toast({
-      title: 'Profile updated',
-      description: 'Your changes have been saved.',
-    });
-    setIsSubmitting(false);
+    try {
+      await updateUserProfile(user.id, data);
+      onSave(data);
+      toast({
+        title: 'Profile updated',
+        description: 'Your changes have been saved.',
+      });
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      toast({
+        title: 'Update Failed',
+        description: 'Could not save your profile changes.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const watchedAvatarUrl = form.watch('avatarUrl');
@@ -189,7 +200,36 @@ export function EditProfileForm({ user, onSave }: EditProfileFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
+        <FormField
+          control={form.control}
+          name="location"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Location</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., San Francisco, CA" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="website"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Website</FormLabel>
+              <FormControl>
+                <Input placeholder="https://your-website.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button
+          type="submit"
+          disabled={isSubmitting || !form.formState.isDirty}
+        >
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Save changes
         </Button>

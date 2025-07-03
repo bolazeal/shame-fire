@@ -58,6 +58,8 @@ export const createUserProfile = async (
     trustScore: 50,
     isVerified: false,
     bio: 'New user on Shame.',
+    location: '',
+    website: '',
     nominations: 0,
     publicVotes: 0,
     followersCount: 0,
@@ -77,6 +79,15 @@ export const getUserProfile = async (
     return fromFirestore<User>(userSnap);
   }
   return null;
+};
+
+export const updateUserProfile = async (
+  userId: string,
+  data: Partial<User>
+): Promise<void> => {
+    if (!db) throw new Error('Firestore not initialized');
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, data);
 };
 
 export const getUsersToFollow = async (

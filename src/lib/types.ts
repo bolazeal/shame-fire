@@ -14,6 +14,8 @@ export type User = {
   trustScore: number;
   isVerified: boolean;
   bio?: string;
+  location?: string;
+  website?: string;
   nominations: number;
   publicVotes: number;
   followersCount: number;
@@ -29,7 +31,8 @@ export type MedalInfo = {
 
 export type Comment = {
   id: string;
-  author: { // Simplified embedded author object
+  author: {
+    // Simplified embedded author object
     id: string;
     name: string;
     username: string;
@@ -45,7 +48,7 @@ export type Post = {
   id: string;
   type: 'report' | 'endorsement' | 'post';
   author: {
-    id:string;
+    id: string;
     name: string;
     username: string;
     avatarUrl?: string;

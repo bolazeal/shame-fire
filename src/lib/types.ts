@@ -59,6 +59,7 @@ export type Post = {
     biasExplanation?: string;
   };
   summary?: string;
+  isEscalated?: boolean;
 };
 
 export type Poll = {
@@ -80,7 +81,8 @@ export type Dispute = {
   title: string;
   description: string;
   involvedParties: User[];
-  createdAt: string;
+  originalPostId: string;
+  createdAt: Timestamp;
   status: 'open' | 'voting' | 'closed';
   commentsCount: number;
   poll: Poll;
@@ -89,12 +91,13 @@ export type Dispute = {
 };
 
 export type FlaggedContent = {
-  id:string;
+  id: string;
+  originalPostId: string;
   content: string;
   contentType: 'post' | 'comment';
   author: User;
   reason: string;
-  flaggedAt: string;
+  flaggedAt: Timestamp;
 };
 
 export interface ModerationContextType {

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
@@ -23,7 +22,7 @@ import {
   Trash2,
   View,
 } from 'lucide-react';
-import { mockUsers, mockPosts, mockDisputes } from '@/lib/mock-data';
+import { mockUsers } from '@/lib/mock-data';
 import {
   Tabs,
   TabsContent,
@@ -44,6 +43,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { UserActivityChart } from '@/components/charts/user-activity-chart';
 import { ContentBreakdownChart } from '@/components/charts/content-breakdown-chart';
+import { getPosts } from '@/lib/firestore'; // Assuming you have a way to get all posts
+import type { Post, Dispute } from '@/lib/types';
+import { mockDisputes } from '@/lib/mock-data';
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
@@ -52,20 +54,31 @@ export default function AdminPage() {
   const { flaggedContent, dismissFlaggedItem, removeFlaggedItem } =
     useModeration();
 
+  // Local state for stats until they are moved to a proper backend service
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalReports, setTotalReports] = useState(0);
+  const [totalEndorsements, setTotalEndorsements] = useState(0);
+  const activeDisputes = mockDisputes.filter((d) => d.status !== 'closed');
+  
   useEffect(() => {
     // In a real app, you'd check a user's role from a database.
     // For this demo, we'll hardcode the admin user's ID.
     if (!loading && user?.uid !== 'user1') {
       router.push('/home');
     }
-  }, [user, loading, router]);
 
-  const totalUsers = Object.keys(mockUsers).length;
-  const totalReports = mockPosts.filter((p) => p.type === 'report').length;
-  const totalEndorsements = mockPosts.filter(
-    (p) => p.type === 'endorsement'
-  ).length;
-  const activeDisputes = mockDisputes.filter((d) => d.status !== 'closed');
+    // This is a placeholder for fetching real stats
+    async function fetchStats() {
+        const reports = await getPosts('reports');
+        const endorsements = await getPosts('endorsements');
+        setTotalReports(reports.length);
+        setTotalEndorsements(endorsements.length);
+        // A real implementation would query a user count
+        setTotalUsers(5); 
+    }
+    fetchStats();
+
+  }, [user, loading, router]);
 
   if (loading || user?.uid !== 'user1') {
     return (

@@ -2,13 +2,11 @@
 
 import type { Dispute } from '@/lib/types';
 import { UserAvatar } from './user-avatar';
-import { Alert, AlertDescription, AlertTitle } from './ui/alert';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Progress } from './ui/progress';
-import { Gavel, MessageCircle, Scale, Users } from 'lucide-react';
-import { Separator } from './ui/separator';
+import { Gavel, MessageCircle, Scale } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from './ui/badge';
+import { formatDistanceToNow } from 'date-fns';
 
 interface DisputeCardProps {
   dispute: Dispute;
@@ -19,6 +17,15 @@ export function DisputeCard({ dispute }: DisputeCardProps) {
     (acc, option) => acc + option.votes,
     0
   );
+
+  const getTimestampDate = (timestamp: any): Date => {
+    if (timestamp && typeof timestamp.toDate === 'function') {
+      return timestamp.toDate();
+    }
+    return new Date(timestamp);
+  }
+
+  const disputeDate = getTimestampDate(dispute.createdAt);
 
   return (
     <Link
@@ -34,7 +41,7 @@ export function DisputeCard({ dispute }: DisputeCardProps) {
             </div>
             <h2 className="mt-2 font-headline text-xl">{dispute.title}</h2>
             <p className="text-sm text-muted-foreground">
-              Dispute opened on {dispute.createdAt}
+              Dispute opened {formatDistanceToNow(disputeDate, { addSuffix: true })}
             </p>
           </div>
         </div>
@@ -45,22 +52,10 @@ export function DisputeCard({ dispute }: DisputeCardProps) {
           </p>
 
           <div>
-            <h4 className="flex items-center gap-2 text-sm font-semibold">
-              <Users className="h-5 w-5" />
-              Involved Parties
-            </h4>
-            <div className="mt-2 flex items-center gap-4">
-              {dispute.involvedParties.map((user) => (
-                <div key={user.id} className="flex items-center gap-2">
-                  <UserAvatar user={user} className="h-10 w-10" />
-                  <div>
-                    <p className="font-bold">{user.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      @{user.username}
-                    </p>
-                  </div>
-                </div>
-              ))}
+            <div className="mt-2 flex -space-x-2 overflow-hidden">
+                {dispute.involvedParties.map((user) => (
+                    <UserAvatar key={user.id} user={user} className="h-8 w-8 border-2 border-background" />
+                ))}
             </div>
           </div>
 

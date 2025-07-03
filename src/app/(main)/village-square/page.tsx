@@ -2,7 +2,10 @@ import { DisputeCard } from '@/components/dispute-card';
 import { mockDisputes } from '@/lib/mock-data';
 import { Landmark } from 'lucide-react';
 
-export default function VillageSquarePage() {
+export default async function VillageSquarePage() {
+  // In the future, this will be a database call.
+  const disputes = mockDisputes;
+
   return (
     <div>
       <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/80 p-4 backdrop-blur-sm">
@@ -11,12 +14,12 @@ export default function VillageSquarePage() {
       </header>
 
       <section className="flex flex-col">
-        {mockDisputes.length === 0 ? (
+        {disputes.length === 0 ? (
           <p className="p-4 text-center text-muted-foreground">
             The Village Square is currently empty.
           </p>
         ) : (
-          mockDisputes.map((dispute) => (
+          disputes.map((dispute) => (
             <DisputeCard key={dispute.id} dispute={dispute} />
           ))
         )}

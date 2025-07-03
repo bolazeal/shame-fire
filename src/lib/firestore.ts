@@ -25,6 +25,7 @@ import type { User as FirebaseUser } from 'firebase/auth';
 import type { Post, User, Comment, FlaggedContent, Dispute, Poll } from './types';
 import type { z } from 'zod';
 import type { createPostFormSchema } from '@/components/create-post-form';
+import { suggestTrustScore } from '@/ai/flows/suggest-trust-score';
 
 // Helper to convert Firestore doc to a serializable object
 function fromFirestore<T>(doc): T {
@@ -80,6 +81,20 @@ export const getUserProfile = async (
   }
   return null;
 };
+
+// NOTE: This is a simplification for the demo. In a real app, you'd need a more robust
+// way to link entities, as names are not guaranteed to be unique.
+export const getUserByEntityName = async (entityName: string): Promise<User | null> => {
+  if (!db) return null;
+  const usersRef = collection(db, 'users');
+  const q = query(usersRef, where('name', '==', entityName), limit(1));
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) {
+    return null;
+  }
+  return fromFirestore<User>(snapshot.docs[0]);
+};
+
 
 export const updateUserProfile = async (
   userId: string,
@@ -204,6 +219,31 @@ export const createPost = async (
   };
 
   const docRef = await addDoc(collection(db, 'posts'), newPost);
+
+  // Update trust score of the entity being posted about
+  if ((postData.type === 'report' || postData.type === 'endorsement') && postData.entity) {
+    const sentiment = (postData as any).sentiment;
+    if (sentiment) {
+      const targetUser = await getUserByEntityName(postData.entity);
+      if (targetUser && targetUser.id !== author.id) { // Prevent users from changing their own score
+        try {
+          const scoreResult = await suggestTrustScore({
+            currentTrustScore: targetUser.trustScore,
+            postType: postData.type,
+            postSentimentScore: sentiment.sentimentScore,
+          });
+
+          if (scoreResult.newTrustScore !== targetUser.trustScore) {
+            await updateUserProfile(targetUser.id, { trustScore: scoreResult.newTrustScore });
+          }
+        } catch (e) {
+          console.error("Failed to suggest or update trust score:", e);
+          // Don't block post creation if trust score update fails
+        }
+      }
+    }
+  }
+
   return docRef.id;
 };
 

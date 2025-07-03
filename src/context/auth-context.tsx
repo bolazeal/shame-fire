@@ -9,48 +9,92 @@ import {
   signOut,
   updateProfile,
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import type { AuthContextType } from '@/lib/types/auth';
 import { createUserProfile } from '@/lib/firestore';
+import { mockUsers } from '@/lib/mock-data';
 
 export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
 );
 
+// This is a mock user object that can be used for development when Firebase isn't configured.
+// It's designed to satisfy the `User` type from `firebase/auth`.
+const mockAuthUser = {
+  uid: mockUsers.user1.id,
+  email: mockUsers.user1.email,
+  displayName: mockUsers.user1.name,
+  photoURL: mockUsers.user1.avatarUrl,
+  emailVerified: true,
+  isAnonymous: false,
+  metadata: {},
+  providerData: [],
+  providerId: 'password',
+  tenantId: null,
+  refreshToken: 'mock-refresh-token',
+  delete: async () => console.warn('Mock user delete called.'),
+  getIdToken: async () => 'mock-id-token',
+  getIdTokenResult: async () => ({
+    token: 'mock-id-token',
+    claims: {},
+    authTime: new Date().toISOString(),
+    issuedAtTime: new Date().toISOString(),
+    signInProvider: 'password',
+    signInSecondFactor: null,
+    expirationTime: new Date(Date.now() + 3600 * 1000).toISOString(),
+  }),
+  reload: async () => console.warn('Mock user reload called.'),
+  toJSON: () => ({
+      uid: mockUsers.user1.id,
+      email: mockUsers.user1.email,
+      displayName: mockUsers.user1.name,
+  }),
+} as User;
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const isFirebaseConfigured = !!auth && !!db;
 
   useEffect(() => {
-    if (!auth) {
-      console.warn('Firebase Auth is not configured. App is in read-only mode.');
+    if (isFirebaseConfigured) {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setUser(user);
+        setLoading(false);
+      });
+      return () => unsubscribe();
+    } else {
+      // In mock mode, check localStorage to persist a "logged in" state across reloads.
+      console.warn('Firebase is not configured. Using mock authentication.');
+      const mockSession = localStorage.getItem('mockUserSession');
+      if (mockSession) {
+        try {
+            setUser(JSON.parse(mockSession));
+        } catch (e) {
+            localStorage.removeItem('mockUserSession');
+        }
+      }
       setLoading(false);
-      return;
     }
-    
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+  }, [isFirebaseConfigured]);
 
   const signup = async (email: string, password, displayName: string) => {
-    if (!auth) throw new Error('Auth is not initialized.');
-    
+    if (!isFirebaseConfigured) {
+      console.warn("Mock Signup: Simulating user creation.");
+      setLoading(true);
+      const newUser = { ...mockAuthUser, uid: `mock_${Date.now()}`, email, displayName };
+      localStorage.setItem('mockUserSession', JSON.stringify(newUser));
+      setUser(newUser);
+      setLoading(false);
+      return newUser;
+    }
+
     setLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName });
-
-      // Create a corresponding user profile in Firestore
       await createUserProfile(userCredential.user);
-
-      // The onAuthStateChanged listener will update the user state.
+      // onAuthStateChanged will set the user state
       return userCredential.user;
     } finally {
       setLoading(false);
@@ -58,16 +102,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (email, password) => {
-    if (!auth) throw new Error('Auth is not initialized.');
+    if (!isFirebaseConfigured) {
+      console.warn("Mock Login: Simulating login with default user.");
+      setLoading(true);
+      localStorage.setItem('mockUserSession', JSON.stringify(mockAuthUser));
+      setUser(mockAuthUser);
+      setLoading(false);
+      return mockAuthUser;
+    }
 
     setLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      // The onAuthStateChanged listener will update the user state.
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       return userCredential.user;
     } finally {
       setLoading(false);
@@ -75,24 +121,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    if (!auth) throw new Error('Auth is not initialized.');
+    if (!isFirebaseConfigured) {
+      console.warn("Mock Logout: Clearing simulated user session.");
+      setLoading(true);
+      localStorage.removeItem('mockUserSession');
+      setUser(null);
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     try {
       await signOut(auth);
-      // The onAuthStateChanged listener will set the user to null.
     } finally {
       setLoading(false);
     }
   };
 
-  const value = {
-    user,
-    loading,
-    signup,
-    login,
-    logout,
-  };
+  const value = { user, loading, signup, login, logout };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

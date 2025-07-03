@@ -8,11 +8,14 @@ import {
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import type { AuthContextType } from '@/lib/types/auth';
 import { createUserProfile } from '@/lib/firestore';
 import { mockUsers } from '@/lib/mock-data';
+import { doc, getDoc } from 'firebase/firestore';
 
 export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
@@ -120,6 +123,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const loginWithGoogle = async () => {
+    if (!isFirebaseConfigured || !db) {
+        console.warn("Mock Google Login: Simulating login.");
+        setLoading(true);
+        // Using a different mock user to show a difference from email login
+        const googleMockUser = { ...mockAuthUser, uid: 'user2', email: 'jane@example.com', displayName: 'Jane Smith' };
+        localStorage.setItem('mockUserSession', JSON.stringify(googleMockUser));
+        setUser(googleMockUser);
+        setLoading(false);
+        return googleMockUser;
+    }
+
+    setLoading(true);
+    try {
+        const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        const userRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(userRef);
+
+        if (!docSnap.exists()) {
+            // New user via Google, create their profile in Firestore
+            await createUserProfile(user);
+        }
+
+        return user;
+    } finally {
+        setLoading(false);
+    }
+  };
+
   const logout = async () => {
     if (!isFirebaseConfigured) {
       console.warn("Mock Logout: Clearing simulated user session.");
@@ -138,7 +173,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const value = { user, loading, signup, login, logout };
+  const value = { user, loading, signup, login, loginWithGoogle, logout };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

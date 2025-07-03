@@ -13,6 +13,7 @@ export type User = {
   'data-ai-hint'?: string;
   trustScore: number;
   isVerified: boolean;
+  isAdmin?: boolean;
   bio?: string;
   location?: string;
   website?: string;

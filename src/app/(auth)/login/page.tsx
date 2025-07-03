@@ -25,15 +25,22 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
+import { useState } from 'react';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
   password: z.string().min(1, { message: 'Password cannot be empty.' }),
 });
 
+const GoogleIcon = () => (
+    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5"><path d="M12.48 10.92v3.28h7.84c-.27 1.44-1.14 3.73-4.3 3.73-5.22 0-8.22-3.52-8.22-8.4s3-8.4 8.22-8.4c3.34 0 4.63 1.62 4.63 1.62l-2.4 2.44s-1.04-1.03-2.23-1.03c-3.14 0-5.22 2.3-5.22 5.3s2.08 5.3 5.22 5.3c3.73 0 4.68-2.64 4.68-2.64H12.48z" fill="currentColor"/></svg>
+  );
+
+
 export default function LoginPage() {
   const { toast } = useToast();
-  const { login, loading } = useAuth();
+  const { login, loginWithGoogle, loading } = useAuth();
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -69,6 +76,24 @@ export default function LoginPage() {
     }
   }
 
+  async function handleGoogleLogin() {
+    setIsGoogleLoading(true);
+    try {
+      await loginWithGoogle();
+      // AuthProvider handles navigation
+    } catch (error: any) {
+      toast({
+        title: 'Login Failed',
+        description: error.code === 'auth/popup-closed-by-user' 
+          ? 'Google Sign-In was cancelled.'
+          : 'An unexpected error occurred with Google Sign-In.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  }
+
   return (
     <Card>
       <CardHeader className="space-y-1">
@@ -78,7 +103,7 @@ export default function LoginPage() {
         </CardDescription>
       </CardHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <CardContent className="grid gap-4">
             <FormField
               control={form.control}
@@ -91,6 +116,7 @@ export default function LoginPage() {
                       type="email"
                       placeholder="m@example.com"
                       {...field}
+                      disabled={loading || isGoogleLoading}
                     />
                   </FormControl>
                   <FormMessage />
@@ -104,7 +130,7 @@ export default function LoginPage() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" {...field} />
+                    <Input type="password" {...field} disabled={loading || isGoogleLoading} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -112,19 +138,48 @@ export default function LoginPage() {
             />
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full" disabled={loading || isGoogleLoading}>
+              {(loading && !isGoogleLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Login
             </Button>
-            <div className="text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{' '}
-              <Link href="/signup" className="underline hover:text-primary">
-                Sign up
-              </Link>
-            </div>
           </CardFooter>
         </form>
       </Form>
+      
+      <div className="relative px-6 pb-4">
+          <div className="absolute inset-x-6 top-1/2 flex items-center">
+              <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">
+              Or continue with
+              </span>
+          </div>
+      </div>
+
+      <div className="px-6 pb-4">
+          <Button
+              variant="outline"
+              type="button"
+              className="w-full"
+              disabled={loading || isGoogleLoading}
+              onClick={handleGoogleLogin}
+          >
+              {isGoogleLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                  <GoogleIcon />
+              )}
+              Google
+          </Button>
+      </div>
+
+      <div className="pb-6 text-center text-sm text-muted-foreground">
+          Don&apos;t have an account?{' '}
+          <Link href="/signup" className="underline hover:text-primary">
+            Sign up
+          </Link>
+      </div>
     </Card>
   );
 }

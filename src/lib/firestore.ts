@@ -58,6 +58,7 @@ export const createUserProfile = async (
     avatarUrl: firebaseUser.photoURL || 'https://placehold.co/100x100.png',
     trustScore: 50,
     isVerified: false,
+    isAdmin: false,
     bio: 'New user on Shame.',
     location: '',
     website: '',

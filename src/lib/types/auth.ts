@@ -9,5 +9,6 @@ export interface AuthContextType {
     displayName: string
   ) => Promise<User | undefined>;
   login: (email, password) => Promise<User | undefined>;
+  loginWithGoogle: () => Promise<User | undefined>;
   logout: () => Promise<void>;
 }

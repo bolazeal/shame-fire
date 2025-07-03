@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ClarityLogo } from '@/components/shame-logo';
+import { ShameLogo } from '@/components/shame-logo';
 import { CreatePostDialog } from '@/components/create-post-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import {
@@ -54,7 +54,7 @@ export function LeftSidebar() {
       <div>
         <div className="p-4">
           <Link href="/home">
-            <ClarityLogo />
+            <ShameLogo />
           </Link>
         </div>
         <nav className="flex flex-col">

@@ -3,11 +3,10 @@
 import { PostCard } from '@/components/post-card';
 import { CommentCard } from '@/components/comment-card';
 import { mockPosts, mockDisputes, mockUsers } from '@/lib/mock-data';
-import { useParams } from 'next/navigation';
+import { useParams } from "next/navigation";
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { UserAvatar } from '@/components/user-avatar';
 
 export default function PostPage() {
   const params = useParams<{ id: string }>();
@@ -30,7 +29,7 @@ export default function PostPage() {
     <div>
       <PostCard post={post} />
       <div className="p-4">
-        <div className="flex gap-4">
+        {/* Comment form placeholder */}
           <UserAvatar user={mockUsers.user1} className="h-10 w-10" />
           <div className="flex-1">
             <Textarea

@@ -1,4 +1,4 @@
-# **App Name**: Clarity
+# **App Name**: Shame
 
 ## Core Features:
 

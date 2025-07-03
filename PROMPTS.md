@@ -1,12 +1,12 @@
-# Prompts for Building the Clarity App
+# Prompts for Building the Shame App
 
-This document outlines the series of conversational prompts that could be used to generate the Clarity application, from initial setup to the final, feature-rich state.
+This document outlines the series of conversational prompts that could be used to generate the Shame application, from initial setup to the final, feature-rich state.
 
 ---
 
 ### Prompt 1: Initial Setup & Theming
 
-"Hello! I'd like to build a new social media application called 'Clarity'. It should be a platform for public accountability where users can post reports and endorsements.
+"Hello! I'd like to build a new social media application called 'Shame'. It should be a platform for public accountability where users can post reports and endorsements.
 
 Let's start by setting up a Next.js project with the App Router, TypeScript, Tailwind CSS, and ShadCN UI.
 
@@ -32,7 +32,7 @@ For now, just create the basic structure in `src/app/(main)/layout.tsx` and use 
 ---
 
 ### Prompt 3: Authentication Flow
-
+ 
 "Let's set up user authentication. I'll need:
 1.  A mock Firebase Auth setup using `Context` for local development. Create an `AuthContext` that provides a default logged-in user (`Alex Doe`).
 2.  Create Login (`/login`) and Signup (`/signup`) pages. Use ShadCN's `Card`, `Form`, and `Input` components. Use `zod` and `react-hook-form` for validation.
@@ -42,7 +42,7 @@ For now, just create the basic structure in `src/app/(main)/layout.tsx` and use 
 ---
 
 ### Prompt 4: Mobile Responsive Layout & Navigation
-
+ 
 "The desktop layout is a good start. Now, let's make it mobile-friendly.
 1.  On small screens, the sidebars should be hidden.
 2.  Add a `MobileBottomNav` component that is fixed to the bottom of the screen on mobile. It should contain icon-only links for: Home, Search, Post (a main action button), Notifications, and Profile.
@@ -65,7 +65,7 @@ For now, just create the basic structure in `src/app/(main)/layout.tsx` and use 
 ---
 
 ### Prompt 6: Create the Feed and Post Card
-
+ 
 "Now for the core of the app: the feed.
 1.  On the Home page (`/home/page.tsx`), create a tabbed interface with filters for 'For You', 'Posts', 'Reports', and 'Endorsements'.
 2.  Create a `PostCard.tsx` component to display individual posts. It should show:
@@ -79,7 +79,7 @@ For now, just create the basic structure in `src/app/(main)/layout.tsx` and use 
 ---
 
 ### Prompt 7: User Profile Page
-
+ 
 "Let's build the user profile page at `/profile/[id]`.
 1.  It should have a banner image and a large user avatar.
 2.  Display user information: Name, username, bio, verification status.
@@ -90,7 +90,7 @@ For now, just create the basic structure in `src/app/(main)/layout.tsx` and use 
 ---
 
 ### Prompt 8: Post Creation Flow & AI Integration (Part 1)
-
+ 
 "Time to let users create content.
 1.  Create a `CreatePostDialog` component that can be triggered from the 'Post' button in the sidebar.
 2.  Inside, create a `CreatePostForm` with tabs for 'Share Update', 'Report Misconduct', and 'Give Endorsement'.
@@ -102,7 +102,7 @@ For now, just create the basic structure in `src/app/(main)/layout.tsx` and use 
 ---
 
 ### Prompt 9: Advanced AI Integration (Part 2)
-
+ 
 "Let's deepen the AI integration.
 1.  When a user submits a report or endorsement, call the `generateEndorsementSummary` flow and store the summary. Display this AI-generated summary on the `PostCard`.
 2.  Also call the `analyzeSentiment` flow. On the `PostCard`, display the sentiment score and a badge indicating if bias was detected. The badge should have a tooltip explaining the bias.
@@ -111,7 +111,7 @@ For now, just create the basic structure in `src/app/(main)/layout.tsx` and use 
 ---
 
 ### Prompt 10: Community & Moderation Features
-
+ 
 "Let's build out the community governance features.
 1.  Create the `/village-square` page to list active disputes using a `DisputeCard` component.
 2.  Create the `/dispute/[id]` page for viewing a single dispute, including involved parties, a community poll, and a discussion section.
@@ -122,7 +122,7 @@ For now, just create the basic structure in `src/app/(main)/layout.tsx` and use 
 ---
 
 ### Prompt 11: Final Polish & Deployment Prep
-
+ 
 "The app is almost ready! Let's do a final polish.
 1.  Fix any outstanding hydration errors.
 2.  Ensure all interactive elements like links and buttons are using the correct `asChild` composition to avoid console warnings.

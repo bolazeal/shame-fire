@@ -44,7 +44,7 @@ export function LeftSidebar() {
     await logout();
   };
 
-  const getUsername = (email: string | null) => {
+  const getUsername = (email: string | null): string => {
     if (!email) return 'user';
     return email.split('@')[0];
   };
@@ -59,7 +59,6 @@ export function LeftSidebar() {
         </div>
         <nav className="flex flex-col">
           {navItems.map((item) => {
-            // In a real app, this would check a role from the user's profile
             if (item.href === '/admin' && user?.uid !== 'user1') {
               return null;
             }

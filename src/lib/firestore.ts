@@ -16,17 +16,20 @@ import {
   arrayRemove,
   arrayUnion,
   updateDoc,
+  type FieldValue,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
 import type { Post, User, Comment } from './types';
+import { createPostFormSchema } from '@/components/create-post-form';
+import type { z } from 'zod';
 
 // Helper to convert Firestore doc to a serializable object
 function fromFirestore<T>(doc): T {
   const data = doc.data();
   if (!data) return data;
 
-  // Convert all Timestamps to milliseconds
+  // Convert all Timestamps to ISO strings
   Object.keys(data).forEach((key) => {
     if (data[key] instanceof Timestamp) {
       data[key] = data[key].toDate().toISOString();
@@ -42,7 +45,8 @@ export const createUserProfile = async (
 ): Promise<void> => {
   if (!db) throw new Error('Firestore not initialized');
   const userRef = doc(db, 'users', firebaseUser.uid);
-  const userProfile: Omit<User, 'id'> = {
+
+  const userProfile: Omit<User, 'id' | 'createdAt'> & { createdAt: FieldValue } = {
     name: firebaseUser.displayName || 'Anonymous User',
     username: (firebaseUser.email || 'user').split('@')[0],
     email: firebaseUser.email || '',
@@ -54,7 +58,7 @@ export const createUserProfile = async (
     publicVotes: 0,
     followersCount: 0,
     followingCount: 0,
-    createdAt: serverTimestamp() as Timestamp,
+    createdAt: serverTimestamp(),
   };
   await setDoc(userRef, userProfile);
 };
@@ -76,14 +80,17 @@ export const getUsersToFollow = async (
 ): Promise<User[]> => {
   if (!db) return [];
   const usersRef = collection(db, 'users');
-  const q = query(
-    usersRef,
-    where('id', '!=', currentUserId || ''),
-    limit(5)
-  );
+  // Firestore doesn't support inequality filters on different fields.
+  // A simple way to get "other" users is to fetch a few and filter out the current user.
+  // For a large-scale app, a more sophisticated approach would be needed.
+  const q = query(usersRef, limit(10));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => fromFirestore<User>(doc));
+  return snapshot.docs
+    .map((doc) => fromFirestore<User>(doc))
+    .filter((user) => user.id !== currentUserId)
+    .slice(0, 5);
 };
+
 
 // FOLLOW-related functions
 export const isFollowing = async (
@@ -135,8 +142,8 @@ export const createPost = async (
 ): Promise<string> => {
   if (!db) throw new Error('Firestore not initialized');
   
-  const newPost: Omit<Post, 'id'> = {
-    ...postData,
+  const newPost: Omit<Post, 'id' | 'createdAt'> & { createdAt: FieldValue } = {
+    type: postData.type,
     author: { // Embed author data for reads
       id: author.id,
       name: postData.postingAs === 'verified' ? author.name : (postData.postingAs === 'anonymous' ? 'Anonymous' : 'Whistleblower'),
@@ -144,13 +151,21 @@ export const createPost = async (
       avatarUrl: postData.postingAs === 'verified' ? author.avatarUrl : 'https://placehold.co/100x100.png',
     },
     authorId: author.id,
-    createdAt: serverTimestamp() as Timestamp,
+    postingAs: postData.postingAs,
+    entity: postData.entity,
+    text: postData.text,
+    mediaUrl: postData.mediaUrl,
+    mediaType: postData.mediaType,
+    category: postData.category,
+    createdAt: serverTimestamp(),
     commentsCount: 0,
     reposts: 0,
     upvotes: 0,
     downvotes: 0,
     bookmarks: 0,
     bookmarkedBy: [],
+    sentiment: postData.sentiment,
+    summary: postData.summary,
   };
 
   const docRef = await addDoc(collection(db, 'posts'), newPost);
@@ -163,10 +178,10 @@ export const getPosts = async (
   if (!db) return [];
   const postsRef = collection(db, 'posts');
   let q;
-  if (filter === 'foryou') {
+  if (filter === 'foryou' || filter === 'posts') {
     q = query(postsRef, orderBy('createdAt', 'desc'), limit(20));
   } else {
-    const type = filter.slice(0, -1); // 'posts' -> 'post'
+    const type = filter.slice(0, -1); // 'reports' -> 'report'
     q = query(
       postsRef,
       where('type', '==', type),
@@ -184,7 +199,7 @@ export const getUserPosts = async (userId: string, filter: string): Promise<Post
     let q;
     
     if (filter === "media") {
-        q = query(postsRef, where('authorId', '==', userId), where('mediaUrl', '!=', null), orderBy('createdAt', 'desc'), limit(20));
+        q = query(postsRef, where('authorId', '==', userId), where('mediaUrl', '!=', undefined), where('mediaUrl', '!=', ''), orderBy('mediaUrl'), orderBy('createdAt', 'desc'), limit(20));
     } else {
         const type = filter.endsWith('s') ? filter.slice(0, -1) : filter;
         q = query(postsRef, where('authorId', '==', userId), where('type', '==', type), orderBy('createdAt', 'desc'), limit(20));
@@ -231,12 +246,21 @@ export const addComment = async (postId: string, text: string, author: User): Pr
   const commentRef = collection(db, `posts/${postId}/comments`);
   const postRef = doc(db, 'posts', postId);
 
-  const newComment = {
+  const newComment: Omit<Comment, 'id' | 'createdAt'> & {createdAt: FieldValue} = {
       author: { // embed user data
           id: author.id,
           name: author.name,
           username: author.username,
           avatarUrl: author.avatarUrl,
+          // We only embed a subset of the user object to avoid bloat
+          bio: author.bio,
+          trustScore: author.trustScore,
+          isVerified: author.isVerified,
+          email: author.email,
+          nominations: author.nominations,
+          publicVotes: author.publicVotes,
+          followersCount: author.followersCount,
+          followingCount: author.followingCount,
       },
       text,
       createdAt: serverTimestamp(),

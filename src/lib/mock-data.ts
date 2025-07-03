@@ -1,12 +1,5 @@
 import type { User, Post, Dispute, FlaggedContent, Comment } from '@/lib/types';
-import type { Timestamp } from 'firebase/firestore';
 
-// We are now transitioning to a hybrid model.
-// Real user and post data will come from Firestore.
-// Dispute, Moderation, and other static page data will use this mock data temporarily
-// until those features are fully migrated to Firestore.
-
-// --- Mock Users for Disputes/Moderation/Hall of Honour ---
 const mockAdminUser: User = {
     id: 'user1',
     name: 'Alex Doe',
@@ -22,7 +15,7 @@ const mockAdminUser: User = {
     publicVotes: 0,
     followersCount: 150,
     followingCount: 20,
-    createdAt: { toDate: () => new Date('2023-01-01T10:00:00Z') } as any,
+    createdAt: new Date('2023-01-01T10:00:00Z').toISOString(),
 };
 
 const mockUser2: User = {
@@ -40,7 +33,7 @@ const mockUser2: User = {
   publicVotes: 1200,
   followersCount: 1200,
   followingCount: 150,
-  createdAt: { toDate: () => new Date('2023-02-10T08:00:00Z') } as any,
+  createdAt: new Date('2023-02-10T08:00:00Z').toISOString(),
 };
 
 const mockReportingUser: User = {
@@ -58,7 +51,7 @@ const mockReportingUser: User = {
   publicVotes: 450,
   followersCount: 88,
   followingCount: 120,
-  createdAt: { toDate: () => new Date('2023-05-15T12:30:00Z') } as any,
+  createdAt: new Date('2023-05-15T12:30:00Z').toISOString(),
 };
 
 const mockDisputingUser: User = {
@@ -76,7 +69,7 @@ const mockDisputingUser: User = {
     publicVotes: 950,
     followersCount: 2400,
     followingCount: 1,
-    createdAt: { toDate: () => new Date('2023-02-20T09:00:00Z') } as any,
+    createdAt: new Date('2023-02-20T09:00:00Z').toISOString(),
 };
 
 const mockCommenter: User = {
@@ -93,11 +86,9 @@ const mockCommenter: User = {
     publicVotes: 2100,
     followersCount: 560,
     followingCount: 300,
-    createdAt: { toDate: () => new Date('2023-03-10T18:45:00Z') } as any,
+    createdAt: new Date('2023-03-10T18:45:00Z').toISOString(),
 };
 
-// This object is exported for use in pages that still rely on mock data,
-// like the Hall of Honour and Dispute pages.
 export const mockUsers = {
     user1: mockAdminUser,
     user2: mockUser2,
@@ -116,7 +107,7 @@ export const mockDisputes: Dispute[] = [
     description:
       'The company "Speedy Shippers" is disputing the report made by @samgreen, claiming the delivery was delayed due to weather conditions not mentioned in the report. They have provided shipping logs as evidence.',
     involvedParties: [mockReportingUser, mockDisputingUser],
-    createdAt: { toDate: () => new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) } as any,
+    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     status: 'voting',
     commentsCount: 3,
     poll: {
@@ -129,9 +120,9 @@ export const mockDisputes: Dispute[] = [
     },
     verdict: null,
     comments: [
-        { id: 'c1', author: mockCommenter, text: "I've had issues with them before, they always have an excuse.", upvotes: 15, downvotes: 1, createdAt: { toDate: () => new Date(Date.now() - 12 * 60 * 60 * 1000) } as any },
-        { id: 'c2', author: mockAdminUser, text: "Can Speedy Shippers provide tracking data that shows weather exceptions?", upvotes: 8, downvotes: 0, createdAt: { toDate: () => new Date(Date.now() - 10 * 60 * 60 * 1000) } as any },
-        { id: 'c3', author: mockDisputingUser, text: "Yes, we are compiling that information and will post an update shortly.", upvotes: 2, downvotes: 5, createdAt: { toDate: () => new Date(Date.now() - 9 * 60 * 60 * 1000) } as any },
+        { id: 'c1', author: mockCommenter, text: "I've had issues with them before, they always have an excuse.", upvotes: 15, downvotes: 1, createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString() },
+        { id: 'c2', author: mockAdminUser, text: "Can Speedy Shippers provide tracking data that shows weather exceptions?", upvotes: 8, downvotes: 0, createdAt: new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString() },
+        { id: 'c3', author: mockDisputingUser, text: "Yes, we are compiling that information and will post an update shortly.", upvotes: 2, downvotes: 5, createdAt: new Date(Date.now() - 9 * 60 * 60 * 1000).toISOString() },
     ],
   },
   {
@@ -141,7 +132,7 @@ export const mockDisputes: Dispute[] = [
     description:
         'A user has disputed an endorsement for "Cafe Aroma", claiming it was a paid promotion and not a genuine experience. The original endorser denies this.',
     involvedParties: [mockCommenter, mockAdminUser],
-    createdAt: { toDate: () => new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) } as any,
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     status: 'closed',
     commentsCount: 2,
     poll: {
@@ -171,7 +162,7 @@ export const mockFlaggedContent: FlaggedContent[] = [
     contentType: 'post',
     author: mockReportingUser,
     reason: 'Hate speech policy violation',
-    flaggedAt: { toDate: () => new Date(Date.now() - 1 * 60 * 60 * 1000) } as any,
+    flaggedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: 'flag2',
@@ -181,7 +172,7 @@ export const mockFlaggedContent: FlaggedContent[] = [
     contentType: 'comment',
     author: mockCommenter,
     reason: 'Doxxing / Privacy violation',
-    flaggedAt: { toDate: () => new Date(Date.now() - 5 * 60 * 60 * 1000) } as any,
+    flaggedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
   },
 ];
 

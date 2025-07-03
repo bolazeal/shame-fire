@@ -17,15 +17,8 @@ export function DisputeCard({ dispute }: DisputeCardProps) {
     (acc, option) => acc + option.votes,
     0
   );
-
-  const getTimestampDate = (timestamp: any): Date => {
-    if (timestamp && typeof timestamp.toDate === 'function') {
-      return timestamp.toDate();
-    }
-    return new Date(timestamp);
-  }
-
-  const disputeDate = getTimestampDate(dispute.createdAt);
+  
+  const disputeDate = new Date(dispute.createdAt);
 
   return (
     <Link

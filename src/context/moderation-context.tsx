@@ -4,7 +4,6 @@ import { createContext, useState, ReactNode } from 'react';
 import { mockFlaggedContent } from '@/lib/mock-data';
 import type { FlaggedContent, ModerationContextType } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import type { Timestamp } from 'firebase/firestore';
 
 export const ModerationContext = createContext<ModerationContextType | undefined>(undefined);
 
@@ -16,7 +15,7 @@ export const ModerationProvider = ({ children }: { children: ReactNode }) => {
     const newItem: FlaggedContent = {
       ...item,
       id: `flag${Date.now()}`,
-      flaggedAt: { toDate: () => new Date() } as any, // Mock Timestamp
+      flaggedAt: new Date().toISOString(),
     };
     setFlaggedContent((prev) => [newItem, ...prev]);
   };

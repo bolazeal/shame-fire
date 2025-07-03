@@ -1,5 +1,4 @@
 import type { ElementType } from 'react';
-import type { Timestamp } from 'firebase/firestore';
 
 export type User = {
   id: string; // Firebase Auth UID
@@ -16,7 +15,7 @@ export type User = {
   publicVotes: number;
   followersCount: number;
   followingCount: number;
-  createdAt: Timestamp;
+  createdAt: string;
 };
 
 export type MedalInfo = {
@@ -29,15 +28,20 @@ export type Comment = {
   id: string;
   author: User; // Embedded author object for easy display
   text: string;
-  createdAt: Timestamp;
+  createdAt: string;
   upvotes: number;
   downvotes: number;
 };
 
 export type Post = {
-  id: string;
+  id:string;
   type: 'report' | 'endorsement' | 'post';
-  author: User; // Embedded author object
+  author: {
+    id: string;
+    name: string;
+    username: string;
+    avatarUrl?: string;
+  };
   authorId: string; // Reference to author's UID
   postingAs?: 'verified' | 'anonymous' | 'whistleblower';
   entity?: string;
@@ -46,7 +50,7 @@ export type Post = {
   mediaType?: 'image' | 'video';
   'data-ai-hint'?: string;
   category?: string;
-  createdAt: Timestamp;
+  createdAt: string;
   commentsCount: number;
   reposts: number;
   upvotes: number;
@@ -82,7 +86,7 @@ export type Dispute = {
   description: string;
   involvedParties: User[];
   originalPostId: string;
-  createdAt: Timestamp;
+  createdAt: string;
   status: 'open' | 'voting' | 'closed';
   commentsCount: number;
   poll: Poll;
@@ -97,7 +101,7 @@ export type FlaggedContent = {
   contentType: 'post' | 'comment';
   author: User;
   reason: string;
-  flaggedAt: Timestamp;
+  flaggedAt: string;
 };
 
 export interface ModerationContextType {

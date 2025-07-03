@@ -3,18 +3,18 @@ import type { Timestamp } from 'firebase/firestore';
 
 // We are now transitioning to a hybrid model.
 // Real user and post data will come from Firestore.
-// Dispute and Moderation data will use this mock data temporarily
+// Dispute, Moderation, and other static page data will use this mock data temporarily
 // until those features are fully migrated to Firestore.
 
-// --- Mock Users for Disputes/Moderation ---
+// --- Mock Users for Disputes/Moderation/Hall of Honour ---
 const mockAdminUser: User = {
     id: 'user1',
     name: 'Alex Doe',
     username: 'alexdoe',
     email: 'alexdoe@example.com',
     avatarUrl: 'https://placehold.co/100x100.png',
-    bannerUrl: 'https://placehold.co/1200x400.png',
     'data-ai-hint': 'person smiling',
+    bannerUrl: 'https://placehold.co/1200x400.png',
     trustScore: 95,
     isVerified: true,
     bio: 'Platform admin. Keeping things fair and square.',
@@ -25,14 +25,32 @@ const mockAdminUser: User = {
     createdAt: { toDate: () => new Date('2023-01-01T10:00:00Z') } as any,
 };
 
+const mockUser2: User = {
+  id: 'user2',
+  name: 'Jane Smith',
+  username: 'janesmith',
+  email: 'janesmith@example.com',
+  avatarUrl: 'https://placehold.co/100x100.png',
+  'data-ai-hint': 'woman smiling',
+  bannerUrl: 'https://placehold.co/1200x400.png',
+  trustScore: 85,
+  isVerified: true,
+  bio: 'Building products that matter. Founder @ TechStart. She/Her.',
+  nominations: 5,
+  publicVotes: 1200,
+  followersCount: 1200,
+  followingCount: 150,
+  createdAt: { toDate: () => new Date('2023-02-10T08:00:00Z') } as any,
+};
+
 const mockReportingUser: User = {
   id: 'user3',
   name: 'Samuel Green',
   username: 'samgreen',
   email: 'samgreen@example.com',
   avatarUrl: 'https://placehold.co/100x100.png',
-  bannerUrl: 'https://placehold.co/1200x400.png',
   'data-ai-hint': 'person glasses',
+  bannerUrl: 'https://placehold.co/1200x400.png',
   trustScore: 78,
   isVerified: false,
   bio: 'Exploring the intersection of technology and society. All opinions are my own.',
@@ -49,8 +67,8 @@ const mockDisputingUser: User = {
     username: 'speedyshippers',
     email: 'contact@speedyshippers.com',
     avatarUrl: 'https://placehold.co/100x100.png',
-    bannerUrl: 'https://placehold.co/1200x400.png',
     'data-ai-hint': 'shipping truck',
+    bannerUrl: 'https://placehold.co/1200x400.png',
     trustScore: 65,
     isVerified: true,
     bio: 'Official account for Speedy Shippers Inc. We deliver on time, every time.',
@@ -76,7 +94,17 @@ const mockCommenter: User = {
     followersCount: 560,
     followingCount: 300,
     createdAt: { toDate: () => new Date('2023-03-10T18:45:00Z') } as any,
-}
+};
+
+// This object is exported for use in pages that still rely on mock data,
+// like the Hall of Honour and Dispute pages.
+export const mockUsers = {
+    user1: mockAdminUser,
+    user2: mockUser2,
+    user3: mockReportingUser,
+    user4: mockDisputingUser,
+    user5: mockCommenter,
+};
 
 
 // --- Mock Data for Village Square (Disputes) ---
@@ -168,3 +196,5 @@ export const userActivity = [
   { date: 'Sat', signups: 15 },
   { date: 'Sun', signups: 10 },
 ];
+
+export const mockPosts: Post[] = []; // This is needed for ContentBreakdownChart but can be empty.

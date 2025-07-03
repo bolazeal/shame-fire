@@ -17,7 +17,7 @@ export function RightSidebar() {
   const initialUsers = [
     mockUsers.user2,
     mockUsers.user3,
-    mockUsers.user4,
+    mockUsers.clarityOfficial,
     mockUsers.user5,
   ];
   const [usersToFollow, setUsersToFollow] = React.useState(
@@ -91,10 +91,10 @@ export function RightSidebar() {
         <CardHeader>
           <CardTitle>Who to follow</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col">
+        <CardContent className="flex flex-col px-6">
           {usersToFollow.map((user, index) => (
             <div key={user.id}>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between py-4">
                 <Link
                   href={`/profile/${user.id}`}
                   className="flex items-center gap-2"
@@ -116,9 +116,7 @@ export function RightSidebar() {
                   {user.isFollowing ? 'Following' : 'Follow'}
                 </Button>
               </div>
-              {index < usersToFollow.length - 1 && (
-                <Separator className="my-4" />
-              )}
+              {index < usersToFollow.length - 1 && <Separator />}
             </div>
           ))}
         </CardContent>

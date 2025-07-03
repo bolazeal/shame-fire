@@ -240,7 +240,7 @@ export function PostCard({ post }: PostCardProps) {
                   src={post.mediaUrl}
                   alt="Post media"
                   fill={true}
-                  objectFit="cover"
+                  style={{ objectFit: 'cover' }}
                   data-ai-hint={post['data-ai-hint']}
                 />
               ) : (

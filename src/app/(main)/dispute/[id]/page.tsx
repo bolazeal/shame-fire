@@ -1,7 +1,6 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { mockDisputes, mockUsers } from '@/lib/mock-data';
 import {
   Card,
   CardContent,
@@ -11,26 +10,166 @@ import { Separator } from '@/components/ui/separator';
 import { UserAvatar } from '@/components/user-avatar';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Gavel, Scale, Users, Vote } from 'lucide-react';
-import { useState } from 'react';
+import { Gavel, Scale, Users, Vote, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { CommentCard } from '@/components/comment-card';
 import { Textarea } from '@/components/ui/textarea';
-import type { Poll } from '@/lib/types';
+import type { Dispute, Comment, Poll } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/hooks/use-auth';
+import { getDispute, getDisputeComments, addDisputeComment, castVote, getUserProfile } from '@/lib/firestore';
+
+function DisputePageSkeleton() {
+    return (
+        <div>
+            <header className="sticky top-0 z-10 border-b p-4 bg-background/80 backdrop-blur-sm">
+                <div className="flex items-center gap-4">
+                    <Skeleton className="h-8 w-24 rounded-full" />
+                    <Skeleton className="h-7 w-64" />
+                </div>
+            </header>
+            <div className="p-4">
+                <Card>
+                    <CardContent className="space-y-6 pt-6">
+                        <Skeleton className="h-20 w-full" />
+                        <Separator />
+                        <div className="space-y-4">
+                            <Skeleton className="h-6 w-40" />
+                            <div className="flex gap-4">
+                                <Skeleton className="h-12 w-12 rounded-full" />
+                                <Skeleton className="h-12 w-12 rounded-full" />
+                            </div>
+                        </div>
+                        <Separator />
+                        <div className="space-y-4">
+                            <Skeleton className="h-6 w-48" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-12 w-full" />
+                            <Skeleton className="h-12 w-full" />
+                        </div>
+                        <Separator />
+                        <div className="space-y-4">
+                             <Skeleton className="h-6 w-40" />
+                             <Skeleton className="h-24 w-full" />
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    );
+}
+
 
 export default function DisputePage() {
   const params = useParams<{ id: string }>();
-  const dispute = mockDisputes.find((d) => d.id === params.id);
+  const { user: authUser } = useAuth();
   const { toast } = useToast();
 
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [hasVoted, setHasVoted] = useState(false);
-  const [currentPoll, setCurrentPoll] = useState<Poll | undefined>(
-    dispute?.poll
-  );
+  const [dispute, setDispute] = useState<Dispute | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (!dispute || !currentPoll) {
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [isVoting, setIsVoting] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  
+  const disputeId = params.id as string;
+
+  const fetchDisputeData = useCallback(async () => {
+    if (!disputeId) return;
+    setLoading(true);
+    try {
+      const [disputeData, commentsData] = await Promise.all([
+        getDispute(disputeId),
+        getDisputeComments(disputeId)
+      ]);
+      setDispute(disputeData);
+      setComments(commentsData);
+    } catch (error) {
+      console.error('Failed to fetch dispute data:', error);
+      toast({ title: 'Error', description: 'Could not load dispute details.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  }, [disputeId, toast]);
+
+  useEffect(() => {
+    fetchDisputeData();
+  }, [fetchDisputeData]);
+
+  const hasVoted = authUser && dispute?.poll.voters?.includes(authUser.uid);
+  const totalVotes = dispute?.poll.options.reduce((acc, option) => acc + option.votes, 0) ?? 0;
+
+  const handleVote = async () => {
+    if (!selectedOption || !authUser || !dispute) {
+      toast({
+        title: 'Cannot cast vote',
+        description: 'Please select an option and ensure you are logged in.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsVoting(true);
+    try {
+        await castVote(dispute.id, dispute.poll, selectedOption, authUser.uid);
+        
+        // Optimistically update UI to feel responsive
+        setDispute(prevDispute => {
+            if (!prevDispute) return null;
+            const newPoll = { ...prevDispute.poll };
+            newPoll.options = newPoll.options.map(opt => 
+                opt.text === selectedOption ? { ...opt, votes: opt.votes + 1 } : opt
+            );
+            if(newPoll.voters) {
+                newPoll.voters.push(authUser.uid);
+            } else {
+                newPoll.voters = [authUser.uid];
+            }
+            return { ...prevDispute, poll: newPoll };
+        });
+
+        toast({
+            title: 'Vote Cast!',
+            description: `You voted for: "${selectedOption}"`,
+        });
+    } catch (error) {
+        console.error("Failed to cast vote:", error);
+        toast({ title: 'Vote Failed', description: 'Could not record your vote.', variant: 'destructive' });
+    } finally {
+        setIsVoting(false);
+    }
+  };
+
+  const handleCommentSubmit = async () => {
+    if (!newComment.trim() || !authUser || !dispute) return;
+    setIsSubmittingComment(true);
+    try {
+        const authorProfile = await getUserProfile(authUser.uid);
+        if (!authorProfile) throw new Error("Could not find user profile.");
+        await addDisputeComment(dispute.id, newComment, authorProfile);
+        setNewComment("");
+        
+        // Refetch comments to show the new one immediately
+        const newComments = await getDisputeComments(dispute.id);
+        setComments(newComments);
+        setDispute(prev => prev ? { ...prev, commentsCount: newComments.length } : null);
+    } catch (error) {
+        console.error("Failed to add comment:", error);
+        toast({ title: 'Comment Failed', description: 'Could not post your comment.', variant: 'destructive' });
+    } finally {
+        setIsSubmittingComment(false);
+    }
+  };
+
+
+  if (loading) {
+    return <DisputePageSkeleton />;
+  }
+
+  if (!dispute) {
     return (
       <div className="p-4 text-center">
         <h1 className="text-2xl font-bold">Dispute Not Found</h1>
@@ -41,40 +180,7 @@ export default function DisputePage() {
     );
   }
 
-  const totalVotes = currentPoll.options.reduce(
-    (acc, option) => acc + option.votes,
-    0
-  );
-
-  const handleVote = () => {
-    if (!selectedOption) {
-      toast({
-        title: 'No option selected',
-        description: 'Please select an option before casting your vote.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    setHasVoted(true);
-
-    // Update poll state to reflect the new vote
-    setCurrentPoll((prevPoll) => {
-      if (!prevPoll) return;
-      return {
-        ...prevPoll,
-        options: prevPoll.options.map((opt) =>
-          opt.text === selectedOption ? { ...opt, votes: opt.votes + 1 } : opt
-        ),
-      };
-    });
-
-    toast({
-      title: 'Vote Cast!',
-      description: `You voted for: "${selectedOption}"`,
-    });
-  };
-
-  const isVotingDisabled = hasVoted || dispute.status !== 'voting';
+  const isVotingDisabled = !!hasVoted || dispute.status !== 'voting' || isVoting;
 
   return (
     <div>
@@ -127,7 +233,7 @@ export default function DisputePage() {
                 {dispute.poll.question}
               </p>
               <div className="mt-4 space-y-4">
-                {currentPoll.options.map((option) => {
+                {dispute.poll.options.map((option) => {
                   const percentage =
                     totalVotes > 0 ? (option.votes / totalVotes) * 100 : 0;
                   return (
@@ -159,6 +265,7 @@ export default function DisputePage() {
                   disabled={isVotingDisabled || !selectedOption}
                   className="mt-4 w-full"
                 >
+                  {isVoting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {hasVoted ? 'Vote Submitted' : 'Cast Your Vote'}
                 </Button>
               )}
@@ -196,20 +303,30 @@ export default function DisputePage() {
 
             <div>
               <h3 className="flex items-center gap-2 text-lg font-semibold">
-                Discussion ({dispute.comments?.length || 0})
+                Discussion ({comments.length})
               </h3>
               <div className="mt-6 space-y-6">
                 <div className="flex gap-4">
-                  <UserAvatar user={mockUsers.user1} className="h-10 w-10" />
+                  {authUser ? (
+                    <UserAvatar user={authUser} className="h-10 w-10" />
+                   ) : (
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                   )}
                   <div className="flex-1">
                     <Textarea
                       placeholder="Add your comment to the discussion..."
                       rows={3}
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      disabled={!authUser || isSubmittingComment}
                     />
-                    <Button className="mt-2">Submit Comment</Button>
+                    <Button className="mt-2" onClick={handleCommentSubmit} disabled={!authUser || isSubmittingComment || !newComment.trim()}>
+                      {isSubmittingComment && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Submit Comment
+                    </Button>
                   </div>
                 </div>
-                {dispute.comments?.map((comment) => (
+                {comments.map((comment) => (
                   <CommentCard key={comment.id} comment={comment} />
                 ))}
               </div>

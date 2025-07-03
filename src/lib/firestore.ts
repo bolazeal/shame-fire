@@ -22,10 +22,9 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
-import type { Post, User, Comment, FlaggedContent, Dispute } from './types';
+import type { Post, User, Comment, FlaggedContent, Dispute, Poll } from './types';
 import type { z } from 'zod';
 import type { createPostFormSchema } from '@/components/create-post-form';
-import { mockUsers } from './mock-data';
 
 // Helper to convert Firestore doc to a serializable object
 function fromFirestore<T>(doc): T {
@@ -296,21 +295,10 @@ export const addComment = async (
     createdAt: FieldValue;
   } = {
     author: {
-      // embed user data
       id: author.id,
       name: author.name,
       username: author.username,
       avatarUrl: author.avatarUrl,
-      // We only embed a subset of the user object to avoid bloat
-      bio: author.bio,
-      trustScore: author.trustScore,
-      isVerified: author.isVerified,
-      email: author.email,
-      nominations: author.nominations,
-      publicVotes: author.publicVotes,
-      followersCount: author.followersCount,
-      followingCount: author.followingCount,
-      createdAt: author.createdAt,
     },
     text,
     createdAt: serverTimestamp(),
@@ -426,6 +414,7 @@ export const createDispute = async (
         { text: `The rebuttal by ${post.entity}`, votes: 0 },
         { text: 'Need more information', votes: 0 },
       ],
+      voters: [],
     },
     verdict: null,
   };
@@ -446,3 +435,68 @@ export const getAllDisputes = async (): Promise<Dispute[]> => {
     const snapshot = await getDocs(q);
     return snapshot.docs.map((doc) => fromFirestore<Dispute>(doc));
 };
+
+export const getDispute = async (disputeId: string): Promise<Dispute | null> => {
+    if (!db) return null;
+    const disputeRef = doc(db, 'disputes', disputeId);
+    const disputeSnap = await getDoc(disputeRef);
+    if (disputeSnap.exists()) {
+        return fromFirestore<Dispute>(disputeSnap);
+    }
+    return null;
+}
+
+export const addDisputeComment = async (disputeId: string, text: string, author: User): Promise<void> => {
+    if (!db) throw new Error('Firestore not initialized');
+    const commentRef = collection(db, `disputes/${disputeId}/comments`);
+    const disputeRef = doc(db, 'disputes', disputeId);
+
+    const newComment: Omit<Comment, 'id' | 'createdAt'> & {createdAt: FieldValue} = {
+        author: {
+            id: author.id,
+            name: author.name,
+            username: author.username,
+            avatarUrl: author.avatarUrl,
+        },
+        text,
+        createdAt: serverTimestamp(),
+        upvotes: 0,
+        downvotes: 0,
+    };
+    
+    const batch = writeBatch(db);
+    batch.set(doc(commentRef), newComment);
+    batch.update(disputeRef, { commentsCount: increment(1) });
+    await batch.commit();
+}
+
+export const getDisputeComments = async (disputeId: string): Promise<Comment[]> => {
+    if (!db) return [];
+    const commentsRef = collection(db, `disputes/${disputeId}/comments`);
+    const q = query(commentsRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => fromFirestore<Comment>(doc));
+}
+
+export const castVote = async (disputeId: string, poll: Poll, optionText: string, userId: string): Promise<void> => {
+    if (!db) throw new Error('Firestore not initialized');
+    const disputeRef = doc(db, 'disputes', disputeId);
+    
+    // Find the index of the option to update
+    const optionIndex = poll.options.findIndex(opt => opt.text === optionText);
+    if (optionIndex === -1) {
+        throw new Error("Invalid poll option.");
+    }
+
+    // This is not a transaction, but it's okay for this demo.
+    // In a production app, a transaction or a Cloud Function would be better
+    // to prevent race conditions.
+    const newOptions = poll.options.map((opt, index) => 
+        index === optionIndex ? { ...opt, votes: opt.votes + 1 } : opt
+    );
+    
+    await updateDoc(disputeRef, {
+        'poll.options': newOptions,
+        'poll.voters': arrayUnion(userId) // Add user to voters list
+    });
+}

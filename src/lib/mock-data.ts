@@ -117,12 +117,13 @@ export const mockDisputes: Dispute[] = [
         { text: "Speedy Shipper's rebuttal", votes: 45 },
         { text: 'Need more information', votes: 33 },
       ],
+      voters: ['user5'],
     },
     verdict: null,
     comments: [
-        { id: 'c1', author: mockCommenter, text: "I've had issues with them before, they always have an excuse.", upvotes: 15, downvotes: 1, createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString() },
-        { id: 'c2', author: mockAdminUser, text: "Can Speedy Shippers provide tracking data that shows weather exceptions?", upvotes: 8, downvotes: 0, createdAt: new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString() },
-        { id: 'c3', author: mockDisputingUser, text: "Yes, we are compiling that information and will post an update shortly.", upvotes: 2, downvotes: 5, createdAt: new Date(Date.now() - 9 * 60 * 60 * 1000).toISOString() },
+        { id: 'c1', author: { id: mockCommenter.id, name: mockCommenter.name, username: mockCommenter.username, avatarUrl: mockCommenter.avatarUrl }, text: "I've had issues with them before, they always have an excuse.", upvotes: 15, downvotes: 1, createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString() },
+        { id: 'c2', author: { id: mockAdminUser.id, name: mockAdminUser.name, username: mockAdminUser.username, avatarUrl: mockAdminUser.avatarUrl }, text: "Can Speedy Shippers provide tracking data that shows weather exceptions?", upvotes: 8, downvotes: 0, createdAt: new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString() },
+        { id: 'c3', author: { id: mockDisputingUser.id, name: mockDisputingUser.name, username: mockDisputingUser.username, avatarUrl: mockDisputingUser.avatarUrl }, text: "Yes, we are compiling that information and will post an update shortly.", upvotes: 2, downvotes: 5, createdAt: new Date(Date.now() - 9 * 60 * 60 * 1000).toISOString() },
     ],
   },
   {
@@ -141,6 +142,7 @@ export const mockDisputes: Dispute[] = [
         { text: "Yes, it seems authentic", votes: 250 },
         { text: "No, it looks like an ad", votes: 180 },
       ],
+      voters: ['user1', 'user2', 'user3'],
     },
     verdict: {
         moderator: mockAdminUser,
@@ -156,20 +158,22 @@ export const mockDisputes: Dispute[] = [
 export const mockFlaggedContent: FlaggedContent[] = [
   {
     id: 'flag1',
-    originalPostId: 'post3',
-    content:
-      'This whole company is a scam, avoid at all costs! They are all criminals.',
-    contentType: 'post',
+    postData: {
+      type: 'post',
+      postingAs: 'verified',
+      text: 'This whole company is a scam, avoid at all costs! They are all criminals.',
+    },
     author: mockReportingUser,
     reason: 'Hate speech policy violation',
     flaggedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: 'flag2',
-    originalPostId: 'post4',
-    content:
-      'Here is the CEO\'s home address, go let him know what you think: 123 Main St.',
-    contentType: 'comment',
+    postData: {
+      type: 'post',
+      postingAs: 'verified',
+      text: "Here is the CEO's home address, go let him know what you think: 123 Main St.",
+    },
     author: mockCommenter,
     reason: 'Doxxing / Privacy violation',
     flaggedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),

@@ -29,7 +29,12 @@ export type MedalInfo = {
 
 export type Comment = {
   id: string;
-  author: User; // Embedded author object for easy display
+  author: { // Simplified embedded author object
+    id: string;
+    name: string;
+    username: string;
+    avatarUrl?: string;
+  };
   text: string;
   createdAt: string;
   upvotes: number;
@@ -40,7 +45,7 @@ export type Post = {
   id: string;
   type: 'report' | 'endorsement' | 'post';
   author: {
-    id: string;
+    id:string;
     name: string;
     username: string;
     avatarUrl?: string;
@@ -75,6 +80,7 @@ export type Poll = {
     text: string;
     votes: number;
   }[];
+  voters?: string[]; // Tracks user IDs who have voted
 };
 
 export type Verdict = {

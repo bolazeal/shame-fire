@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Card,
@@ -21,8 +21,8 @@ import {
   CheckCircle,
   Trash2,
   View,
+  Loader2,
 } from 'lucide-react';
-import { mockUsers } from '@/lib/mock-data';
 import {
   Tabs,
   TabsContent,
@@ -37,50 +37,119 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useModeration } from '@/hooks/use-moderation';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { UserActivityChart } from '@/components/charts/user-activity-chart';
 import { ContentBreakdownChart } from '@/components/charts/content-breakdown-chart';
-import { getPosts } from '@/lib/firestore'; // Assuming you have a way to get all posts
-import type { Post, Dispute } from '@/lib/types';
-import { mockDisputes } from '@/lib/mock-data';
+import {
+  getCollectionCount,
+  getFlaggedContent,
+  approveFlaggedItem,
+  removeFlaggedItem,
+  getActiveDisputes,
+} from '@/lib/firestore';
+import type { Post, Dispute, FlaggedContent } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AdminPage() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
-  const { flaggedContent, dismissFlaggedItem, removeFlaggedItem } =
-    useModeration();
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalReports: 0,
+    totalEndorsements: 0,
+    activeDisputes: 0,
+  });
+  const [flaggedContent, setFlaggedContent] = useState<FlaggedContent[]>([]);
+  const [disputes, setDisputes] = useState<Dispute[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Local state for stats until they are moved to a proper backend service
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [totalReports, setTotalReports] = useState(0);
-  const [totalEndorsements, setTotalEndorsements] = useState(0);
-  const activeDisputes = mockDisputes.filter((d) => d.status !== 'closed');
-  
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [
+        userCount,
+        reportCount,
+        endorsementCount,
+        flagged,
+        activeDisputes,
+      ] = await Promise.all([
+        getCollectionCount('users'),
+        getCollectionCount('posts', 'type', '==', 'report'),
+        getCollectionCount('posts', 'type', '==', 'endorsement'),
+        getFlaggedContent(),
+        getActiveDisputes(),
+      ]);
+
+      setStats({
+        totalUsers: userCount,
+        totalReports: reportCount,
+        totalEndorsements: endorsementCount,
+        activeDisputes: activeDisputes.length,
+      });
+      setFlaggedContent(flagged);
+      setDisputes(activeDisputes);
+    } catch (error) {
+      console.error('Failed to fetch admin data:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load admin panel data.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
   useEffect(() => {
-    // In a real app, you'd check a user's role from a database.
-    // For this demo, we'll hardcode the admin user's ID.
-    if (!loading && user?.uid !== 'user1') {
-      router.push('/home');
+    if (!authLoading) {
+      if (user?.uid !== 'user1') {
+        router.push('/home');
+      } else {
+        fetchData();
+      }
     }
+  }, [user, authLoading, router, fetchData]);
 
-    // This is a placeholder for fetching real stats
-    async function fetchStats() {
-        const reports = await getPosts('reports');
-        const endorsements = await getPosts('endorsements');
-        setTotalReports(reports.length);
-        setTotalEndorsements(endorsements.length);
-        // A real implementation would query a user count
-        setTotalUsers(5); 
+  const handleApprove = async (item: FlaggedContent) => {
+    try {
+      await approveFlaggedItem(item);
+      toast({
+        title: 'Content Approved',
+        description: 'The content has been posted successfully.',
+      });
+      fetchData(); // Refresh data
+    } catch (error) {
+      toast({
+        title: 'Approval Failed',
+        description: 'Could not approve the content.',
+        variant: 'destructive',
+      });
     }
-    fetchStats();
+  };
 
-  }, [user, loading, router]);
+  const handleRemove = async (itemId: string) => {
+    try {
+      await removeFlaggedItem(itemId);
+      toast({
+        title: 'Content Removed',
+        description: 'The flagged content has been deleted.',
+        variant: 'destructive',
+      });
+      fetchData(); // Refresh data
+    } catch (error) {
+      toast({
+        title: 'Removal Failed',
+        description: 'Could not remove the content.',
+        variant: 'destructive',
+      });
+    }
+  };
 
-  if (loading || user?.uid !== 'user1') {
+  if (authLoading || loading) {
     return (
       <div>
         <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/80 p-4 backdrop-blur-sm">
@@ -127,10 +196,7 @@ export default function AdminPage() {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{totalUsers}</div>
-                  <p className="text-xs text-muted-foreground">
-                    +2 new users this month
-                  </p>
+                  <div className="text-2xl font-bold">{stats.totalUsers}</div>
                 </CardContent>
               </Card>
               <Card>
@@ -141,10 +207,7 @@ export default function AdminPage() {
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{totalReports}</div>
-                  <p className="text-xs text-muted-foreground">
-                    -5 from last month
-                  </p>
+                  <div className="text-2xl font-bold">{stats.totalReports}</div>
                 </CardContent>
               </Card>
               <Card>
@@ -155,10 +218,9 @@ export default function AdminPage() {
                   <ThumbsUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{totalEndorsements}</div>
-                  <p className="text-xs text-muted-foreground">
-                    +15 from last month
-                  </p>
+                  <div className="text-2xl font-bold">
+                    {stats.totalEndorsements}
+                  </div>
                 </CardContent>
               </Card>
               <Card>
@@ -169,12 +231,7 @@ export default function AdminPage() {
                   <Gavel className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
-                    {activeDisputes.length}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Currently in the Village Square
-                  </p>
+                  <div className="text-2xl font-bold">{stats.activeDisputes}</div>
                 </CardContent>
               </Card>
             </section>
@@ -213,7 +270,8 @@ export default function AdminPage() {
                   Content Review Queue ({flaggedContent.length})
                 </CardTitle>
                 <CardDescription>
-                  Review content flagged by AI and users for policy violations.
+                  Review content flagged by AI for policy violations. Approve to
+                  post, or remove.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -229,8 +287,8 @@ export default function AdminPage() {
                   <TableBody>
                     {flaggedContent.map((item) => (
                       <TableRow key={item.id}>
-                        <TableCell className="max-w-xs truncate italic">
-                          "{item.content}"
+                        <TableCell className="max-w-xs truncate font-mono text-xs">
+                          {item.postData.text}
                         </TableCell>
                         <TableCell>
                           <Link
@@ -247,15 +305,15 @@ export default function AdminPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => dismissFlaggedItem(item.id)}
+                            onClick={() => handleApprove(item)}
                           >
                             <CheckCircle className="mr-2 h-4 w-4" />
-                            Dismiss
+                            Approve
                           </Button>
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => removeFlaggedItem(item.id)}
+                            onClick={() => handleRemove(item.id)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Remove
@@ -277,7 +335,7 @@ export default function AdminPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Gavel />
-                  Active Disputes ({activeDisputes.length})
+                  Active Disputes ({disputes.length})
                 </CardTitle>
                 <CardDescription>
                   Oversee ongoing disputes in the Village Square.
@@ -294,7 +352,7 @@ export default function AdminPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {activeDisputes.map((dispute) => (
+                    {disputes.map((dispute) => (
                       <TableRow key={dispute.id}>
                         <TableCell className="font-medium">
                           {dispute.title}
@@ -305,7 +363,9 @@ export default function AdminPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {dispute.involvedParties.map((p) => p.name).join(', ')}
+                          {dispute.involvedParties
+                            .map((p) => p.name)
+                            .join(', ')}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button asChild variant="outline" size="sm">
@@ -319,7 +379,7 @@ export default function AdminPage() {
                     ))}
                   </TableBody>
                 </Table>
-                {activeDisputes.length === 0 && (
+                {disputes.length === 0 && (
                   <p className="p-4 text-center text-muted-foreground">
                     No active disputes.
                   </p>

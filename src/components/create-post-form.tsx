@@ -40,7 +40,6 @@ import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { generateEndorsementSummary } from '@/ai/flows/generate-endorsement-summary';
 import { useAuth } from '@/hooks/use-auth';
 import { useModeration } from '@/hooks/use-moderation';
-import type { User as AppUser } from '@/lib/types';
 import { createPost, getUserProfile } from '@/lib/firestore';
 
 export const createPostFormSchema = z
@@ -193,58 +192,68 @@ export function CreatePostForm({
 
   async function onSubmit(values: z.infer<typeof createPostFormSchema>) {
     if (!user) {
-        toast({ title: "You must be logged in to post.", variant: 'destructive' });
-        return;
+      toast({
+        title: 'You must be logged in to post.',
+        variant: 'destructive',
+      });
+      return;
     }
 
     setIsSubmitting(true);
 
     try {
-        // AI Checks
-        const moderationResult = await detectHarmfulContent({ text: values.text });
-        if (moderationResult.isHarmful) {
-            // ... (moderation logic remains the same)
-            toast({
-                title: 'Post Held for Review',
-                description: `Our AI moderation has flagged this content: ${moderationResult.reason}. A human moderator will assess it shortly.`,
-                variant: 'destructive',
-            });
-            setIsSubmitting(false);
-            onPostCreated();
-            return;
-        }
-
-        let finalValues = { ...values };
-
-        if (values.type !== 'post') {
-            const [sentimentResult, summaryResult] = await Promise.all([
-                analyzeSentiment({ text: values.text }),
-                generateEndorsementSummary({ endorsementText: values.text })
-            ]);
-            finalValues.sentiment = sentimentResult;
-            finalValues.summary = summaryResult.summary;
-        }
-        
-        // Get full author profile
+      // AI Checks
+      const moderationResult = await detectHarmfulContent({
+        text: values.text,
+      });
+      if (moderationResult.isHarmful) {
         const authorProfile = await getUserProfile(user.uid);
-        if (!authorProfile) throw new Error("Could not find user profile.");
+        if (!authorProfile) throw new Error('Could not find user profile.');
 
-        await createPost(finalValues, authorProfile);
+        await addFlaggedItem(values, authorProfile, moderationResult.reason);
 
         toast({
-            title: 'Post created!',
-            description: `Your ${values.type} has been successfully submitted.`,
+          title: 'Post Held for Review',
+          description: `Our AI moderation has flagged this content: ${moderationResult.reason}. A human moderator will assess it shortly.`,
+          variant: 'destructive',
         });
-        onPostCreated();
-    } catch (error) {
-        console.error('Failed to create post:', error);
-        toast({
-            title: 'Failed to create post',
-            description: 'An error occurred while submitting your post. Please try again.',
-            variant: 'destructive',
-        });
-    } finally {
         setIsSubmitting(false);
+        onPostCreated();
+        return;
+      }
+
+      let finalValues: any = { ...values };
+
+      if (values.type !== 'post') {
+        const [sentimentResult, summaryResult] = await Promise.all([
+          analyzeSentiment({ text: values.text }),
+          generateEndorsementSummary({ endorsementText: values.text }),
+        ]);
+        finalValues.sentiment = sentimentResult;
+        finalValues.summary = summaryResult.summary;
+      }
+
+      // Get full author profile
+      const authorProfile = await getUserProfile(user.uid);
+      if (!authorProfile) throw new Error('Could not find user profile.');
+
+      await createPost(finalValues, authorProfile);
+
+      toast({
+        title: 'Post created!',
+        description: `Your ${values.type} has been successfully submitted.`,
+      });
+      onPostCreated();
+    } catch (error) {
+      console.error('Failed to create post:', error);
+      toast({
+        title: 'Failed to create post',
+        description:
+          'An error occurred while submitting your post. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 

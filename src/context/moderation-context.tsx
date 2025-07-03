@@ -1,47 +1,41 @@
 'use client';
 
-import { createContext, useState, ReactNode } from 'react';
-import { mockFlaggedContent } from '@/lib/mock-data';
-import type { FlaggedContent, ModerationContextType } from '@/lib/types';
+import { createContext, ReactNode, useCallback } from 'react';
+import type { ModerationContextType, PostCreationData, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { addFlaggedItemToQueue } from '@/lib/firestore';
 
-export const ModerationContext = createContext<ModerationContextType | undefined>(undefined);
+export const ModerationContext = createContext<ModerationContextType | undefined>(
+  undefined
+);
 
 export const ModerationProvider = ({ children }: { children: ReactNode }) => {
-  const [flaggedContent, setFlaggedContent] = useState<FlaggedContent[]>(mockFlaggedContent);
   const { toast } = useToast();
 
-  const addFlaggedItem = (item: Omit<FlaggedContent, 'id' | 'flaggedAt'>) => {
-    const newItem: FlaggedContent = {
-      ...item,
-      id: `flag${Date.now()}`,
-      flaggedAt: new Date().toISOString(),
-    };
-    setFlaggedContent((prev) => [newItem, ...prev]);
-  };
-
-  const dismissFlaggedItem = (id: string) => {
-    setFlaggedContent((prev) => prev.filter((item) => item.id !== id));
-    toast({
-      title: 'Flag Dismissed',
-      description: 'The content is no longer flagged.',
-    });
-  };
-
-  const removeFlaggedItem = (id: string) => {
-    setFlaggedContent((prev) => prev.filter((item) => item.id !== id));
-    toast({
-      title: 'Content Removed',
-      description: 'The content has been removed from the platform.',
-      variant: 'destructive',
-    });
-  };
+  const addFlaggedItem = useCallback(
+    async (postData: PostCreationData, author: User, reason: string) => {
+      try {
+        await addFlaggedItemToQueue({
+          postData,
+          author,
+          reason,
+        });
+      } catch (error) {
+        console.error('Failed to add item to moderation queue:', error);
+        toast({
+          title: 'Moderation Error',
+          description: 'Could not send item for review. Please try again.',
+          variant: 'destructive',
+        });
+        // re-throw to notify caller
+        throw error;
+      }
+    },
+    [toast]
+  );
 
   const value = {
-    flaggedContent,
     addFlaggedItem,
-    dismissFlaggedItem,
-    removeFlaggedItem,
   };
 
   return (

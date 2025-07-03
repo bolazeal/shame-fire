@@ -1,4 +1,6 @@
 import type { ElementType } from 'react';
+import type { z } from 'zod';
+import type { createPostFormSchema } from '@/components/create-post-form';
 
 export type User = {
   id: string; // Firebase Auth UID
@@ -34,7 +36,7 @@ export type Comment = {
 };
 
 export type Post = {
-  id:string;
+  id: string;
   type: 'report' | 'endorsement' | 'post';
   author: {
     id: string;
@@ -94,19 +96,20 @@ export type Dispute = {
   comments?: Comment[];
 };
 
+export type PostCreationData = z.infer<typeof createPostFormSchema>;
+
 export type FlaggedContent = {
   id: string;
-  originalPostId: string;
-  content: string;
-  contentType: 'post' | 'comment';
-  author: User;
-  reason: string;
+  postData: PostCreationData;
+  author: User; // The full user object of who tried to post it
+  reason: string; // AI's reason for flagging
   flaggedAt: string;
 };
 
 export interface ModerationContextType {
-  flaggedContent: FlaggedContent[];
-  addFlaggedItem: (item: Omit<FlaggedContent, 'id' | 'flaggedAt'>) => void;
-  dismissFlaggedItem: (id: string) => void;
-  removeFlaggedItem: (id: string) => void;
+  addFlaggedItem: (
+    postData: PostCreationData,
+    author: User,
+    reason: string
+  ) => Promise<void>;
 }

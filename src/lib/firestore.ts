@@ -16,13 +16,15 @@ import {
   arrayRemove,
   arrayUnion,
   updateDoc,
+  deleteDoc,
   type FieldValue,
+  type WhereFilterOp,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
-import type { Post, User, Comment } from './types';
-import { createPostFormSchema } from '@/components/create-post-form';
+import type { Post, User, Comment, FlaggedContent, Dispute } from './types';
 import type { z } from 'zod';
+import type { createPostFormSchema } from '@/components/create-post-form';
 
 // Helper to convert Firestore doc to a serializable object
 function fromFirestore<T>(doc): T {
@@ -46,7 +48,9 @@ export const createUserProfile = async (
   if (!db) throw new Error('Firestore not initialized');
   const userRef = doc(db, 'users', firebaseUser.uid);
 
-  const userProfile: Omit<User, 'id' | 'createdAt'> & { createdAt: FieldValue } = {
+  const userProfile: Omit<User, 'id' | 'createdAt'> & {
+    createdAt: FieldValue;
+  } = {
     name: firebaseUser.displayName || 'Anonymous User',
     username: (firebaseUser.email || 'user').split('@')[0],
     email: firebaseUser.email || '',
@@ -91,7 +95,6 @@ export const getUsersToFollow = async (
     .slice(0, 5);
 };
 
-
 // FOLLOW-related functions
 export const isFollowing = async (
   currentUserId: string,
@@ -126,8 +129,14 @@ export const toggleFollow = async (
     batch.update(targetUserRef, { followersCount: increment(-1) });
   } else {
     // Follow
-    batch.set(followingRef, { userId: targetUserId, timestamp: serverTimestamp() });
-    batch.set(followerRef, { userId: currentUserId, timestamp: serverTimestamp() });
+    batch.set(followingRef, {
+      userId: targetUserId,
+      timestamp: serverTimestamp(),
+    });
+    batch.set(followerRef, {
+      userId: currentUserId,
+      timestamp: serverTimestamp(),
+    });
     batch.update(currentUserRef, { followingCount: increment(1) });
     batch.update(targetUserRef, { followersCount: increment(1) });
   }
@@ -141,14 +150,28 @@ export const createPost = async (
   author: User
 ): Promise<string> => {
   if (!db) throw new Error('Firestore not initialized');
-  
+
   const newPost: Omit<Post, 'id' | 'createdAt'> & { createdAt: FieldValue } = {
     type: postData.type,
-    author: { // Embed author data for reads
+    author: {
+      // Embed author data for reads
       id: author.id,
-      name: postData.postingAs === 'verified' ? author.name : (postData.postingAs === 'anonymous' ? 'Anonymous' : 'Whistleblower'),
-      username: postData.postingAs === 'verified' ? author.username : (postData.postingAs === 'anonymous' ? 'anonymous' : 'whistleblower'),
-      avatarUrl: postData.postingAs === 'verified' ? author.avatarUrl : 'https://placehold.co/100x100.png',
+      name:
+        postData.postingAs === 'verified'
+          ? author.name
+          : postData.postingAs === 'anonymous'
+          ? 'Anonymous'
+          : 'Whistleblower',
+      username:
+        postData.postingAs === 'verified'
+          ? author.username
+          : postData.postingAs === 'anonymous'
+          ? 'anonymous'
+          : 'whistleblower',
+      avatarUrl:
+        postData.postingAs === 'verified'
+          ? author.avatarUrl
+          : 'https://placehold.co/100x100.png',
     },
     authorId: author.id,
     postingAs: postData.postingAs,
@@ -164,8 +187,8 @@ export const createPost = async (
     downvotes: 0,
     bookmarks: 0,
     bookmarkedBy: [],
-    sentiment: postData.sentiment,
-    summary: postData.summary,
+    sentiment: (postData as any).sentiment,
+    summary: (postData as any).summary,
   };
 
   const docRef = await addDoc(collection(db, 'posts'), newPost);
@@ -193,31 +216,48 @@ export const getPosts = async (
   return snapshot.docs.map((doc) => fromFirestore<Post>(doc));
 };
 
-export const getUserPosts = async (userId: string, filter: string): Promise<Post[]> => {
-    if (!db) return [];
-    const postsRef = collection(db, 'posts');
-    let q;
-    
-    if (filter === "media") {
-        q = query(postsRef, where('authorId', '==', userId), where('mediaUrl', '!=', undefined), where('mediaUrl', '!=', ''), orderBy('mediaUrl'), orderBy('createdAt', 'desc'), limit(20));
-    } else {
-        const type = filter.endsWith('s') ? filter.slice(0, -1) : filter;
-        q = query(postsRef, where('authorId', '==', userId), where('type', '==', type), orderBy('createdAt', 'desc'), limit(20));
-    }
-    
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => fromFirestore<Post>(doc));
+export const getUserPosts = async (
+  userId: string,
+  filter: string
+): Promise<Post[]> => {
+  if (!db) return [];
+  const postsRef = collection(db, 'posts');
+  let q;
+
+  if (filter === 'media') {
+    q = query(
+      postsRef,
+      where('authorId', '==', userId),
+      where('mediaUrl', '!=', undefined),
+      where('mediaUrl', '!=', ''),
+      orderBy('mediaUrl'),
+      orderBy('createdAt', 'desc'),
+      limit(20)
+    );
+  } else {
+    const type = filter.endsWith('s') ? filter.slice(0, -1) : filter;
+    q = query(
+      postsRef,
+      where('authorId', '==', userId),
+      where('type', '==', type),
+      orderBy('createdAt', 'desc'),
+      limit(20)
+    );
+  }
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => fromFirestore<Post>(doc));
 };
 
 export const getPost = async (postId: string): Promise<Post | null> => {
-    if (!db) return null;
-    const postRef = doc(db, 'posts', postId);
-    const postSnap = await getDoc(postRef);
-    if (postSnap.exists()) {
-        return fromFirestore<Post>(postSnap);
-    }
-    return null;
-}
+  if (!db) return null;
+  const postRef = doc(db, 'posts', postId);
+  const postSnap = await getDoc(postRef);
+  if (postSnap.exists()) {
+    return fromFirestore<Post>(postSnap);
+  }
+  return null;
+};
 
 // INTERACTION functions
 export const toggleBookmark = async (
@@ -240,37 +280,45 @@ export const toggleBookmark = async (
   }
 };
 
-export const addComment = async (postId: string, text: string, author: User): Promise<void> => {
+export const addComment = async (
+  postId: string,
+  text: string,
+  author: User
+): Promise<void> => {
   if (!db) throw new Error('Firestore not initialized');
 
   const commentRef = collection(db, `posts/${postId}/comments`);
   const postRef = doc(db, 'posts', postId);
 
-  const newComment: Omit<Comment, 'id' | 'createdAt'> & {createdAt: FieldValue} = {
-      author: { // embed user data
-          id: author.id,
-          name: author.name,
-          username: author.username,
-          avatarUrl: author.avatarUrl,
-          // We only embed a subset of the user object to avoid bloat
-          bio: author.bio,
-          trustScore: author.trustScore,
-          isVerified: author.isVerified,
-          email: author.email,
-          nominations: author.nominations,
-          publicVotes: author.publicVotes,
-          followersCount: author.followersCount,
-          followingCount: author.followingCount,
-      },
-      text,
-      createdAt: serverTimestamp(),
-      upvotes: 0,
-      downvotes: 0,
+  const newComment: Omit<Comment, 'id' | 'createdAt'> & {
+    createdAt: FieldValue;
+  } = {
+    author: {
+      // embed user data
+      id: author.id,
+      name: author.name,
+      username: author.username,
+      avatarUrl: author.avatarUrl,
+      // We only embed a subset of the user object to avoid bloat
+      bio: author.bio,
+      trustScore: author.trustScore,
+      isVerified: author.isVerified,
+      email: author.email,
+      nominations: author.nominations,
+      publicVotes: author.publicVotes,
+      followersCount: author.followersCount,
+      followingCount: author.followingCount,
+      createdAt: author.createdAt,
+    },
+    text,
+    createdAt: serverTimestamp(),
+    upvotes: 0,
+    downvotes: 0,
   };
 
   await addDoc(commentRef, newComment);
   await updateDoc(postRef, {
-      commentsCount: increment(1)
+    commentsCount: increment(1),
   });
 };
 
@@ -279,5 +327,67 @@ export const getComments = async (postId: string): Promise<Comment[]> => {
   const commentsRef = collection(db, `posts/${postId}/comments`);
   const q = query(commentsRef, orderBy('createdAt', 'desc'));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => fromFirestore<Comment>(doc));
+  return snapshot.docs.map((doc) => fromFirestore<Comment>(doc));
+};
+
+// ADMIN & MODERATION functions
+export const getCollectionCount = async (
+  collectionName: string,
+  field?: string,
+  op?: WhereFilterOp,
+  value?: any
+): Promise<number> => {
+  if (!db) return 0;
+  let q = query(collection(db, collectionName));
+  if (field && op && value) {
+    q = query(q, where(field, op, value));
+  }
+  const snapshot = await getDocs(q);
+  return snapshot.size;
+};
+
+export const getFlaggedContent = async (): Promise<FlaggedContent[]> => {
+  if (!db) return [];
+  const contentRef = collection(db, 'flagged_content');
+  const q = query(contentRef, orderBy('flaggedAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => fromFirestore<FlaggedContent>(doc));
+};
+
+export const addFlaggedItemToQueue = async (
+  item: Omit<FlaggedContent, 'id' | 'flaggedAt'>
+) => {
+  if (!db) throw new Error('Firestore not initialized');
+  await addDoc(collection(db, 'flagged_content'), {
+    ...item,
+    flaggedAt: serverTimestamp(),
+  });
+};
+
+export const removeFlaggedItem = async (flaggedItemId: string) => {
+  if (!db) throw new Error('Firestore not initialized');
+  await deleteDoc(doc(db, 'flagged_content', flaggedItemId));
+};
+
+export const approveFlaggedItem = async (item: FlaggedContent) => {
+  if (!db) throw new Error('Firestore not initialized');
+  // First, create the post from the flagged data
+  await createPost(item.postData, item.author);
+  // Then, remove it from the moderation queue
+  await removeFlaggedItem(item.id);
+};
+
+export const getActiveDisputes = async (): Promise<Dispute[]> => {
+  if (!db) return [];
+  // For simplicity, we fetch all and filter client-side.
+  // In a real app, you'd query where status is 'open' or 'voting'.
+  const disputesRef = collection(db, 'disputes');
+  const q = query(
+    disputesRef,
+    where('status', '!=', 'closed'),
+    orderBy('status'),
+    orderBy('createdAt', 'desc')
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => fromFirestore<Dispute>(doc));
 };

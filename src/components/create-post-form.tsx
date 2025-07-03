@@ -225,32 +225,16 @@ export function CreatePostForm({
       console.error('Failed to run moderation check:', error);
     }
 
-    // Prepare data to send to the API
-    const postData = {
-      type: values.type,
-      postingAs: values.postingAs,
-      entity: values.entity,
-      text: values.text,
-      category: values.category,
-      authorId: user?.uid, // Include the author's UID
-      // Media handling is excluded for now
-      // mediaUrl: values.mediaUrl,
-      // mediaType: values.mediaType,
-    };
+    // This section is now for mocking purposes as API is removed.
+    // In a real app, you would handle API calls here.
 
     let sentimentAnalysisResult;
     if (values.type !== 'post') {
       try {
         sentimentAnalysisResult = await analyzeSentiment({ text: values.text });
-        // Optionally include sentiment analysis result in postData
-        // postData.sentiment = sentimentAnalysisResult;
       } catch (error) {
         console.error('Failed to analyze sentiment:', error);
       }
-    }
-
-    if (sentimentAnalysisResult) {
-      Object.assign(postData, { sentiment: sentimentAnalysisResult });
     }
 
     let summary = '';
@@ -260,51 +244,17 @@ export function CreatePostForm({
           endorsementText: values.text,
         });
         summary = summaryResult.summary;
-        // Optionally include summary in postData
-        // postData.summary = summary;
       } catch (error) {
         console.error('Failed to generate summary:', error);
       }
     }
 
-    if (summary) {
-      Object.assign(postData, { summary });
-    }
-
-    try {
-      const response = await fetch('/api/posts/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(postData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create post');
-      }
-
-      // const result = await response.json(); // If your API returns the created post ID or other data
-      toast({
-        title: 'Post created!',
-        description: `Your ${values.type} has been successfully submitted.`,
-      });
-      onPostCreated(); // Close the dialog on success
-    } catch (error: any) {
-      console.error('Failed to create post:', error);
-      toast({
-        title: 'Failed to create post',
-        description: error.message || 'An unexpected error occurred.',
-        variant: 'destructive',
-      });
-    });
-
+    // Simulate post creation delay
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     toast({
       title: 'Post created!',
-      description: `Your ${values.type} has been successfully submitted.`,
+      description: `Your ${values.type} has been successfully submitted. (Mocked)`,
     });
     setIsSubmitting(false);
     onPostCreated();

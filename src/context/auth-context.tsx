@@ -5,6 +5,8 @@ import {
   User,
   onAuthStateChanged,
   createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
   updateProfile,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -71,20 +73,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return newUser;
     }
 
-    // Handle real signup.
+    // Handle real signup using Firebase Client SDK
     try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password, displayName }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Signup failed'); // More specific error handling can be added here
-      }
-      // The onAuthStateChanged listener will set the user.
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      await updateProfile(userCredential.user, { displayName });
+      // The onAuthStateChanged listener will update the state, but we can return the user
       return userCredential.user;
     } finally {
       setLoading(false);
@@ -108,20 +105,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return mockUser;
     }
 
-    // Handle real login.
+    // Handle real login using Firebase Client SDK
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-      if (!response.ok) {
-        throw new Error('Login failed'); // More specific error handling can be added here
-      }
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
       );
-      // The onAuthStateChanged listener will set the user.
+      // The onAuthStateChanged listener will update the state
       return userCredential.user;
     } finally {
       setLoading(false);
@@ -138,14 +129,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    // Handle real logout.
+    // Handle real logout using Firebase Client SDK
     try {
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST', // Assuming you'll add a logout API route
-      });
-      if (!response.ok) {
-        throw new Error('Logout failed'); // More specific error handling
-      }
+      await signOut(auth);
       // The onAuthStateChanged listener will set the user to null.
     } finally {
       setLoading(false);

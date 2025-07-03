@@ -6,53 +6,137 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserAvatar } from '@/components/user-avatar';
-import { mockPosts, mockUsers } from '@/lib/mock-data';
-import type { User } from '@/lib/types';
+import type { User, Post } from '@/lib/types';
 import {
   Calendar,
   Flag,
   Link as LinkIcon,
   MapPin,
-  Medal,
   ShieldCheck,
-  Star,
   ThumbsUp,
   Trophy,
   Users,
+  Loader2,
 } from 'lucide-react';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { EditProfileDialog } from '@/components/edit-profile-dialog';
 import { CreatePostDialog } from '@/components/create-post-dialog';
 import { useParams } from 'next/navigation';
+import {
+  getUserProfile,
+  getUserPosts,
+  isFollowing,
+  toggleFollow,
+} from '@/lib/firestore';
+import { useAuth } from '@/hooks/use-auth';
+import { Skeleton } from '@/components/ui/skeleton';
+import { formatDistanceToNow } from 'date-fns';
+
+function ProfileSkeleton() {
+  return (
+    <div>
+      <Skeleton className="h-48 w-full bg-muted" />
+      <div className="p-4">
+        <div className="flex justify-between">
+          <Skeleton className="-mt-20 h-32 w-32 rounded-full border-4 border-background" />
+          <Skeleton className="h-10 w-28 rounded-full" />
+        </div>
+        <div className="mt-2 space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+        <Skeleton className="mt-4 h-12 w-full" />
+        <div className="mt-4 grid flex-1 grid-cols-2 gap-4">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+        <div className="mt-4 space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 export default function ProfilePage() {
   const params = useParams<{ id: string }>();
-  const user =
-    Object.values(mockUsers).find((u) => u.id === params.id) ||
-    mockUsers.user1;
+  const { user: authUser, loading: authLoading } = useAuth();
+  
+  const [profileUser, setProfileUser] = useState<User | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [activeTab, setActiveTab] = useState('posts');
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [loadingPosts, setLoadingPosts] = useState(true);
+  const [following, setFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
 
-  const userPostsAll = mockPosts.filter((p) => p.author.id === user.id);
-  const userPosts = userPostsAll.filter((p) => p.type === 'post');
-  const userReports = userPostsAll.filter((p) => p.type === 'report');
-  const userEndorsements = userPostsAll.filter((p) => p.type === 'endorsement');
-  const userMediaPosts = userPostsAll.filter((p) => p.mediaUrl);
+  const userId = params.id;
+  const isCurrentUserProfile = authUser?.uid === userId;
 
+  const fetchProfile = useCallback(async () => {
+    if (!userId) return;
+    setLoadingProfile(true);
+    const userProfile = await getUserProfile(userId as string);
+    setProfileUser(userProfile);
+    if (authUser && authUser.uid !== userId) {
+      const isUserFollowing = await isFollowing(authUser.uid, userId as string);
+      setFollowing(isUserFollowing);
+    }
+    setLoadingProfile(false);
+  }, [userId, authUser]);
 
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [currentUser, setCurrentUser] = useState(user);
+  const fetchPosts = useCallback(async () => {
+    if (!userId) return;
+    setLoadingPosts(true);
+    const userPosts = await getUserPosts(userId as string, activeTab);
+    setPosts(userPosts);
+    setLoadingPosts(false);
+  }, [userId, activeTab]);
+
+  useEffect(() => {
+    fetchProfile();
+    fetchPosts();
+  }, [fetchProfile, fetchPosts]);
 
   const handleProfileUpdate = (updatedUser: Partial<User>) => {
-    setCurrentUser((prev) => ({ ...prev, ...updatedUser }));
+    setProfileUser((prev) => (prev ? { ...prev, ...updatedUser } : null));
   };
+  
+  const handleFollowToggle = async () => {
+      if (!authUser || !profileUser || isCurrentUserProfile) return;
+      setIsFollowLoading(true);
+      try {
+          await toggleFollow(authUser.uid, profileUser.id, following);
+          setFollowing(!following);
+          setProfileUser(prev => prev ? { ...prev, followersCount: prev.followersCount + (following ? -1 : 1) } : null);
+      } catch (error) {
+          console.error("Failed to toggle follow", error);
+      } finally {
+          setIsFollowLoading(false);
+      }
+  };
+
+
+  if (loadingProfile || authLoading) {
+    return <ProfileSkeleton />;
+  }
+
+  if (!profileUser) {
+    return <div className="p-4 text-center">User not found.</div>;
+  }
+  
+  const joinedDate = profileUser.createdAt ? new Date(profileUser.createdAt) : new Date();
 
   return (
     <div>
       <div className="relative h-48 bg-muted">
         <Image
-          src={currentUser.bannerUrl || "https://placehold.co/1500x500.png"}
+          src={profileUser.bannerUrl || "https://placehold.co/1500x500.png"}
           alt="Profile banner"
-          layout="fill"
+          fill={true}
           objectFit="cover"
           data-ai-hint="abstract landscape"
         />
@@ -60,13 +144,13 @@ export default function ProfilePage() {
       <div className="p-4">
         <div className="flex justify-between">
           <UserAvatar
-            user={currentUser}
+            user={profileUser}
             className="-mt-20 h-32 w-32 border-4 border-background"
           />
           <div className="flex items-center gap-2">
-            {params.id === 'user1' ? (
+            {isCurrentUserProfile ? (
               <EditProfileDialog
-                user={currentUser}
+                user={profileUser}
                 onProfileUpdate={handleProfileUpdate}
               >
                 <Button variant="outline" className="rounded-full font-bold">
@@ -75,11 +159,13 @@ export default function ProfilePage() {
               </EditProfileDialog>
             ) : (
               <Button
-                variant={isFollowing ? 'secondary' : 'outline'}
+                variant={following ? 'secondary' : 'outline'}
                 className="rounded-full font-bold"
-                onClick={() => setIsFollowing(!isFollowing)}
+                onClick={handleFollowToggle}
+                disabled={isFollowLoading}
               >
-                {isFollowing ? 'Following' : 'Follow'}
+                 {isFollowLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {following ? 'Following' : 'Follow'}
               </Button>
             )}
           </div>
@@ -88,18 +174,18 @@ export default function ProfilePage() {
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-2">
               <h2 className="text-2xl font-bold font-headline">
-                {currentUser.name}
+                {profileUser.name}
               </h2>
-              {currentUser.isVerified && (
+              {profileUser.isVerified && (
                 <ShieldCheck className="h-6 w-6 text-primary" />
               )}
             </div>
           </div>
 
-          <p className="text-muted-foreground">@{currentUser.username}</p>
+          <p className="text-muted-foreground">@{profileUser.username}</p>
         </div>
         <div className="mt-4 text-base">
-          <p>{currentUser.bio}</p>
+          <p>{profileUser.bio}</p>
         </div>
 
         <div className="mt-4 flex flex-wrap items-stretch gap-4">
@@ -112,10 +198,10 @@ export default function ProfilePage() {
             <CardContent>
               <div className="flex items-center gap-4">
                 <span className="text-4xl font-bold text-primary">
-                  {currentUser.trustScore}
+                  {profileUser.trustScore}
                 </span>
                 <div className="flex-1">
-                  <Progress value={currentUser.trustScore} className="h-3" />
+                  <Progress value={profileUser.trustScore} className="h-3" />
                   <p className="mt-1 text-sm text-muted-foreground">
                     Based on community endorsements and reports.
                   </p>
@@ -123,14 +209,13 @@ export default function ProfilePage() {
               </div>
             </CardContent>
           </Card>
-          <div className="flex shrink-0 flex-col justify-center gap-2">
-            {params.id === 'user1' ? null : (
-              <>
+          {!isCurrentUserProfile && (
+            <div className="flex shrink-0 flex-col justify-center gap-2">
                 <CreatePostDialog
-                  dialogTitle={`Endorse ${currentUser.name}`}
+                  dialogTitle={`Endorse ${profileUser.name}`}
                   initialValues={{
                     type: 'endorsement',
-                    entity: currentUser.name,
+                    entity: profileUser.name,
                   }}
                   trigger={
                     <Button variant="outline" className="w-full font-bold">
@@ -139,23 +224,22 @@ export default function ProfilePage() {
                   }
                 />
                 <CreatePostDialog
-                  dialogTitle={`Report ${currentUser.name}`}
-                  initialValues={{ type: 'report', entity: currentUser.name }}
+                  dialogTitle={`Report ${profileUser.name}`}
+                  initialValues={{ type: 'report', entity: profileUser.name }}
                   trigger={
                     <Button variant="destructive" className="w-full font-bold">
                       <Flag className="mr-2 h-4 w-4" /> Report
                     </Button>
                   }
                 />
-                {currentUser.trustScore > 80 && (
+                {profileUser.trustScore > 80 && (
                   <Button variant="outline" className="w-full font-bold">
                     <Trophy className="mr-2 h-4 w-4 text-amber-500" /> Nominate
                     for Medal
                   </Button>
                 )}
-              </>
-            )}
-          </div>
+            </div>
+          )}
         </div>
         
         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-muted-foreground">
@@ -171,73 +255,45 @@ export default function ProfilePage() {
           </div>
           <div className="flex items-center gap-1">
             <Calendar className="h-4 w-4" />
-            <span>Joined June 2023</span>
+            <span>Joined {formatDistanceToNow(joinedDate, { addSuffix: true })}</span>
           </div>
           <div className="flex items-center gap-1">
-            <Star className="h-4 w-4" />
+            <Users className="h-4 w-4" />
             <span>
               <span className="font-bold text-foreground">
-                {currentUser.nominations || 0}
+                {profileUser.followersCount.toLocaleString() || 0}
               </span>{' '}
-              Nominations
+              Followers
             </span>
           </div>
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4" />
             <span>
               <span className="font-bold text-foreground">
-                {currentUser.publicVotes?.toLocaleString() || 0}
+                {profileUser.followingCount.toLocaleString() || 0}
               </span>{' '}
-              Votes
+              Following
             </span>
           </div>
         </div>
-
       </div>
-      <Tabs defaultValue="posts" className="w-full">
+      <Tabs defaultValue="posts" onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4 rounded-none border-b border-border bg-transparent">
           <TabsTrigger value="posts">Posts</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
           <TabsTrigger value="endorsements">Endorsements</TabsTrigger>
           <TabsTrigger value="media">Media</TabsTrigger>
         </TabsList>
-        <TabsContent value="posts">
-          {userPosts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-          {userPosts.length === 0 && (
+        <TabsContent value={activeTab}>
+          {loadingPosts ? (
+             <div className="p-4"><Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" /></div>
+          ) : posts.length > 0 ? (
+            posts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))
+          ) : (
             <p className="p-4 text-center text-muted-foreground">
-              No posts yet.
-            </p>
-          )}
-        </TabsContent>
-        <TabsContent value="reports">
-          {userReports.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-          {userReports.length === 0 && (
-            <p className="p-4 text-center text-muted-foreground">
-              No reports yet.
-            </p>
-          )}
-        </TabsContent>
-        <TabsContent value="endorsements">
-          {userEndorsements.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-          {userEndorsements.length === 0 && (
-            <p className="p-4 text-center text-muted-foreground">
-              No endorsements yet.
-            </p>
-          )}
-        </TabsContent>
-        <TabsContent value="media">
-          {userMediaPosts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-          {userMediaPosts.length === 0 && (
-            <p className="p-4 text-center text-muted-foreground">
-              This user hasn't posted any media.
+              No {activeTab} yet.
             </p>
           )}
         </TabsContent>

@@ -1,6 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -16,6 +17,7 @@ const firebaseConfig = {
 
 let app;
 let auth;
+let db;
 
 // Initialize Firebase only if all the required config values are provided
 if (
@@ -26,6 +28,7 @@ if (
   try {
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     auth = getAuth(app);
+    db = getFirestore(app);
   } catch (error) {
     console.error('Firebase initialization failed:', error);
   }
@@ -35,4 +38,4 @@ if (
   );
 }
 
-export { app, auth };
+export { app, auth, db };

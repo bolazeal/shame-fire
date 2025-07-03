@@ -42,18 +42,29 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from './ui/alert-dialog';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { mockUsers } from '@/lib/mock-data';
+import { useAuth } from '@/hooks/use-auth';
+import { toggleBookmark } from '@/lib/firestore';
+import { formatDistanceToNow } from 'date-fns';
 
 interface PostCardProps {
   post: Post;
 }
 
 export function PostCard({ post }: PostCardProps) {
+  const { user: authUser } = useAuth();
   const { toast } = useToast();
+
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [bookmarkCount, setBookmarkCount] = useState(post.bookmarks);
+  const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
+  
+  useEffect(() => {
+    if (authUser) {
+      setIsBookmarked(post.bookmarkedBy.includes(authUser.uid));
+    }
+  }, [authUser, post.bookmarkedBy]);
 
   const sentimentScoreColor =
     post.sentiment && post.sentiment.score < 0
@@ -63,17 +74,8 @@ export function PostCard({ post }: PostCardProps) {
   const isAnonymous = post.postingAs === 'anonymous';
   const isWhistleblower = post.postingAs === 'whistleblower';
 
-  const authorName = isAnonymous
-    ? 'Anonymous'
-    : isWhistleblower
-    ? 'Whistleblower'
-    : post.author.name;
-
-  const authorUsername = isAnonymous
-    ? 'anonymous'
-    : isWhistleblower
-    ? 'whistleblower'
-    : post.author.username;
+  const authorName = post.author.name;
+  const authorUsername = post.author.username;
 
   const showVerifiedBadge =
     post.author.isVerified && !isAnonymous && !isWhistleblower;
@@ -88,21 +90,27 @@ export function PostCard({ post }: PostCardProps) {
     });
   };
 
-  const handleBookmarkClick = (e: React.MouseEvent) => {
+  const handleBookmarkClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isBookmarked) {
-      setBookmarkCount(bookmarkCount - 1);
-      toast({
-        title: 'Bookmark Removed',
-      });
-    } else {
-      setBookmarkCount(bookmarkCount + 1);
-      toast({
-        title: 'Post Bookmarked',
-      });
+    if (!authUser) {
+        toast({ title: "Please log in to bookmark posts.", variant: "destructive" });
+        return;
     }
-    setIsBookmarked(!isBookmarked);
+    setIsBookmarkLoading(true);
+    try {
+        await toggleBookmark(authUser.uid, post.id, isBookmarked);
+        setIsBookmarked(!isBookmarked);
+        setBookmarkCount(prev => prev + (isBookmarked ? -1 : 1));
+        toast({
+            title: isBookmarked ? "Bookmark Removed" : "Post Bookmarked",
+        });
+    } catch (error) {
+        console.error("Failed to toggle bookmark", error);
+        toast({ title: "Something went wrong.", variant: "destructive" });
+    } finally {
+        setIsBookmarkLoading(false);
+    }
   };
 
   const handleShareClick = (e: React.MouseEvent) => {
@@ -115,11 +123,13 @@ export function PostCard({ post }: PostCardProps) {
     });
   };
 
-  const currentUser = mockUsers.user1;
   const canEscalate =
     post.type === 'report' &&
-    (post.entity === currentUser.name ||
-      post.text.includes(`@${currentUser.username}`));
+    authUser &&
+    (post.entity === authUser.displayName ||
+      post.text.includes(`@${authUser.email?.split('@')[0]}`));
+      
+  const postDate = post.createdAt ? new Date(post.createdAt) : new Date();
 
   return (
     <Link
@@ -150,7 +160,7 @@ export function PostCard({ post }: PostCardProps) {
               <span className="text-muted-foreground">@{authorUsername}</span>
               <span className="text-muted-foreground">·</span>
               <span className="text-muted-foreground hover:underline">
-                {post.createdAt}
+                {formatDistanceToNow(postDate, { addSuffix: true })}
               </span>
             </div>
             <div className="flex items-center">
@@ -340,6 +350,7 @@ export function PostCard({ post }: PostCardProps) {
                   isBookmarked && 'text-amber-500'
                 )}
                 onClick={handleBookmarkClick}
+                disabled={isBookmarkLoading}
               >
                 <Bookmark
                   className={cn('h-5 w-5', isBookmarked && 'fill-current')}

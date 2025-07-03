@@ -1,23 +1,22 @@
 import type { ElementType } from 'react';
+import type { Timestamp } from 'firebase/firestore';
 
 export type User = {
-  id: string;
+  id: string; // Firebase Auth UID
   name: string;
-  username?: string;
+  username: string;
+  email: string;
   avatarUrl?: string;
   bannerUrl?: string;
   'data-ai-hint'?: string;
-  trustScore?: number;
-  isVerified?: boolean;
+  trustScore: number;
+  isVerified: boolean;
   bio?: string;
-  nominations?: number;
-  publicVotes?: number;
-};
-
-export type Award = {
-  name: string;
-  year: number;
-  icon: ElementType;
+  nominations: number;
+  publicVotes: number;
+  followersCount: number;
+  followingCount: number;
+  createdAt: Timestamp;
 };
 
 export type MedalInfo = {
@@ -27,18 +26,19 @@ export type MedalInfo = {
 };
 
 export type Comment = {
-  id:string;
-  author: User;
+  id: string;
+  author: User; // Embedded author object for easy display
   text: string;
-  createdAt: string;
-  shameRank: number; // 0-10 rating
-  replies?: Comment[];
+  createdAt: Timestamp;
+  upvotes: number;
+  downvotes: number;
 };
 
 export type Post = {
   id: string;
   type: 'report' | 'endorsement' | 'post';
-  author: User;
+  author: User; // Embedded author object
+  authorId: string; // Reference to author's UID
   postingAs?: 'verified' | 'anonymous' | 'whistleblower';
   entity?: string;
   text: string;
@@ -46,12 +46,13 @@ export type Post = {
   mediaType?: 'image' | 'video';
   'data-ai-hint'?: string;
   category?: string;
-  createdAt: string;
+  createdAt: Timestamp;
   commentsCount: number;
+  reposts: number;
   upvotes: number;
   downvotes: number;
-  reposts: number;
   bookmarks: number;
+  bookmarkedBy: string[]; // Array of user IDs who bookmarked
   sentiment?: {
     score: number;
     biasDetected: boolean;

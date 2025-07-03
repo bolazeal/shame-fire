@@ -1,37 +1,15 @@
 
 import type { User, Post, Dispute, Award, FlaggedContent } from '@/lib/types';
 
-export const mockUsers: Record<string, User> = {
-  user1: {
-    id: 'user1',
-    name: 'Alex Doe',
-    username: 'alexdoe',
-    avatarUrl: 'https://placehold.co/100x100.png',
-    bannerUrl: 'https://placehold.co/1200x400.png',
-    'data-ai-hint': 'man portrait',
-    trustScore: 85,
-    isVerified: true,
-    bio: 'Digital craftsman, coffee enthusiast, and advocate for clarity on the web.',
-    nominations: 5,
-    publicVotes: 1200,
-  },
-  user2: {
-    id: 'user2',
-    name: 'Jane Smith',
-    username: 'janesmith',
-    avatarUrl: 'https://placehold.co/100x100.png',
-    bannerUrl: 'https://placehold.co/1200x400.png',
-    'data-ai-hint': 'woman portrait',
-    trustScore: 92,
-    isVerified: true,
-    bio: 'Building beautiful and accessible user experiences. Cat lover. Tea drinker.',
-    nominations: 12,
-    publicVotes: 3450,
-  },
-  user3: {
+export const mockUsers: Record<string, User> = {};
+export const mockPosts: Post[] = [];
+
+// We are keeping this mock data for now to avoid breaking pages we aren't converting yet.
+const mockUserForDispute: User = {
     id: 'user3',
     name: 'Samuel Green',
     username: 'samgreen',
+    email: 'samgreen@example.com',
     avatarUrl: 'https://placehold.co/100x100.png',
     bannerUrl: 'https://placehold.co/1200x400.png',
     'data-ai-hint': 'person smiling',
@@ -40,11 +18,16 @@ export const mockUsers: Record<string, User> = {
     bio: 'Exploring the intersection of technology and society. All opinions are my own.',
     nominations: 2,
     publicVotes: 450,
-  },
-  clarityOfficial: {
+    followersCount: 0,
+    followingCount: 0,
+    createdAt: null as any,
+  };
+  
+const mockOfficialForDispute: User = {
     id: 'clarityOfficial',
     name: 'Clarity Official',
     username: 'clarity',
+    email: 'clarity@example.com',
     avatarUrl: 'https://placehold.co/100x100.png',
     bannerUrl: 'https://placehold.co/1200x400.png',
     'data-ai-hint': 'shield logo',
@@ -53,187 +36,27 @@ export const mockUsers: Record<string, User> = {
     bio: 'The official account for the Clarity platform. Promoting transparency and accountability.',
     nominations: 0,
     publicVotes: 0,
-  },
-  user5: {
+    followersCount: 0,
+    followingCount: 0,
+    createdAt: null as any,
+};
+
+const mockCommentAuthor: User = {
     id: 'user5',
     name: 'Emily Carter',
     username: 'emilycarter',
+    email: 'emily@example.com',
     avatarUrl: 'https://placehold.co/100x100.png',
-    bannerUrl: 'https://placehold.co/1200x400.png',
     'data-ai-hint': 'woman artist',
     trustScore: 88,
     isVerified: false,
-    bio: 'Artist, dreamer, and creator of things. Finding beauty in the chaos.',
+    bio: 'Artist, dreamer, and creator of things.',
     nominations: 8,
     publicVotes: 2100,
-  },
-};
-
-export const mockPosts: Post[] = [
-  {
-    id: 'post1',
-    type: 'endorsement',
-    author: mockUsers.user2,
-    postingAs: 'verified',
-    entity: 'The Local Cafe',
-    text: 'Just had the best customer service experience at The Local Cafe. The staff was incredibly friendly and helpful. Highly recommend their cortado!',
-    category: 'Customer Service',
-    createdAt: '2h',
-    commentsCount: 12,
-    upvotes: 45,
-    downvotes: 2,
-    reposts: 5,
-    bookmarks: 3,
-    sentiment: {
-      score: 0.9,
-      biasDetected: false,
-    },
-    summary:
-      "A glowing review of The Local Cafe's customer service and coffee.",
-  },
-  {
-    id: 'post2',
-    type: 'report',
-    author: mockUsers.user3,
-    postingAs: 'whistleblower',
-    entity: 'Speedy Shippers',
-    text: "My package from 'Speedy Shippers' arrived two weeks late and the box was damaged. Their tracking system was also down for the entire duration. Very frustrating experience.",
-    mediaUrl: 'https://placehold.co/600x400.png',
-    'data-ai-hint': 'damaged package',
-    mediaType: 'image',
-    category: 'Logistics',
-    createdAt: '5h',
-    commentsCount: 34,
-    upvotes: 8,
-    downvotes: 29,
-    reposts: 2,
-    bookmarks: 1,
-    sentiment: {
-      score: -0.8,
-      biasDetected: false,
-    },
-    summary:
-      "A user reports a frustrating experience with 'Speedy Shippers' due to a two-week delivery delay and a damaged package.",
-  },
-  {
-    id: 'post5',
-    type: 'post',
-    author: mockUsers.user1,
-    postingAs: 'verified',
-    text: "Just enjoying a beautiful day at the park. Sometimes it's the simple things in life that matter most.",
-    mediaUrl: 'https://placehold.co/600x400.png',
-    'data-ai-hint': 'park nature',
-    mediaType: 'image',
-    createdAt: '8h',
-    commentsCount: 15,
-    upvotes: 102,
-    downvotes: 4,
-    reposts: 8,
-    bookmarks: 12,
-  },
-  {
-    id: 'post3',
-    type: 'endorsement',
-    author: mockUsers.user1,
-    postingAs: 'verified',
-    entity: 'Productivity Pro App',
-    text: "I want to give a shoutout to the developers of the 'Productivity Pro' app. The new update is fantastic, and it has genuinely improved my workflow. The UI is clean and intuitive.",
-    category: 'Technology',
-    createdAt: '1d',
-    commentsCount: 5,
-    upvotes: 78,
-    downvotes: 1,
-    reposts: 12,
-    bookmarks: 9,
-    sentiment: {
-      score: 0.95,
-      biasDetected: false,
-    },
-    summary:
-      'Positive feedback on the new update for the "Productivity Pro" app.',
-  },
-  {
-    id: 'post4',
-    type: 'report',
-    author: mockUsers.user2,
-    postingAs: 'anonymous',
-    entity: 'Innovate Inc.',
-    text: "Attended a workshop by 'Innovate Inc.' and the content was completely outdated. The speaker seemed unprepared and couldn't answer basic questions. Not worth the price of admission.",
-    category: 'Education',
-    createdAt: '2d',
-    commentsCount: 21,
-    upvotes: 15,
-    downvotes: 4,
-    reposts: 1,
-    bookmarks: 0,
-    sentiment: {
-      score: -0.7,
-      biasDetected: true,
-      biasExplanation:
-        'The language used is strong and subjective, which may indicate a personal bias against the company or speaker.',
-    },
-    summary:
-      "The user reports that a workshop by 'Innovate Inc.' was outdated and the speaker was unprepared.",
-  },
-  {
-    id: 'post6',
-    type: 'endorsement',
-    author: mockUsers.user3,
-    postingAs: 'verified',
-    entity: 'Alex Doe', // Target user1 by name
-    text: 'Had a great collaboration with Alex on a recent project. A true professional with a keen eye for detail. Highly recommended!',
-    category: 'Professionalism',
-    createdAt: '3d',
-    commentsCount: 8,
-    upvotes: 62,
-    downvotes: 0,
-    reposts: 4,
-    bookmarks: 2,
-    sentiment: {
-      score: 0.98,
-      biasDetected: false,
-    },
-    summary:
-      'A strong professional endorsement for Alex Doe, highlighting collaboration and attention to detail.',
-  },
-  {
-    id: 'post7',
-    type: 'post',
-    author: mockUsers.user5,
-    postingAs: 'verified',
-    text: 'Finished a new painting today! So happy with how the colors turned out. 🎨',
-    mediaUrl: 'https://placehold.co/600x400.png',
-    'data-ai-hint': 'abstract painting',
-    mediaType: 'image',
-    createdAt: '1h',
-    commentsCount: 22,
-    upvotes: 150,
-    downvotes: 3,
-    reposts: 10,
-    bookmarks: 15,
-  },
-  {
-    id: 'post8',
-    type: 'report',
-    author: mockUsers.user5, // Emily Carter
-    postingAs: 'verified',
-    entity: 'Alex Doe', // Reporting user1
-    text: "I hired Alex Doe for a web design project, but the final product was not as promised and delivered late. Communication was also poor throughout the process. I would not recommend working with @alexdoe.",
-    category: 'Services',
-    createdAt: '4d',
-    commentsCount: 18,
-    upvotes: 2,
-    downvotes: 10,
-    reposts: 0,
-    bookmarks: 1,
-    sentiment: {
-      score: -0.6,
-      biasDetected: false,
-    },
-    summary:
-      "A negative review of Alex Doe's web design services, citing late delivery and poor communication.",
-  },
-];
+    followersCount: 0,
+    followingCount: 0,
+    createdAt: null as any,
+}
 
 export const mockDisputes: Dispute[] = [
   {
@@ -241,7 +64,7 @@ export const mockDisputes: Dispute[] = [
     title: 'Dispute over "Speedy Shippers" report accuracy',
     description:
       'The company "Speedy Shippers" is disputing the report made by @samgreen, claiming the delivery was delayed due to weather conditions not mentioned in the report. They have provided shipping logs as evidence.',
-    involvedParties: [mockUsers.user3, mockUsers.clarityOfficial],
+    involvedParties: [mockUserForDispute, mockOfficialForDispute],
     createdAt: '1d',
     status: 'voting',
     commentsCount: 56,
@@ -255,69 +78,6 @@ export const mockDisputes: Dispute[] = [
     },
     verdict: null,
     comments: [
-      {
-        id: 'c1',
-        author: mockUsers.user5,
-        text: 'Weather delays are a real thing, but two weeks seems excessive. Speedy Shippers should have been more proactive with communication.',
-        createdAt: '1d',
-        shameRank: 7,
-      },
-      {
-        id: 'c2',
-        author: mockUsers.user1,
-        text: 'I agree with @emilycarter. The core issue seems to be the lack of transparency from the company.',
-        createdAt: '22h',
-        shameRank: 8,
-        replies: [
-          {
-            id: 'c3',
-            author: mockUsers.user3,
-            text: "Thanks for the support. That's exactly what I was trying to highlight.",
-            createdAt: '20h',
-            shameRank: 0,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'dispute2',
-    title: 'Community review of "Innovate Inc." workshop report',
-    description:
-      'The report against "Innovate Inc." by @janesmith has been flagged for potential bias. The Village Square is now open for community discussion and polling to determine the fairness of the initial report.',
-    involvedParties: [mockUsers.user2, mockUsers.clarityOfficial],
-    createdAt: '3d',
-    status: 'closed',
-    commentsCount: 123,
-    poll: {
-      question: 'Is the report on "Innovate Inc." fair and unbiased?',
-      options: [
-        { text: 'Yes, it is fair', votes: 88 },
-        { text: 'No, it shows significant bias', votes: 154 },
-      ],
-    },
-    verdict: {
-      moderator: mockUsers.clarityOfficial,
-      decision:
-        'The original report by @janesmith will be marked with a "Community Disputed" tag.',
-      reason:
-        'Based on the community poll and discussion, the majority found the report to contain strong subjective language that could indicate bias. While the negative experience is valid, the post will be flagged to encourage readers to view comments for a balanced perspective.',
-    },
-    comments: [
-      {
-        id: 'c4',
-        author: mockUsers.user1,
-        text: "I've had good experiences with Innovate Inc. before, but every experience is subjective. The language in the report does seem a bit harsh though.",
-        createdAt: '2d',
-        shameRank: 3,
-      },
-      {
-        id: 'c5',
-        author: mockUsers.user3,
-        text: 'I think it is important to allow people to voice their honest opinions, even if they are harsh. Outdated content is a serious issue for a workshop.',
-        createdAt: '1d',
-        shameRank: 2,
-      },
     ],
   },
 ];
@@ -328,25 +88,9 @@ export const mockFlaggedContent: FlaggedContent[] = [
     content:
       'This whole company is a scam, avoid at all costs! They are all criminals.',
     contentType: 'comment',
-    author: mockUsers.user3,
+    author: mockUserForDispute,
     reason: 'Hate speech policy violation',
     flaggedAt: '1h ago',
-  },
-  {
-    id: 'flag2',
-    content: "I'm going to find where you live.",
-    contentType: 'post',
-    author: mockUsers.user5,
-    reason: 'Threats of violence',
-    flaggedAt: '3h ago',
-  },
-  {
-    id: 'flag3',
-    content: 'This is an obviously fake review trying to manipulate ratings.',
-    contentType: 'post',
-    author: mockUsers.user2,
-    reason: 'Spam/Misleading',
-    flaggedAt: '1d ago',
   },
 ];
 

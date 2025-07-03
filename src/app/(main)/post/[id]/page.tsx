@@ -2,19 +2,97 @@
 
 import { PostCard } from '@/components/post-card';
 import { CommentCard } from '@/components/comment-card';
-import { mockPosts, mockDisputes, mockUsers } from '@/lib/mock-data';
 import { useParams } from 'next/navigation';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
+import { useState, useEffect, useCallback } from 'react';
+import { getPost, getComments, addComment, getUserProfile } from '@/lib/firestore';
+import type { Post, Comment } from '@/lib/types';
+import { useAuth } from '@/hooks/use-auth';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Loader2 } from 'lucide-react';
+
+function PostPageSkeleton() {
+    return (
+        <div>
+            <div className="flex gap-4 border-b p-4">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="mt-4 h-48 w-full" />
+                </div>
+            </div>
+            <div className="p-4 space-y-4">
+                <Skeleton className="h-10 w-32" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+            </div>
+        </div>
+    )
+}
 
 export default function PostPage() {
   const params = useParams<{ id: string }>();
-  const post = mockPosts.find((p) => p.id === params.id);
+  const { user: authUser } = useAuth();
+  
+  const [post, setPost] = useState<Post | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newComment, setNewComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Using dispute comments for mock post comments for now
-  const comments = mockDisputes[0]?.comments || [];
+  const postId = params.id as string;
+
+  const fetchPostAndComments = useCallback(async () => {
+    setLoading(true);
+    try {
+        const [postData, commentsData] = await Promise.all([
+            getPost(postId),
+            getComments(postId)
+        ]);
+        setPost(postData);
+        setComments(commentsData);
+    } catch (error) {
+        console.error("Failed to fetch post and comments", error);
+    } finally {
+        setLoading(false);
+    }
+  }, [postId]);
+
+  useEffect(() => {
+    if (postId) {
+        fetchPostAndComments();
+    }
+  }, [postId, fetchPostAndComments]);
+  
+  const handleCommentSubmit = async () => {
+      if (!newComment.trim() || !authUser || !post) return;
+
+      setIsSubmitting(true);
+      try {
+          const authorProfile = await getUserProfile(authUser.uid);
+          if (!authorProfile) throw new Error("Could not find user profile.");
+
+          await addComment(post.id, newComment, authorProfile);
+          setNewComment("");
+          // Refetch comments to show the new one
+          const commentsData = await getComments(post.id);
+          setComments(commentsData);
+      } catch (error) {
+          console.error("Failed to add comment", error);
+      } finally {
+          setIsSubmitting(false);
+      }
+  };
+
+
+  if (loading) {
+    return <PostPageSkeleton />;
+  }
 
   if (!post) {
     return (
@@ -29,24 +107,30 @@ export default function PostPage() {
     );
   }
 
-  const currentUser = mockUsers.user1;
-
   return (
     <div>
-      {/* Display the main post */}
       <PostCard post={post} />
 
-      {/* Reply/Comment Form Section */}
       <div className="border-t border-border p-4">
         <div className="flex gap-4">
-          <UserAvatar user={currentUser} className="h-10 w-10" />
+          {authUser ? (
+            <UserAvatar user={authUser} className="h-10 w-10" />
+           ) : (
+            <Skeleton className="h-10 w-10 rounded-full" />
+           )}
           <div className="flex-1 space-y-2">
             <Textarea
-              placeholder={`Reply to @${post.author.username}...`}
+              placeholder={authUser ? `Reply to @${post.author.username}...` : "Log in to leave a comment."}
               rows={3}
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              disabled={!authUser || isSubmitting}
             />
             <div className="flex justify-end">
-              <Button>Post Reply</Button>
+              <Button onClick={handleCommentSubmit} disabled={!authUser || isSubmitting || !newComment.trim()}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Post Reply
+              </Button>
             </div>
           </div>
         </div>
@@ -54,7 +138,6 @@ export default function PostPage() {
 
       <Separator />
 
-      {/* Comments Section */}
       <div className="space-y-4 p-4">
         <h2 className="text-xl font-bold">Comments ({comments.length})</h2>
         {comments.length > 0 ? (

@@ -25,6 +25,7 @@ import type { User as FirebaseUser } from 'firebase/auth';
 import type { Post, User, Comment, FlaggedContent, Dispute } from './types';
 import type { z } from 'zod';
 import type { createPostFormSchema } from '@/components/create-post-form';
+import { mockUsers } from './mock-data';
 
 // Helper to convert Firestore doc to a serializable object
 function fromFirestore<T>(doc): T {
@@ -189,6 +190,7 @@ export const createPost = async (
     bookmarkedBy: [],
     sentiment: (postData as any).sentiment,
     summary: (postData as any).summary,
+    isEscalated: false,
   };
 
   const docRef = await addDoc(collection(db, 'posts'), newPost);
@@ -372,7 +374,9 @@ export const removeFlaggedItem = async (flaggedItemId: string) => {
 export const approveFlaggedItem = async (item: FlaggedContent) => {
   if (!db) throw new Error('Firestore not initialized');
   // First, create the post from the flagged data
-  await createPost(item.postData, item.author);
+  const authorProfile = await getUserProfile(item.author.id);
+  if (!authorProfile) throw new Error('Could not find author profile.');
+  await createPost(item.postData, authorProfile);
   // Then, remove it from the moderation queue
   await removeFlaggedItem(item.id);
 };
@@ -390,4 +394,55 @@ export const getActiveDisputes = async (): Promise<Dispute[]> => {
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => fromFirestore<Dispute>(doc));
+};
+
+// DISPUTE-related functions
+export const createDispute = async (
+  post: Post,
+  disputingUser: User
+): Promise<string> => {
+  if (!db) throw new Error('Firestore not initialized');
+  const batch = writeBatch(db);
+
+  // 1. Create the new dispute document
+  const disputeRef = doc(collection(db, 'disputes'));
+  const authorProfile = await getUserProfile(post.authorId);
+  if (!authorProfile) throw new Error('Original author profile not found');
+
+  const newDispute: Omit<Dispute, 'id' | 'createdAt'> & {
+    createdAt: FieldValue;
+  } = {
+    originalPostId: post.id,
+    title: `Dispute over report against "${post.entity}"`,
+    description: `This dispute was opened regarding the following report: "${post.text}"`,
+    involvedParties: [authorProfile, disputingUser],
+    createdAt: serverTimestamp(),
+    status: 'open',
+    commentsCount: 0,
+    poll: {
+      question: 'Whose account do you find more credible in this dispute?',
+      options: [
+        { text: `The original report by @${post.author.username}`, votes: 0 },
+        { text: `The rebuttal by ${post.entity}`, votes: 0 },
+        { text: 'Need more information', votes: 0 },
+      ],
+    },
+    verdict: null,
+  };
+  batch.set(disputeRef, newDispute);
+
+  // 2. Mark the original post as escalated
+  const postRef = doc(db, 'posts', post.id);
+  batch.update(postRef, { isEscalated: true });
+
+  await batch.commit();
+  return disputeRef.id;
+};
+
+export const getAllDisputes = async (): Promise<Dispute[]> => {
+    if (!db) return [];
+    const disputesRef = collection(db, 'disputes');
+    const q = query(disputesRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => fromFirestore<Dispute>(doc));
 };

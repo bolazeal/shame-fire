@@ -19,6 +19,7 @@ import {
   UserCircle,
   Megaphone,
   Trophy,
+  Loader2,
 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import Image from 'next/image';
@@ -45,7 +46,7 @@ import {
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { toggleBookmark } from '@/lib/firestore';
+import { toggleBookmark, createDispute } from '@/lib/firestore';
 import { formatDistanceToNow } from 'date-fns';
 
 interface PostCardProps {
@@ -59,6 +60,7 @@ export function PostCard({ post }: PostCardProps) {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [bookmarkCount, setBookmarkCount] = useState(post.bookmarks);
   const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
+  const [isEscalating, setIsEscalating] = useState(false);
   
   useEffect(() => {
     if (authUser) {
@@ -80,14 +82,30 @@ export function PostCard({ post }: PostCardProps) {
   const showVerifiedBadge =
     post.author.isVerified && !isAnonymous && !isWhistleblower;
 
-  const handleEscalateConfirm = (e: React.MouseEvent) => {
+  const handleEscalateConfirm = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    toast({
-      title: 'Post Escalated',
-      description:
-        'This report is now a public dispute in the Village Square.',
-    });
+
+    if (!authUser || !post.entity) {
+        toast({ title: 'Error', description: 'Cannot escalate this post.', variant: 'destructive' });
+        return;
+    }
+
+    setIsEscalating(true);
+    try {
+        await createDispute(post, authUser as any);
+        toast({
+            title: 'Post Escalated',
+            description: 'This report is now a public dispute in the Village Square.',
+        });
+        // You might want to update the post state to reflect `isEscalated: true`
+        // to disable the button immediately, but for now we rely on page refresh.
+    } catch (error) {
+        console.error("Failed to escalate post:", error);
+        toast({ title: 'Escalation Failed', description: 'Could not create a dispute.', variant: 'destructive' });
+    } finally {
+        setIsEscalating(false);
+    }
   };
 
   const handleBookmarkClick = async (e: React.MouseEvent) => {
@@ -127,7 +145,7 @@ export function PostCard({ post }: PostCardProps) {
     post.type === 'report' &&
     authUser &&
     (post.entity === authUser.displayName ||
-      post.text.includes(`@${authUser.email?.split('@')[0]}`));
+      post.text.includes(`@${authUser.email?.split('@')[0]}`)) && !post.isEscalated;
       
   const postDate = post.createdAt ? new Date(post.createdAt) : new Date();
 
@@ -148,7 +166,7 @@ export function PostCard({ post }: PostCardProps) {
             </AvatarFallback>
           </Avatar>
         ) : (
-          <UserAvatar user={post.author} />
+          <UserAvatar user={post.author as any} />
         )}
         <div className="flex-1">
           <div className="flex items-center justify-between">
@@ -177,8 +195,13 @@ export function PostCard({ post }: PostCardProps) {
                       variant="outline"
                       size="sm"
                       className="mr-2 flex items-center gap-1 rounded-full px-2 text-xs"
+                      disabled={isEscalating}
                     >
-                      <Gavel className="h-4 w-4" />
+                      {isEscalating ? (
+                        <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Gavel className="h-4 w-4" />
+                      )}
                       Escalate
                     </Button>
                   </AlertDialogTrigger>
@@ -203,6 +226,11 @@ export function PostCard({ post }: PostCardProps) {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
+              )}
+              {post.isEscalated && (
+                <Badge variant="secondary" className="mr-2 text-xs">
+                    <Gavel className="mr-1 h-3 w-3" /> Escalated
+                </Badge>
               )}
               <Button
                 variant="ghost"

@@ -1,3 +1,4 @@
+'use server';
 import type { ElementType } from 'react';
 import type { z } from 'zod';
 import type { createPostFormSchema } from '@/components/create-post-form';

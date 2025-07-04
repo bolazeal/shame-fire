@@ -40,7 +40,8 @@ import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { generateEndorsementSummary } from '@/ai/flows/generate-endorsement-summary';
 import { useAuth } from '@/hooks/use-auth';
 import { useModeration } from '@/hooks/use-moderation';
-import { createPost, getUserProfile } from '@/lib/firestore';
+import { createPost, getUserProfile, getUserByEntityName, updateUserProfile } from '@/lib/firestore';
+import { suggestTrustScore } from '@/ai/flows/suggest-trust-score';
 
 export const createPostFormSchema = z
   .object({
@@ -231,6 +232,28 @@ export function CreatePostForm({
         ]);
         finalValues.sentiment = sentimentResult;
         finalValues.summary = summaryResult.summary;
+
+        // Update trust score of the entity being posted about
+        if (values.entity) {
+          const targetUser = await getUserByEntityName(values.entity);
+          if (targetUser && targetUser.id !== user.uid) {
+            try {
+              const scoreResult = await suggestTrustScore({
+                currentTrustScore: targetUser.trustScore,
+                postType: values.type as 'report' | 'endorsement',
+                postSentimentScore: sentimentResult.sentimentScore,
+              });
+
+              if (scoreResult.newTrustScore !== targetUser.trustScore) {
+                await updateUserProfile(targetUser.id, {
+                  trustScore: scoreResult.newTrustScore,
+                });
+              }
+            } catch (e) {
+              console.error('Failed to suggest or update trust score:', e);
+            }
+          }
+        }
       }
 
       // Get full author profile

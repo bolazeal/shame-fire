@@ -27,6 +27,8 @@ import type { Post, User, Comment, FlaggedContent, Dispute, Poll } from './types
 import type { z } from 'zod';
 import type { createPostFormSchema } from '@/components/create-post-form';
 import { suggestTrustScore } from '@/ai/flows/suggest-trust-score';
+import { analyzeSentiment } from '@/ai/flows/analyze-sentiment';
+import { generateEndorsementSummary } from '@/ai/flows/generate-endorsement-summary';
 
 // Helper to convert Firestore doc to a serializable object
 function fromFirestore<T>(doc): T {
@@ -221,31 +223,6 @@ export const createPost = async (
   };
 
   const docRef = await addDoc(collection(db, 'posts'), newPost);
-
-  // Update trust score of the entity being posted about
-  if ((postData.type === 'report' || postData.type === 'endorsement') && postData.entity) {
-    const sentiment = (postData as any).sentiment;
-    if (sentiment) {
-      const targetUser = await getUserByEntityName(postData.entity);
-      if (targetUser && targetUser.id !== author.id) { // Prevent users from changing their own score
-        try {
-          const scoreResult = await suggestTrustScore({
-            currentTrustScore: targetUser.trustScore,
-            postType: postData.type,
-            postSentimentScore: sentiment.sentimentScore,
-          });
-
-          if (scoreResult.newTrustScore !== targetUser.trustScore) {
-            await updateUserProfile(targetUser.id, { trustScore: scoreResult.newTrustScore });
-          }
-        } catch (e) {
-          console.error("Failed to suggest or update trust score:", e);
-          // Don't block post creation if trust score update fails
-        }
-      }
-    }
-  }
-
   return docRef.id;
 };
 
@@ -430,10 +407,23 @@ export const approveFlaggedItem = async (item: FlaggedContent) => {
   // First, create the post from the flagged data
   const authorProfile = await getUserProfile(item.author.id);
   if (!authorProfile) throw new Error('Could not find author profile.');
-  await createPost(item.postData, authorProfile);
+  
+  const postData = { ...item.postData };
+  
+  // Re-run AI analysis during approval to get sentiment and summary
+  if (postData.type !== 'post') {
+      const sentimentResult = await analyzeSentiment({ text: postData.text });
+      const summaryResult = await generateEndorsementSummary({ endorsementText: postData.text });
+      (postData as any).sentiment = sentimentResult;
+      (postData as any).summary = summaryResult.summary;
+  }
+  
+  await createPost(postData, authorProfile);
+
   // Then, remove it from the moderation queue
   await removeFlaggedItem(item.id);
 };
+
 
 export const getActiveDisputes = async (): Promise<Dispute[]> => {
   if (!db) return [];
@@ -566,3 +556,5 @@ export const castVote = async (disputeId: string, poll: Poll, optionText: string
         'poll.voters': arrayUnion(userId) // Add user to voters list
     });
 }
+
+  

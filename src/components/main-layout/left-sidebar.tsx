@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { UserAvatar } from '../user-avatar';
 
 const navItems = [
   { href: '/home', icon: Home, text: 'Home' },
@@ -38,7 +39,7 @@ const navItems = [
 ];
 
 export function LeftSidebar() {
-  const { user, logout } = useAuth();
+  const { user, logout, fullProfile } = useAuth();
 
   const handleLogout = async () => {
     await logout();
@@ -59,8 +60,12 @@ export function LeftSidebar() {
         </div>
         <nav className="flex flex-col">
           {navItems.map((item) => {
-            if (item.href === '/admin' && user?.uid !== 'user1') {
+            if (item.href === '/admin' && !fullProfile?.isAdmin) {
               return null;
+            }
+            if(item.href.startsWith('/profile')) {
+                // Link to the current user's profile
+                item.href = `/profile/${user?.uid}`;
             }
             return (
               <Link
@@ -83,36 +88,33 @@ export function LeftSidebar() {
         />
       </div>
       <div className="p-4">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="flex h-auto w-full items-center justify-between rounded-full p-2 text-left hover:bg-accent/50"
-            >
-              <div className="flex items-center gap-2">
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback>
-                    {user?.displayName?.charAt(0) || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-
-                <div>
-                  <p className="font-bold">{user?.displayName}</p>
-                  <p className="text-sm text-muted-foreground">
-                    @{getUsername(user?.email)}
-                  </p>
+        {user && fullProfile && (
+            <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button
+                variant="ghost"
+                className="flex h-auto w-full items-center justify-between rounded-full p-2 text-left hover:bg-accent/50"
+                >
+                <div className="flex items-center gap-2">
+                    <UserAvatar user={fullProfile} className="h-10 w-10" />
+                    <div>
+                    <p className="font-bold">{fullProfile.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                        @{fullProfile.username}
+                    </p>
+                    </div>
                 </div>
-              </div>
-              <MoreHorizontal className="h-5 w-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuItem onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Log out</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+                <MoreHorizontal className="h-5 w-5" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+            </DropdownMenu>
+        )}
       </div>
     </aside>
   );

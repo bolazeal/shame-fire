@@ -13,7 +13,8 @@ import {
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import type { AuthContextType } from '@/lib/types/auth';
-import { createUserProfile } from '@/lib/firestore';
+import type { User as AppUser } from '@/lib/types';
+import { createUserProfile, getUserProfile } from '@/lib/firestore';
 import { mockUsers } from '@/lib/mock-data';
 import { doc, getDoc } from 'firebase/firestore';
 
@@ -56,13 +57,20 @@ const mockAuthUser = {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [fullProfile, setFullProfile] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const isFirebaseConfigured = !!auth && !!db;
 
   useEffect(() => {
     if (isFirebaseConfigured) {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
         setUser(user);
+        if (user) {
+          const profile = await getUserProfile(user.uid);
+          setFullProfile(profile);
+        } else {
+          setFullProfile(null);
+        }
         setLoading(false);
       });
       return () => unsubscribe();
@@ -72,7 +80,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const mockSession = localStorage.getItem('mockUserSession');
       if (mockSession) {
         try {
-            setUser(JSON.parse(mockSession));
+            const mockAuthUser = JSON.parse(mockSession);
+            setUser(mockAuthUser);
+            const mockProfile = Object.values(mockUsers).find(u => u.id === mockAuthUser.uid);
+            setFullProfile(mockProfile || null);
         } catch (e) {
             localStorage.removeItem('mockUserSession');
         }
@@ -97,7 +108,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName });
       await createUserProfile(userCredential.user);
-      // onAuthStateChanged will set the user state
+      // onAuthStateChanged will set the user and fullProfile state
       return userCredential.user;
     } finally {
       setLoading(false);
@@ -110,6 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       localStorage.setItem('mockUserSession', JSON.stringify(mockAuthUser));
       setUser(mockAuthUser);
+      setFullProfile(mockUsers.user1);
       setLoading(false);
       return mockAuthUser;
     }
@@ -117,6 +129,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+       // onAuthStateChanged will set the user and fullProfile state
       return userCredential.user;
     } finally {
       setLoading(false);
@@ -128,11 +141,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.warn("Mock Google Login: Simulating login.");
         setLoading(true);
         // Using a different mock user to show a difference from email login
-        const googleMockUser = { ...mockAuthUser, uid: 'user2', email: 'jane@example.com', displayName: 'Jane Smith' };
-        localStorage.setItem('mockUserSession', JSON.stringify(googleMockUser));
-        setUser(googleMockUser);
+        const googleMockUserAuth = { ...mockAuthUser, uid: 'user2', email: 'jane@example.com', displayName: 'Jane Smith' };
+        localStorage.setItem('mockUserSession', JSON.stringify(googleMockUserAuth));
+        setUser(googleMockUserAuth);
+        setFullProfile(mockUsers.user2);
         setLoading(false);
-        return googleMockUser;
+        return googleMockUserAuth;
     }
 
     setLoading(true);
@@ -148,6 +162,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // New user via Google, create their profile in Firestore
             await createUserProfile(user);
         }
+         // onAuthStateChanged will set the user and fullProfile state
 
         return user;
     } finally {
@@ -161,6 +176,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       localStorage.removeItem('mockUserSession');
       setUser(null);
+      setFullProfile(null);
       setLoading(false);
       return;
     }
@@ -168,12 +184,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await signOut(auth);
+       // onAuthStateChanged will set the user and fullProfile state to null
     } finally {
       setLoading(false);
     }
   };
 
-  const value = { user, loading, signup, login, loginWithGoogle, logout };
+  const value = { user, fullProfile, loading, signup, login, loginWithGoogle, logout };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -53,7 +53,7 @@ import type { Post, Dispute, FlaggedContent } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AdminPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { fullProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -106,13 +106,13 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!authLoading) {
-      if (user?.uid !== 'user1') {
+      if (!fullProfile?.isAdmin) {
         router.push('/home');
       } else {
         fetchData();
       }
     }
-  }, [user, authLoading, router, fetchData]);
+  }, [fullProfile, authLoading, router, fetchData]);
 
   const handleApprove = async (item: FlaggedContent) => {
     try {

@@ -10,6 +10,7 @@ const mockAdminUser: User = {
     bannerUrl: 'https://placehold.co/1200x400.png',
     trustScore: 95,
     isVerified: true,
+    isAdmin: true,
     bio: 'Platform admin. Keeping things fair and square.',
     nominations: 0,
     publicVotes: 0,

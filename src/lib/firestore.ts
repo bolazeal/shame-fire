@@ -127,6 +127,14 @@ export const getUsersToFollow = async (
     .slice(0, 5);
 };
 
+export const getAllUsers = async (): Promise<User[]> => {
+  if (!db) return [];
+  const usersRef = collection(db, 'users');
+  const q = query(usersRef, orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => fromFirestore<User>(doc));
+};
+
 // FOLLOW-related functions
 export const isFollowing = async (
   currentUserId: string,

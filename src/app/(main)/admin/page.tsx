@@ -23,6 +23,7 @@ import {
   Trash2,
   View,
   Loader2,
+  Settings,
 } from 'lucide-react';
 import {
   Tabs,
@@ -49,8 +50,9 @@ import {
   approveFlaggedItem,
   removeFlaggedItem,
   getActiveDisputes,
+  getAllUsers,
 } from '@/lib/firestore';
-import type { Post, Dispute, FlaggedContent } from '@/lib/types';
+import type { Post, Dispute, FlaggedContent, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AdminPage() {
@@ -66,6 +68,7 @@ export default function AdminPage() {
   });
   const [flaggedContent, setFlaggedContent] = useState<FlaggedContent[]>([]);
   const [disputes, setDisputes] = useState<Dispute[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -77,12 +80,14 @@ export default function AdminPage() {
         endorsementCount,
         flagged,
         activeDisputes,
+        usersData,
       ] = await Promise.all([
         getCollectionCount('users'),
         getCollectionCount('posts', 'type', '==', 'report'),
         getCollectionCount('posts', 'type', '==', 'endorsement'),
         getFlaggedContent(),
         getActiveDisputes(),
+        getAllUsers(),
       ]);
 
       setStats({
@@ -93,6 +98,7 @@ export default function AdminPage() {
       });
       setFlaggedContent(flagged);
       setDisputes(activeDisputes);
+      setAllUsers(usersData);
     } catch (error) {
       console.error('Failed to fetch admin data:', error);
       toast({
@@ -181,9 +187,12 @@ export default function AdminPage() {
       </header>
 
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="m-4">
+        <TabsList className="m-4 grid h-auto w-full grid-cols-2 md:grid-cols-5">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="moderation">Content Moderation</TabsTrigger>
+          <TabsTrigger value="users">User Management</TabsTrigger>
+          <TabsTrigger value="disputes">Dispute Management</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="m-0 border-t">
@@ -232,7 +241,9 @@ export default function AdminPage() {
                   <Gavel className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.activeDisputes}</div>
+                  <div className="text-2xl font-bold">
+                    {stats.activeDisputes}
+                  </div>
                 </CardContent>
               </Card>
             </section>
@@ -331,7 +342,85 @@ export default function AdminPage() {
                 )}
               </CardContent>
             </Card>
+          </div>
+        </TabsContent>
 
+        <TabsContent value="users" className="m-0 border-t">
+          <div className="space-y-8 p-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users />
+                  User Management ({allUsers.length})
+                </CardTitle>
+                <CardDescription>
+                  View, manage, and take action on user accounts.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead className="hidden md:table-cell">
+                        Email
+                      </TableHead>
+                      <TableHead className="hidden sm:table-cell">
+                        Trust Score
+                      </TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {allUsers.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <Link
+                            href={`/profile/${user.id}`}
+                            className="font-medium hover:underline"
+                          >
+                            {user.name}
+                          </Link>
+                          <p className="text-xs text-muted-foreground">
+                            @{user.username}
+                          </p>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {user.email}
+                        </TableCell>
+                        <TableCell className="hidden text-center sm:table-cell">
+                          {user.trustScore}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {user.isAdmin && (
+                              <Badge variant="destructive">Admin</Badge>
+                            )}
+                            {user.isVerified && (
+                              <Badge variant="secondary">Verified</Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm">
+                            Suspend
+                          </Button>
+                          <Button variant="destructive" size="sm">
+                            Ban
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="disputes" className="m-0 border-t">
+          <div className="space-y-8 p-4">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -385,6 +474,29 @@ export default function AdminPage() {
                     No active disputes.
                   </p>
                 )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="settings" className="m-0 border-t">
+          <div className="p-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings />
+                  Platform Settings
+                </CardTitle>
+                <CardDescription>
+                  Configure global aspects of the platform.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex h-40 items-center justify-center rounded-lg border-2 border-dashed">
+                  <p className="text-muted-foreground">
+                    Settings controls are coming soon.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </div>

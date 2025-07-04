@@ -122,6 +122,12 @@ export const updateUserAccountStatus = async (
   await updateDoc(userRef, { accountStatus: status });
 };
 
+export const resetUserTrustScore = async (userId: string): Promise<void> => {
+  if (!db) throw new Error('Firestore not initialized');
+  const userRef = doc(db, 'users', userId);
+  await updateDoc(userRef, { trustScore: 50 });
+};
+
 export const getUsersToFollow = async (
   currentUserId: string
 ): Promise<User[]> => {

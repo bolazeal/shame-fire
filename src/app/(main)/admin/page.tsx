@@ -28,6 +28,7 @@ import {
   UserCheck,
   UserX,
   Ban,
+  RotateCcw,
 } from 'lucide-react';
 import {
   Tabs,
@@ -56,6 +57,7 @@ import {
   getActiveDisputes,
   getAllUsers,
   updateUserAccountStatus,
+  resetUserTrustScore,
 } from '@/lib/firestore';
 import type { Post, Dispute, FlaggedContent, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -67,6 +69,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function AdminPage() {
   const { fullProfile, loading: authLoading } = useAuth();
@@ -84,6 +97,9 @@ export default function AdminPage() {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+  const [updatingTrustScore, setUpdatingTrustScore] = useState<string | null>(
+    null
+  );
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -191,6 +207,27 @@ export default function AdminPage() {
       });
     } finally {
       setUpdatingUserId(null);
+    }
+  };
+
+  const handleResetTrustScore = async (userId: string) => {
+    setUpdatingTrustScore(userId);
+    try {
+      await resetUserTrustScore(userId);
+      toast({
+        title: 'Trust Score Reset',
+        description: `User's trust score has been reset to 50.`,
+      });
+      fetchData(); // Refresh the user list
+    } catch (error) {
+      console.error('Failed to reset trust score:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not reset trust score.',
+        variant: 'destructive',
+      });
+    } finally {
+      setUpdatingTrustScore(null);
     }
   };
 
@@ -456,9 +493,14 @@ export default function AdminPage() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                disabled={updatingUserId === user.id || user.id === fullProfile?.id}
+                                disabled={
+                                  updatingUserId === user.id ||
+                                  user.id === fullProfile?.id ||
+                                  updatingTrustScore === user.id
+                                }
                               >
-                                {updatingUserId === user.id ? (
+                                {updatingUserId === user.id ||
+                                updatingTrustScore === user.id ? (
                                   <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
                                   <MoreHorizontal className="h-4 w-4" />
@@ -478,18 +520,21 @@ export default function AdminPage() {
                                   Reactivate
                                 </DropdownMenuItem>
                               )}
-              
+
                               {user.accountStatus === 'active' && (
                                 <DropdownMenuItem
                                   onClick={() =>
-                                    handleUpdateUserStatus(user.id, 'suspended')
+                                    handleUpdateUserStatus(
+                                      user.id,
+                                      'suspended'
+                                    )
                                   }
                                 >
                                   <UserX className="mr-2 h-4 w-4" />
                                   Suspend
                                 </DropdownMenuItem>
                               )}
-              
+
                               {user.accountStatus !== 'banned' && (
                                 <DropdownMenuItem
                                   className="text-destructive focus:bg-destructive/10 focus:text-destructive"
@@ -501,6 +546,44 @@ export default function AdminPage() {
                                   Ban
                                 </DropdownMenuItem>
                               )}
+                              <DropdownMenuSeparator />
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem
+                                    onSelect={(e) => e.preventDefault()}
+                                    className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                  >
+                                    <RotateCcw className="mr-2 h-4 w-4" />
+                                    Reset Trust Score
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Are you sure?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This will reset @{user.username}&apos;s
+                                      trust score to the default value of 50.
+                                      This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() =>
+                                        handleResetTrustScore(user.id)
+                                      }
+                                      disabled={updatingTrustScore === user.id}
+                                    >
+                                      {updatingTrustScore === user.id && (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      )}
+                                      Confirm Reset
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>

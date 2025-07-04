@@ -19,6 +19,7 @@ import {
   arrayUnion,
   updateDoc,
   deleteDoc,
+  runTransaction,
   type FieldValue,
   type WhereFilterOp,
 } from 'firebase/firestore';
@@ -218,6 +219,8 @@ export const createPost = async (
     downvotes: 0,
     bookmarks: 0,
     bookmarkedBy: [],
+    upvotedBy: [],
+    downvotedBy: [],
     sentiment: (postData as any).sentiment,
     summary: (postData as any).summary,
     isEscalated: false,
@@ -324,6 +327,77 @@ export const toggleBookmark = async (
     });
   }
 };
+
+export const toggleVoteOnPost = async (
+  userId: string,
+  postId: string,
+  voteType: 'up' | 'down'
+) => {
+  if (!db) throw new Error('Firestore not initialized');
+  const postRef = doc(db, 'posts', postId);
+
+  await runTransaction(db, async (transaction) => {
+    const postDoc = await transaction.get(postRef);
+    if (!postDoc.exists()) {
+      throw "Document does not exist!";
+    }
+
+    const data = postDoc.data() as Post;
+    const isUpvoted = data.upvotedBy.includes(userId);
+    const isDownvoted = data.downvotedBy.includes(userId);
+    
+    let updates = {};
+
+    if (voteType === 'up') {
+      if (isUpvoted) {
+        // User is toggling off their upvote
+        updates = {
+          upvotedBy: arrayRemove(userId),
+          upvotes: increment(-1),
+        };
+      } else {
+        // User is adding an upvote
+        updates = {
+          upvotedBy: arrayUnion(userId),
+          upvotes: increment(1),
+        };
+        // If user had a downvote, remove it
+        if (isDownvoted) {
+          updates = {
+            ...updates,
+            downvotedBy: arrayRemove(userId),
+            downvotes: increment(-1),
+          };
+        }
+      }
+    } else if (voteType === 'down') {
+      if (isDownvoted) {
+        // User is toggling off their downvote
+        updates = {
+          downvotedBy: arrayRemove(userId),
+          downvotes: increment(-1),
+        };
+      } else {
+        // User is adding a downvote
+        updates = {
+          downvotedBy: arrayUnion(userId),
+          downvotes: increment(1),
+        };
+        // If user had an upvote, remove it
+        if (isUpvoted) {
+          updates = {
+            ...updates,
+            upvotedBy: arrayRemove(userId),
+            upvotes: increment(-1),
+          };
+        }
+      }
+    }
+    
+    transaction.update(postRef, updates);
+  });
+};
+
 
 export const addComment = async (
   postId: string,
@@ -557,5 +631,3 @@ export const castVote = async (disputeId: string, poll: Poll, optionText: string
         'poll.voters': arrayUnion(userId) // Add user to voters list
     });
 }
-
-  

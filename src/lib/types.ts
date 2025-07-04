@@ -49,7 +49,7 @@ export type Post = {
   id: string;
   type: 'report' | 'endorsement' | 'post';
   author: {
-    id: string;
+    id:string;
     name: string;
     username: string;
     avatarUrl?: string;
@@ -69,6 +69,8 @@ export type Post = {
   downvotes: number;
   bookmarks: number;
   bookmarkedBy: string[]; // Array of user IDs who bookmarked
+  upvotedBy: string[];
+  downvotedBy: string[];
   sentiment?: {
     score: number;
     biasDetected: boolean;

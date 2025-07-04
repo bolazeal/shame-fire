@@ -46,7 +46,7 @@ import {
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { toggleBookmark, createDispute } from '@/lib/firestore';
+import { toggleBookmark, createDispute, toggleVoteOnPost } from '@/lib/firestore';
 import { formatDistanceToNow } from 'date-fns';
 
 interface PostCardProps {
@@ -61,12 +61,75 @@ export function PostCard({ post }: PostCardProps) {
   const [bookmarkCount, setBookmarkCount] = useState(post.bookmarks);
   const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
   const [isEscalating, setIsEscalating] = useState(false);
+
+  const [voteStatus, setVoteStatus] = useState<'up' | 'down' | null>(null);
+  const [voteCounts, setVoteCounts] = useState({ upvotes: post.upvotes, downvotes: post.downvotes });
+  const [isVoteLoading, setIsVoteLoading] = useState(false);
   
   useEffect(() => {
     if (authUser) {
       setIsBookmarked(post.bookmarkedBy.includes(authUser.uid));
+      if (post.upvotedBy.includes(authUser.uid)) {
+        setVoteStatus('up');
+      } else if (post.downvotedBy.includes(authUser.uid)) {
+        setVoteStatus('down');
+      } else {
+        setVoteStatus(null);
+      }
     }
-  }, [authUser, post.bookmarkedBy]);
+  }, [authUser, post.bookmarkedBy, post.upvotedBy, post.downvotedBy]);
+
+  const handleVoteClick = async (e: React.MouseEvent, voteType: 'up' | 'down') => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!authUser) {
+      toast({ title: 'Please log in to vote.', variant: 'destructive' });
+      return;
+    }
+    setIsVoteLoading(true);
+
+    const originalVoteStatus = voteStatus;
+    const originalVoteCounts = { ...voteCounts };
+
+    // Optimistic UI update
+    setVoteCounts(currentCounts => {
+      let { upvotes, downvotes } = currentCounts;
+      if (voteType === 'up') {
+        if (originalVoteStatus === 'up') { // Toggling off upvote
+          upvotes--;
+        } else {
+          upvotes++;
+          if (originalVoteStatus === 'down') downvotes--; // Switching from down to up
+        }
+      } else { // voteType is 'down'
+        if (originalVoteStatus === 'down') { // Toggling off downvote
+          downvotes--;
+        } else {
+          downvotes++;
+          if (originalVoteStatus === 'up') upvotes--; // Switching from up to down
+        }
+      }
+      return { upvotes, downvotes };
+    });
+
+    setVoteStatus(currentStatus => {
+      if (currentStatus === voteType) return null; // Toggling off
+      return voteType; // Setting new vote
+    });
+    
+    try {
+      await toggleVoteOnPost(authUser.uid, post.id, voteType);
+    } catch (error) {
+      // Revert optimistic update on error
+      setVoteStatus(originalVoteStatus);
+      setVoteCounts(originalVoteCounts);
+      console.error('Failed to toggle vote:', error);
+      toast({ title: 'Something went wrong.', variant: 'destructive' });
+    } finally {
+      setIsVoteLoading(false);
+    }
+  };
+
 
   const sentimentScoreColor =
     post.sentiment && post.sentiment.score < 0
@@ -356,18 +419,28 @@ export function PostCard({ post }: PostCardProps) {
             <Button
               variant="ghost"
               size="sm"
-              className="flex items-center gap-2 rounded-full hover:text-sky-500"
+              onClick={(e) => handleVoteClick(e, 'up')}
+              disabled={isVoteLoading}
+              className={cn(
+                'flex items-center gap-2 rounded-full hover:text-sky-500',
+                voteStatus === 'up' && 'text-sky-500'
+              )}
             >
-              <ThumbsUp className="h-5 w-5" />
-              <span>{post.upvotes}</span>
+              <ThumbsUp className={cn('h-5 w-5', voteStatus === 'up' && 'fill-current')} />
+              <span>{voteCounts.upvotes}</span>
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="flex items-center gap-2 rounded-full hover:text-red-500"
+              onClick={(e) => handleVoteClick(e, 'down')}
+              disabled={isVoteLoading}
+              className={cn(
+                'flex items-center gap-2 rounded-full hover:text-red-500',
+                voteStatus === 'down' && 'text-red-500'
+              )}
             >
-              <ThumbsDown className="h-5 w-5" />
-              <span>{post.downvotes}</span>
+              <ThumbsDown className={cn('h-5 w-5', voteStatus === 'down' && 'fill-current')} />
+              <span>{voteCounts.downvotes}</span>
             </Button>
             <div className="flex items-center">
               <Button

@@ -753,7 +753,28 @@ export const getDispute = async (disputeId: string): Promise<Dispute | null> => 
         return fromFirestore<Dispute>(disputeSnap);
     }
     return null;
-}
+};
+
+export const listenToDispute = (
+    disputeId: string,
+    callback: (dispute: Dispute | null) => void
+  ): (() => void) => {
+    if (!db) return () => {};
+    const disputeRef = doc(db, 'disputes', disputeId);
+  
+    const unsubscribe = onSnapshot(disputeRef, (docSnap) => {
+      if (docSnap.exists()) {
+        callback(fromFirestore<Dispute>(docSnap));
+      } else {
+        callback(null);
+      }
+    }, (error) => {
+      console.error(`Failed to listen to dispute ${disputeId}:`, error);
+      callback(null);
+    });
+  
+    return unsubscribe;
+  };
 
 export const addDisputeComment = async (disputeId: string, text: string, author: User): Promise<void> => {
     if (!db) throw new Error('Firestore not initialized');
@@ -782,10 +803,31 @@ export const addDisputeComment = async (disputeId: string, text: string, author:
 export const getDisputeComments = async (disputeId: string): Promise<Comment[]> => {
     if (!db) return [];
     const commentsRef = collection(db, `disputes/${disputeId}/comments`);
-    const q = query(commentsRef, orderBy('createdAt', 'desc'));
+    const q = query(commentsRef, orderBy('createdAt', 'asc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => fromFirestore<Comment>(doc));
 }
+
+export const listenToDisputeComments = (
+    disputeId: string,
+    callback: (comments: Comment[]) => void
+  ): (() => void) => {
+    if (!db) return () => {};
+    const commentsRef = collection(db, `disputes/${disputeId}/comments`);
+    const q = query(commentsRef, orderBy('createdAt', 'asc'));
+  
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const newComments = snapshot.docs.map((doc) =>
+        fromFirestore<Comment>(doc)
+      );
+      callback(newComments);
+    }, (error) => {
+      console.error(`Failed to listen to comments for dispute ${disputeId}:`, error);
+      callback([]);
+    });
+  
+    return unsubscribe;
+  };
 
 export const castVote = async (disputeId: string, poll: Poll, optionText: string, userId: string): Promise<void> => {
     if (!db) throw new Error('Firestore not initialized');

@@ -137,7 +137,6 @@ export type Dispute = {
   commentsCount: number;
   poll: Poll;
   verdict: Verdict | null;
-  comments?: Comment[];
 };
 
 export type PostCreationData = z.infer<typeof createPostFormSchema>;

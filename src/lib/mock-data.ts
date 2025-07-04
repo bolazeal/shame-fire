@@ -126,11 +126,6 @@ export const mockDisputes: Dispute[] = [
       voters: ['user5'],
     },
     verdict: null,
-    comments: [
-        { id: 'c1', author: { id: mockCommenter.id, name: mockCommenter.name, username: mockCommenter.username, avatarUrl: mockCommenter.avatarUrl }, text: "I've had issues with them before, they always have an excuse.", upvotes: 15, downvotes: 1, createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString() },
-        { id: 'c2', author: { id: mockAdminUser.id, name: mockAdminUser.name, username: mockAdminUser.username, avatarUrl: mockAdminUser.avatarUrl }, text: "Can Speedy Shippers provide tracking data that shows weather exceptions?", upvotes: 8, downvotes: 0, createdAt: new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString() },
-        { id: 'c3', author: { id: mockDisputingUser.id, name: mockDisputingUser.name, username: mockDisputingUser.username, avatarUrl: mockDisputingUser.avatarUrl }, text: "Yes, we are compiling that information and will post an update shortly.", upvotes: 2, downvotes: 5, createdAt: new Date(Date.now() - 9 * 60 * 60 * 1000).toISOString() },
-    ],
   },
   {
     id: 'dispute2',
@@ -160,7 +155,6 @@ export const mockDisputes: Dispute[] = [
         decision: "The endorsement is deemed promotional.",
         reason: "After review, evidence suggested a coordinated campaign. The endorsement has been flagged as sponsored content."
     },
-    comments: [],
   },
 ];
 

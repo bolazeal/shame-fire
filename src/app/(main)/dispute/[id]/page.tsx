@@ -13,15 +13,21 @@ import { UserAvatar } from '@/components/user-avatar';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Gavel, Scale, Users, Vote, Loader2 } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { CommentCard } from '@/components/comment-card';
 import { Textarea } from '@/components/ui/textarea';
-import type { Dispute, Comment, Poll } from '@/lib/types';
+import type { Dispute, Comment } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
-import { getDispute, getDisputeComments, addDisputeComment, castVote, getUserProfile } from '@/lib/firestore';
+import {
+  listenToDispute,
+  listenToDisputeComments,
+  addDisputeComment,
+  castVote,
+  getUserProfile,
+} from '@/lib/firestore';
 import { ModeratorVerdictForm } from '@/components/moderator-verdict-form';
 
 function DisputePageSkeleton() {
@@ -81,27 +87,24 @@ export default function DisputePage() {
   
   const disputeId = params.id as string;
 
-  const fetchDisputeData = useCallback(async () => {
+  useEffect(() => {
     if (!disputeId) return;
     setLoading(true);
-    try {
-      const [disputeData, commentsData] = await Promise.all([
-        getDispute(disputeId),
-        getDisputeComments(disputeId)
-      ]);
-      setDispute(disputeData);
-      setComments(commentsData);
-    } catch (error) {
-      console.error('Failed to fetch dispute data:', error);
-      toast({ title: 'Error', description: 'Could not load dispute details.', variant: 'destructive' });
-    } finally {
-      setLoading(false);
-    }
-  }, [disputeId, toast]);
 
-  useEffect(() => {
-    fetchDisputeData();
-  }, [fetchDisputeData]);
+    const unsubscribeDispute = listenToDispute(disputeId, (disputeData) => {
+        setDispute(disputeData);
+        setLoading(false);
+    });
+
+    const unsubscribeComments = listenToDisputeComments(disputeId, (commentsData) => {
+        setComments(commentsData);
+    });
+
+    return () => {
+        unsubscribeDispute();
+        unsubscribeComments();
+    };
+  }, [disputeId]);
 
   const hasVoted = authUser && dispute?.poll.voters?.includes(authUser.uid);
   const totalVotes = dispute?.poll.options.reduce((acc, option) => acc + option.votes, 0) ?? 0;
@@ -154,11 +157,7 @@ export default function DisputePage() {
         if (!authorProfile) throw new Error("Could not find user profile.");
         await addDisputeComment(dispute.id, newComment, authorProfile);
         setNewComment("");
-        
-        // Refetch comments to show the new one immediately
-        const newComments = await getDisputeComments(dispute.id);
-        setComments(newComments);
-        setDispute(prev => prev ? { ...prev, commentsCount: newComments.length } : null);
+        // No manual state update needed, the listener will handle it.
     } catch (error) {
         console.error("Failed to add comment:", error);
         toast({ title: 'Comment Failed', description: 'Could not post your comment.', variant: 'destructive' });
@@ -313,7 +312,7 @@ export default function DisputePage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ModeratorVerdictForm disputeId={dispute.id} onSuccess={fetchDisputeData} />
+                    <ModeratorVerdictForm disputeId={dispute.id} onSuccess={() => {}} />
                   </CardContent>
                 </Card>
               </>
@@ -323,7 +322,7 @@ export default function DisputePage() {
 
             <div>
               <h3 className="flex items-center gap-2 text-lg font-semibold">
-                Discussion ({comments.length})
+                Discussion ({dispute.commentsCount})
               </h3>
               <div className="mt-6 space-y-6">
                 <div className="flex gap-4">

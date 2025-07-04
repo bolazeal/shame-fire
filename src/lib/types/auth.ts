@@ -1,6 +1,6 @@
 'use server';
 import type { User as AppUser } from '@/lib/types';
-import type { User, UserCredential } from 'firebase/auth';
+import type { User } from 'firebase/auth';
 
 export interface AuthContextType {
   user: User | null;
@@ -9,7 +9,8 @@ export interface AuthContextType {
   signup: (
     email: string,
     password,
-    displayName: string
+    displayName: string,
+    username: string
   ) => Promise<User | undefined>;
   login: (email, password) => Promise<User | undefined>;
   loginWithGoogle: () => Promise<User | undefined>;

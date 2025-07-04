@@ -50,33 +50,54 @@ export function fromFirestore<T>(doc): T {
 
 // USER-related functions
 export const createUserProfile = async (
-  firebaseUser: FirebaseUser
+  firebaseUser: FirebaseUser,
+  username: string
 ): Promise<void> => {
   if (!db) throw new Error('Firestore not initialized');
   const userRef = doc(db, 'users', firebaseUser.uid);
+  const usernameRef = doc(db, 'usernames', username.toLowerCase());
 
-  const userProfile: Omit<User, 'id' | 'createdAt'> & {
-    createdAt: FieldValue;
-  } = {
-    name: firebaseUser.displayName || 'Anonymous User',
-    username: (firebaseUser.email || 'user').split('@')[0],
-    email: firebaseUser.email || '',
-    avatarUrl: firebaseUser.photoURL || 'https://placehold.co/100x100.png',
-    trustScore: 50,
-    isVerified: false,
-    isAdmin: false,
-    bio: 'New user on Shame.',
-    location: '',
-    website: '',
-    nominations: 0,
-    publicVotes: 0,
-    followersCount: 0,
-    followingCount: 0,
-    createdAt: serverTimestamp(),
-    accountStatus: 'active',
-  };
-  await setDoc(userRef, userProfile);
+  try {
+    await runTransaction(db, async (transaction) => {
+      const usernameDoc = await transaction.get(usernameRef);
+      if (usernameDoc.exists()) {
+        // Throw a specific error message that the frontend can catch
+        throw new Error('firestore/username-already-in-use');
+      }
+
+      const userProfile: Omit<User, 'id' | 'createdAt'> & {
+        createdAt: FieldValue;
+      } = {
+        name: firebaseUser.displayName || 'Anonymous User',
+        username: username,
+        email: firebaseUser.email || '',
+        avatarUrl: firebaseUser.photoURL || 'https://placehold.co/100x100.png',
+        trustScore: 50,
+        isVerified: false,
+        isAdmin: false,
+        bio: 'New user on Shame.',
+        location: '',
+        website: '',
+        nominations: 0,
+        publicVotes: 0,
+        followersCount: 0,
+        followingCount: 0,
+        createdAt: serverTimestamp(),
+        accountStatus: 'active',
+      };
+      transaction.set(userRef, userProfile);
+      transaction.set(usernameRef, { userId: firebaseUser.uid });
+    });
+  } catch (error: any) {
+    // Re-throw the custom error to be handled by the UI
+    if (error.message === 'firestore/username-already-in-use') {
+      throw error;
+    }
+    console.error('Create user profile transaction failed: ', error);
+    throw new Error('Failed to create user profile due to a server error.');
+  }
 };
+
 
 export const getUserProfile = async (
   userId: string

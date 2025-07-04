@@ -29,6 +29,13 @@ import { useState } from 'react';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
+  username: z
+    .string()
+    .min(3, { message: 'Username must be at least 3 characters.' })
+    .max(20, { message: 'Username must not exceed 20 characters.' })
+    .regex(/^[a-zA-Z0-9_]+$/, {
+      message: 'Username can only contain letters, numbers, and underscores.',
+    }),
   email: z.string().email({ message: 'Please enter a valid email.' }),
   password: z
     .string()
@@ -36,8 +43,18 @@ const formSchema = z.object({
 });
 
 const GoogleIcon = () => (
-    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5"><path d="M12.48 10.92v3.28h7.84c-.27 1.44-1.14 3.73-4.3 3.73-5.22 0-8.22-3.52-8.22-8.4s3-8.4 8.22-8.4c3.34 0 4.63 1.62 4.63 1.62l-2.4 2.44s-1.04-1.03-2.23-1.03c-3.14 0-5.22 2.3-5.22 5.3s2.08 5.3 5.22 5.3c3.73 0 4.68-2.64 4.68-2.64H12.48z" fill="currentColor"/></svg>
-  );
+  <svg
+    role="img"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5"
+  >
+    <path
+      d="M12.48 10.92v3.28h7.84c-.27 1.44-1.14 3.73-4.3 3.73-5.22 0-8.22-3.52-8.22-8.4s3-8.4 8.22-8.4c3.34 0 4.63 1.62 4.63 1.62l-2.4 2.44s-1.04-1.03-2.23-1.03c-3.14 0-5.22 2.3-5.22 5.3s2.08 5.3 5.22 5.3c3.73 0 4.68-2.64 4.68-2.64H12.48z"
+      fill="currentColor"
+    />
+  </svg>
+);
 
 export default function SignupPage() {
   const { toast } = useToast();
@@ -48,6 +65,7 @@ export default function SignupPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
+      username: '',
       email: '',
       password: '',
     },
@@ -55,7 +73,7 @@ export default function SignupPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      await signup(values.email, values.password, values.name);
+      await signup(values.email, values.password, values.name, values.username);
       toast({
         title: 'Account Created',
         description: 'Welcome! You have been successfully signed up.',
@@ -65,6 +83,10 @@ export default function SignupPage() {
       if (error.code === 'auth/email-already-in-use') {
         errorMessage =
           'This email address is already in use. Please use a different email.';
+        form.setError('email', { type: 'manual', message: errorMessage });
+      } else if (error.message === 'firestore/username-already-in-use') {
+        errorMessage = 'This username is already taken. Please choose another.';
+        form.setError('username', { type: 'manual', message: errorMessage });
       } else {
         errorMessage = `Signup failed: ${error.message}`;
       }
@@ -82,14 +104,16 @@ export default function SignupPage() {
       await loginWithGoogle();
       toast({
         title: 'Account Created',
-        description: 'Welcome! You have been successfully signed up with Google.',
+        description:
+          'Welcome! You have been successfully signed up with Google.',
       });
     } catch (error: any) {
       toast({
         title: 'Signup Failed',
-        description: error.code === 'auth/popup-closed-by-user' 
-          ? 'Google Sign-In was cancelled.'
-          : 'An unexpected error occurred with Google Sign-In.',
+        description:
+          error.code === 'auth/popup-closed-by-user'
+            ? 'Google Sign-In was cancelled.'
+            : 'An unexpected error occurred with Google Sign-In.',
         variant: 'destructive',
       });
     } finally {
@@ -115,7 +139,28 @@ export default function SignupPage() {
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="John Doe" {...field} disabled={loading || isGoogleLoading}/>
+                    <Input
+                      placeholder="John Doe"
+                      {...field}
+                      disabled={loading || isGoogleLoading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="username"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Username</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="johndoe"
+                      {...field}
+                      disabled={loading || isGoogleLoading}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -146,7 +191,11 @@ export default function SignupPage() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" {...field} disabled={loading || isGoogleLoading}/>
+                    <Input
+                      type="password"
+                      {...field}
+                      disabled={loading || isGoogleLoading}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -154,40 +203,46 @@ export default function SignupPage() {
             />
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={loading || isGoogleLoading}>
-              {(loading && !isGoogleLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading || isGoogleLoading}
+            >
+              {loading && !isGoogleLoading && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               Create Account
             </Button>
           </CardFooter>
         </form>
       </Form>
-      
+
       <div className="relative px-6 pb-4">
-          <div className="absolute inset-x-6 top-1/2 flex items-center">
-              <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-              Or sign up with
-              </span>
-          </div>
+        <div className="absolute inset-x-6 top-1/2 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-card px-2 text-muted-foreground">
+            Or sign up with
+          </span>
+        </div>
       </div>
 
       <div className="px-6 pb-4">
-          <Button
-              variant="outline"
-              type="button"
-              className="w-full"
-              disabled={loading || isGoogleLoading}
-              onClick={handleGoogleLogin}
-          >
-              {isGoogleLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                  <GoogleIcon />
-              )}
-              Google
-          </Button>
+        <Button
+          variant="outline"
+          type="button"
+          className="w-full"
+          disabled={loading || isGoogleLoading}
+          onClick={handleGoogleLogin}
+        >
+          {isGoogleLoading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <GoogleIcon />
+          )}
+          Google
+        </Button>
       </div>
 
       <div className="pb-6 text-center text-sm text-muted-foreground">

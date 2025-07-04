@@ -111,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isFirebaseConfigured, toast]);
 
-  const signup = async (email: string, password, displayName: string) => {
+  const signup = async (email: string, password, displayName: string, username: string) => {
     if (!isFirebaseConfigured) {
       console.warn("Mock Signup: Simulating user creation.");
       setLoading(true);
@@ -126,7 +126,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName });
-      await createUserProfile(userCredential.user);
+      await createUserProfile(userCredential.user, username);
       // onAuthStateChanged will set the user and fullProfile state
       return userCredential.user;
     } finally {
@@ -191,7 +191,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (!docSnap.exists()) {
             // New user via Google, create their profile in Firestore
-            await createUserProfile(user);
+            const username = user.email ? user.email.split('@')[0] : `user${Date.now()}`;
+            await createUserProfile(user, username);
         } else {
             const profile = fromFirestore<AppUser>(docSnap);
             // ENFORCE ACCOUNT STATUS ON GOOGLE LOGIN

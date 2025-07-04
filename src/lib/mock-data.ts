@@ -17,6 +17,7 @@ const mockAdminUser: User = {
     followersCount: 150,
     followingCount: 20,
     createdAt: new Date('2023-01-01T10:00:00Z').toISOString(),
+    accountStatus: 'active',
 };
 
 const mockUser2: User = {
@@ -35,6 +36,7 @@ const mockUser2: User = {
   followersCount: 1200,
   followingCount: 150,
   createdAt: new Date('2023-02-10T08:00:00Z').toISOString(),
+  accountStatus: 'active',
 };
 
 const mockReportingUser: User = {
@@ -53,6 +55,7 @@ const mockReportingUser: User = {
   followersCount: 88,
   followingCount: 120,
   createdAt: new Date('2023-05-15T12:30:00Z').toISOString(),
+  accountStatus: 'active',
 };
 
 const mockDisputingUser: User = {
@@ -71,6 +74,7 @@ const mockDisputingUser: User = {
     followersCount: 2400,
     followingCount: 1,
     createdAt: new Date('2023-02-20T09:00:00Z').toISOString(),
+    accountStatus: 'active',
 };
 
 const mockCommenter: User = {
@@ -88,6 +92,7 @@ const mockCommenter: User = {
     followersCount: 560,
     followingCount: 300,
     createdAt: new Date('2023-03-10T18:45:00Z').toISOString(),
+    accountStatus: 'active',
 };
 
 export const mockUsers = {

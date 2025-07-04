@@ -33,7 +33,7 @@ import { analyzeSentiment } from '@/ai/flows/analyze-sentiment';
 import { generateEndorsementSummary } from '@/ai/flows/generate-endorsement-summary';
 
 // Helper to convert Firestore doc to a serializable object
-function fromFirestore<T>(doc): T {
+export function fromFirestore<T>(doc): T {
   const data = doc.data();
   if (!data) return data;
 
@@ -72,6 +72,7 @@ export const createUserProfile = async (
     followersCount: 0,
     followingCount: 0,
     createdAt: serverTimestamp(),
+    accountStatus: 'active',
   };
   await setDoc(userRef, userProfile);
 };
@@ -109,6 +110,15 @@ export const updateUserProfile = async (
     if (!db) throw new Error('Firestore not initialized');
     const userRef = doc(db, 'users', userId);
     await updateDoc(userRef, data);
+};
+
+export const updateUserAccountStatus = async (
+  userId: string,
+  status: 'active' | 'suspended' | 'banned'
+): Promise<void> => {
+  if (!db) throw new Error('Firestore not initialized');
+  const userRef = doc(db, 'users', userId);
+  await updateDoc(userRef, { accountStatus: status });
 };
 
 export const getUsersToFollow = async (
@@ -212,6 +222,7 @@ export const createPost = async (
         postData.postingAs === 'verified'
           ? author.avatarUrl
           : 'https://placehold.co/100x100.png',
+      isVerified: postData.postingAs === 'verified' ? author.isVerified : false,
     },
     authorId: author.id,
     postingAs: postData.postingAs,

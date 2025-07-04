@@ -14,9 +14,14 @@ import {
 import { auth, db } from '@/lib/firebase';
 import type { AuthContextType } from '@/lib/types/auth';
 import type { User as AppUser } from '@/lib/types';
-import { createUserProfile, getUserProfile } from '@/lib/firestore';
+import {
+  createUserProfile,
+  getUserProfile,
+  fromFirestore,
+} from '@/lib/firestore';
 import { mockUsers } from '@/lib/mock-data';
 import { doc, getDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
@@ -60,15 +65,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [fullProfile, setFullProfile] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const isFirebaseConfigured = !!auth && !!db;
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isFirebaseConfigured) {
       const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        setUser(user);
         if (user) {
           const profile = await getUserProfile(user.uid);
-          setFullProfile(profile);
+
+          // ENFORCE ACCOUNT STATUS
+          if (profile && profile.accountStatus !== 'active') {
+            toast({
+              title: 'Access Denied',
+              description: `Your account has been ${profile.accountStatus}. Please contact support.`,
+              variant: 'destructive',
+            });
+            await signOut(auth); // Sign them out immediately
+            setUser(null);
+            setFullProfile(null);
+          } else {
+            setUser(user);
+            setFullProfile(profile);
+          }
         } else {
+          setUser(null);
           setFullProfile(null);
         }
         setLoading(false);
@@ -90,7 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       setLoading(false);
     }
-  }, [isFirebaseConfigured]);
+  }, [isFirebaseConfigured, toast]);
 
   const signup = async (email: string, password, displayName: string) => {
     if (!isFirebaseConfigured) {
@@ -129,7 +149,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-       // onAuthStateChanged will set the user and fullProfile state
+      const profile = await getUserProfile(userCredential.user.uid);
+      
+      // ENFORCE ACCOUNT STATUS ON LOGIN
+      if (profile && profile.accountStatus !== 'active') {
+        toast({
+          title: 'Login Failed',
+          description: `Your account has been ${profile.accountStatus}. Please contact support.`,
+          variant: 'destructive',
+        });
+        await signOut(auth);
+        return undefined; // Return undefined to signify login failure
+      }
+       // onAuthStateChanged will set the user and fullProfile state if successful
       return userCredential.user;
     } finally {
       setLoading(false);
@@ -161,6 +193,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!docSnap.exists()) {
             // New user via Google, create their profile in Firestore
             await createUserProfile(user);
+        } else {
+            const profile = fromFirestore<AppUser>(docSnap);
+            // ENFORCE ACCOUNT STATUS ON GOOGLE LOGIN
+            if (profile.accountStatus !== 'active') {
+                toast({
+                    title: 'Login Failed',
+                    description: `Your account has been ${profile.accountStatus}. Please contact support.`,
+                    variant: 'destructive',
+                });
+                await signOut(auth);
+                return undefined;
+            }
         }
          // onAuthStateChanged will set the user and fullProfile state
 

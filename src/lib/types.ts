@@ -23,6 +23,7 @@ export type User = {
   followersCount: number;
   followingCount: number;
   createdAt: string;
+  accountStatus: 'active' | 'suspended' | 'banned';
 };
 
 export type MedalInfo = {
@@ -54,6 +55,7 @@ export type Post = {
     name: string;
     username: string;
     avatarUrl?: string;
+    isVerified?: boolean;
   };
   authorId: string; // Reference to author's UID
   postingAs?: 'verified' | 'anonymous' | 'whistleblower';

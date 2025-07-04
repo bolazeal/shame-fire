@@ -24,6 +24,10 @@ import {
   View,
   Loader2,
   Settings,
+  MoreHorizontal,
+  UserCheck,
+  UserX,
+  Ban,
 } from 'lucide-react';
 import {
   Tabs,
@@ -51,9 +55,18 @@ import {
   removeFlaggedItem,
   getActiveDisputes,
   getAllUsers,
+  updateUserAccountStatus,
 } from '@/lib/firestore';
 import type { Post, Dispute, FlaggedContent, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function AdminPage() {
   const { fullProfile, loading: authLoading } = useAuth();
@@ -70,6 +83,7 @@ export default function AdminPage() {
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -153,6 +167,30 @@ export default function AdminPage() {
         description: 'Could not remove the content.',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleUpdateUserStatus = async (
+    userId: string,
+    status: 'active' | 'suspended' | 'banned'
+  ) => {
+    setUpdatingUserId(userId);
+    try {
+      await updateUserAccountStatus(userId, status);
+      toast({
+        title: 'User Status Updated',
+        description: `User has been set to ${status}.`,
+      });
+      fetchData(); // Refresh the user list
+    } catch (error) {
+      console.error('Failed to update user status:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not update user status.',
+        variant: 'destructive',
+      });
+    } finally {
+      setUpdatingUserId(null);
     }
   };
 
@@ -393,7 +431,17 @@ export default function AdminPage() {
                           {user.trustScore}
                         </TableCell>
                         <TableCell>
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-wrap items-center gap-1">
+                            <Badge
+                              variant={
+                                user.accountStatus === 'active'
+                                  ? 'secondary'
+                                  : 'destructive'
+                              }
+                              className="capitalize"
+                            >
+                              {user.accountStatus}
+                            </Badge>
                             {user.isAdmin && (
                               <Badge variant="destructive">Admin</Badge>
                             )}
@@ -403,12 +451,58 @@ export default function AdminPage() {
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="sm">
-                            Suspend
-                          </Button>
-                          <Button variant="destructive" size="sm">
-                            Ban
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled={updatingUserId === user.id || user.id === fullProfile?.id}
+                              >
+                                {updatingUserId === user.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <MoreHorizontal className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              {user.accountStatus !== 'active' && (
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleUpdateUserStatus(user.id, 'active')
+                                  }
+                                >
+                                  <UserCheck className="mr-2 h-4 w-4" />
+                                  Reactivate
+                                </DropdownMenuItem>
+                              )}
+              
+                              {user.accountStatus === 'active' && (
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleUpdateUserStatus(user.id, 'suspended')
+                                  }
+                                >
+                                  <UserX className="mr-2 h-4 w-4" />
+                                  Suspend
+                                </DropdownMenuItem>
+                              )}
+              
+                              {user.accountStatus !== 'banned' && (
+                                <DropdownMenuItem
+                                  className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                  onClick={() =>
+                                    handleUpdateUserStatus(user.id, 'banned')
+                                  }
+                                >
+                                  <Ban className="mr-2 h-4 w-4" />
+                                  Ban
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}

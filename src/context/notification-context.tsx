@@ -10,7 +10,7 @@ import {
 } from 'react';
 import type { Notification, NotificationContextType } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
-import { db } from '@/lib/firebase';
+import { db, isFirebaseConfigured } from '@/lib/firebase';
 import {
   collection,
   query,
@@ -30,7 +30,6 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const isFirebaseConfigured = !!db;
 
   useEffect(() => {
     if (user && isFirebaseConfigured) {

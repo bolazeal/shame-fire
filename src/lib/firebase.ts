@@ -18,6 +18,7 @@ const firebaseConfig = {
 let app;
 let auth;
 let db;
+let isFirebaseConfigured = false;
 
 // Initialize Firebase only if all the required config values are provided
 if (
@@ -29,6 +30,7 @@ if (
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     auth = getAuth(app);
     db = getFirestore(app);
+    isFirebaseConfigured = true;
   } catch (error) {
     console.error('Firebase initialization failed:', error);
   }
@@ -38,4 +40,4 @@ if (
   );
 }
 
-export { app, auth, db };
+export { app, auth, db, isFirebaseConfigured };

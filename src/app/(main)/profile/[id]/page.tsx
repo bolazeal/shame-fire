@@ -30,10 +30,23 @@ import {
   getUserPosts,
   isFollowing,
   toggleFollow,
+  nominateUserForMedal,
 } from '@/lib/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 function ProfileSkeleton() {
   return (
@@ -66,6 +79,7 @@ function ProfileSkeleton() {
 export default function ProfilePage() {
   const params = useParams<{ id: string }>();
   const { user: authUser, loading: authLoading } = useAuth();
+  const { toast } = useToast();
   
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -74,6 +88,9 @@ export default function ProfilePage() {
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [following, setFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [isNominating, setIsNominating] = useState(false);
+  const [hasNominated, setHasNominated] = useState(false);
+
 
   const userId = params.id;
   const isCurrentUserProfile = authUser?.uid === userId;
@@ -124,6 +141,30 @@ export default function ProfilePage() {
       } finally {
           setIsFollowLoading(false);
       }
+  };
+
+  const handleNominate = async () => {
+    if (!authUser || !profileUser) return;
+    setIsNominating(true);
+    try {
+      await nominateUserForMedal(profileUser.id, authUser.uid);
+      toast({
+        title: 'Nomination successful!',
+        description: `${profileUser.name} has been nominated for a Medal of Honour.`,
+      });
+      setHasNominated(true);
+      setProfileUser((prev) =>
+        prev ? { ...prev, nominations: prev.nominations + 1 } : null
+      );
+    } catch (error: any) {
+      toast({
+        title: 'Nomination failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsNominating(false);
+    }
   };
 
 
@@ -240,10 +281,42 @@ export default function ProfilePage() {
                   }
                 />
                 {profileUser.trustScore > 80 && (
-                  <Button variant="outline" className="w-full font-bold">
-                    <Trophy className="mr-2 h-4 w-4 text-amber-500" /> Nominate
-                    for Medal
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full font-bold"
+                        disabled={hasNominated}
+                      >
+                        <Trophy className="mr-2 h-4 w-4 text-amber-500" />
+                        {hasNominated ? 'Nominated' : 'Nominate for Medal'}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Nominate {profileUser.name}?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will formally nominate {profileUser.name} for a
+                          Medal of Honour, recognizing their positive impact.
+                          This action is public and cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleNominate}
+                          disabled={isNominating}
+                        >
+                          {isNominating && (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          )}
+                          Confirm Nomination
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 )}
             </div>
           )}

@@ -145,6 +145,31 @@ export const getAllUsers = async (): Promise<User[]> => {
   return snapshot.docs.map((doc) => fromFirestore<User>(doc));
 };
 
+export const nominateUserForMedal = async (
+  nominatedUserId: string,
+  nominatorId: string
+): Promise<void> => {
+  if (!db) throw new Error('Firestore not initialized');
+
+  const nominationRef = doc(db, `users/${nominatedUserId}/nominators`, nominatorId);
+  const nominationSnap = await getDoc(nominationRef);
+  if (nominationSnap.exists()) {
+    throw new Error('You have already nominated this user.');
+  }
+
+  const batch = writeBatch(db);
+
+  // Add to a subcollection to track who nominated
+  batch.set(nominationRef, { timestamp: serverTimestamp() });
+
+  // Increment the public count on the user's profile
+  const userRef = doc(db, 'users', nominatedUserId);
+  batch.update(userRef, { nominations: increment(1) });
+
+  await batch.commit();
+};
+
+
 // FOLLOW-related functions
 export const isFollowing = async (
   currentUserId: string,

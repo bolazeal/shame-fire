@@ -68,6 +68,7 @@ export type Post = {
   createdAt: string;
   commentsCount: number;
   reposts: number;
+  repostedBy: string[];
   upvotes: number;
   downvotes: number;
   bookmarks: number;

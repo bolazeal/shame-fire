@@ -46,7 +46,12 @@ import {
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { toggleBookmark, createDispute, toggleVoteOnPost } from '@/lib/firestore';
+import {
+  toggleBookmark,
+  createDispute,
+  toggleVoteOnPost,
+  toggleRepost,
+} from '@/lib/firestore';
 import { formatDistanceToNow } from 'date-fns';
 
 interface PostCardProps {
@@ -63,12 +68,20 @@ export function PostCard({ post }: PostCardProps) {
   const [isEscalating, setIsEscalating] = useState(false);
 
   const [voteStatus, setVoteStatus] = useState<'up' | 'down' | null>(null);
-  const [voteCounts, setVoteCounts] = useState({ upvotes: post.upvotes, downvotes: post.downvotes });
+  const [voteCounts, setVoteCounts] = useState({
+    upvotes: post.upvotes,
+    downvotes: post.downvotes,
+  });
   const [isVoteLoading, setIsVoteLoading] = useState(false);
-  
+
+  const [isReposted, setIsReposted] = useState(false);
+  const [repostCount, setRepostCount] = useState(post.reposts);
+  const [isRepostLoading, setIsRepostLoading] = useState(false);
+
   useEffect(() => {
     if (authUser) {
       setIsBookmarked(post.bookmarkedBy.includes(authUser.uid));
+      setIsReposted(post.repostedBy.includes(authUser.uid));
       if (post.upvotedBy.includes(authUser.uid)) {
         setVoteStatus('up');
       } else if (post.downvotedBy.includes(authUser.uid)) {
@@ -77,9 +90,18 @@ export function PostCard({ post }: PostCardProps) {
         setVoteStatus(null);
       }
     }
-  }, [authUser, post.bookmarkedBy, post.upvotedBy, post.downvotedBy]);
+  }, [
+    authUser,
+    post.bookmarkedBy,
+    post.repostedBy,
+    post.upvotedBy,
+    post.downvotedBy,
+  ]);
 
-  const handleVoteClick = async (e: React.MouseEvent, voteType: 'up' | 'down') => {
+  const handleVoteClick = async (
+    e: React.MouseEvent,
+    voteType: 'up' | 'down'
+  ) => {
     e.preventDefault();
     e.stopPropagation();
     if (!authUser) {
@@ -92,17 +114,20 @@ export function PostCard({ post }: PostCardProps) {
     const originalVoteCounts = { ...voteCounts };
 
     // Optimistic UI update
-    setVoteCounts(currentCounts => {
+    setVoteCounts((currentCounts) => {
       let { upvotes, downvotes } = currentCounts;
       if (voteType === 'up') {
-        if (originalVoteStatus === 'up') { // Toggling off upvote
+        if (originalVoteStatus === 'up') {
+          // Toggling off upvote
           upvotes--;
         } else {
           upvotes++;
           if (originalVoteStatus === 'down') downvotes--; // Switching from down to up
         }
-      } else { // voteType is 'down'
-        if (originalVoteStatus === 'down') { // Toggling off downvote
+      } else {
+        // voteType is 'down'
+        if (originalVoteStatus === 'down') {
+          // Toggling off downvote
           downvotes--;
         } else {
           downvotes++;
@@ -112,11 +137,11 @@ export function PostCard({ post }: PostCardProps) {
       return { upvotes, downvotes };
     });
 
-    setVoteStatus(currentStatus => {
+    setVoteStatus((currentStatus) => {
       if (currentStatus === voteType) return null; // Toggling off
       return voteType; // Setting new vote
     });
-    
+
     try {
       await toggleVoteOnPost(authUser.uid, post.id, voteType);
     } catch (error) {
@@ -130,6 +155,28 @@ export function PostCard({ post }: PostCardProps) {
     }
   };
 
+  const handleRepostClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!authUser) {
+      toast({ title: 'Please log in to repost.', variant: 'destructive' });
+      return;
+    }
+    setIsRepostLoading(true);
+    try {
+      await toggleRepost(authUser.uid, post.id, isReposted);
+      setIsReposted(!isReposted);
+      setRepostCount((prev) => prev + (isReposted ? -1 : 1));
+      toast({
+        title: isReposted ? 'Repost undone' : 'Post Reposted',
+      });
+    } catch (error) {
+      console.error('Failed to toggle repost', error);
+      toast({ title: 'Something went wrong.', variant: 'destructive' });
+    } finally {
+      setIsRepostLoading(false);
+    }
+  };
 
   const sentimentScoreColor =
     post.sentiment && post.sentiment.score < 0
@@ -150,24 +197,33 @@ export function PostCard({ post }: PostCardProps) {
     e.stopPropagation();
 
     if (!authUser || !post.entity) {
-        toast({ title: 'Error', description: 'Cannot escalate this post.', variant: 'destructive' });
-        return;
+      toast({
+        title: 'Error',
+        description: 'Cannot escalate this post.',
+        variant: 'destructive',
+      });
+      return;
     }
 
     setIsEscalating(true);
     try {
-        await createDispute(post, authUser as any);
-        toast({
-            title: 'Post Escalated',
-            description: 'This report is now a public dispute in the Village Square.',
-        });
-        // You might want to update the post state to reflect `isEscalated: true`
-        // to disable the button immediately, but for now we rely on page refresh.
+      await createDispute(post, authUser as any);
+      toast({
+        title: 'Post Escalated',
+        description:
+          'This report is now a public dispute in the Village Square.',
+      });
+      // You might want to update the post state to reflect `isEscalated: true`
+      // to disable the button immediately, but for now we rely on page refresh.
     } catch (error) {
-        console.error("Failed to escalate post:", error);
-        toast({ title: 'Escalation Failed', description: 'Could not create a dispute.', variant: 'destructive' });
+      console.error('Failed to escalate post:', error);
+      toast({
+        title: 'Escalation Failed',
+        description: 'Could not create a dispute.',
+        variant: 'destructive',
+      });
     } finally {
-        setIsEscalating(false);
+      setIsEscalating(false);
     }
   };
 
@@ -175,22 +231,25 @@ export function PostCard({ post }: PostCardProps) {
     e.preventDefault();
     e.stopPropagation();
     if (!authUser) {
-        toast({ title: "Please log in to bookmark posts.", variant: "destructive" });
-        return;
+      toast({
+        title: 'Please log in to bookmark posts.',
+        variant: 'destructive',
+      });
+      return;
     }
     setIsBookmarkLoading(true);
     try {
-        await toggleBookmark(authUser.uid, post.id, isBookmarked);
-        setIsBookmarked(!isBookmarked);
-        setBookmarkCount(prev => prev + (isBookmarked ? -1 : 1));
-        toast({
-            title: isBookmarked ? "Bookmark Removed" : "Post Bookmarked",
-        });
+      await toggleBookmark(authUser.uid, post.id, isBookmarked);
+      setIsBookmarked(!isBookmarked);
+      setBookmarkCount((prev) => prev + (isBookmarked ? -1 : 1));
+      toast({
+        title: isBookmarked ? 'Bookmark Removed' : 'Post Bookmarked',
+      });
     } catch (error) {
-        console.error("Failed to toggle bookmark", error);
-        toast({ title: "Something went wrong.", variant: "destructive" });
+      console.error('Failed to toggle bookmark', error);
+      toast({ title: 'Something went wrong.', variant: 'destructive' });
     } finally {
-        setIsBookmarkLoading(false);
+      setIsBookmarkLoading(false);
     }
   };
 
@@ -208,8 +267,9 @@ export function PostCard({ post }: PostCardProps) {
     post.type === 'report' &&
     authUser &&
     (post.entity === authUser.displayName ||
-      post.text.includes(`@${authUser.email?.split('@')[0]}`)) && !post.isEscalated;
-      
+      post.text.includes(`@${authUser.email?.split('@')[0]}`)) &&
+    !post.isEscalated;
+
   const postDate = post.createdAt ? new Date(post.createdAt) : new Date();
 
   return (
@@ -292,7 +352,7 @@ export function PostCard({ post }: PostCardProps) {
               )}
               {post.isEscalated && (
                 <Badge variant="secondary" className="mr-2 text-xs">
-                    <Gavel className="mr-1 h-3 w-3" /> Escalated
+                  <Gavel className="mr-1 h-3 w-3" /> Escalated
                 </Badge>
               )}
               <Button
@@ -411,10 +471,15 @@ export function PostCard({ post }: PostCardProps) {
             <Button
               variant="ghost"
               size="sm"
-              className="flex items-center gap-2 rounded-full hover:text-green-500"
+              onClick={handleRepostClick}
+              disabled={isRepostLoading}
+              className={cn(
+                'flex items-center gap-2 rounded-full hover:text-green-500',
+                isReposted && 'text-green-500'
+              )}
             >
               <Repeat className="h-5 w-5" />
-              <span>{post.reposts}</span>
+              <span>{repostCount}</span>
             </Button>
             <Button
               variant="ghost"
@@ -426,7 +491,9 @@ export function PostCard({ post }: PostCardProps) {
                 voteStatus === 'up' && 'text-sky-500'
               )}
             >
-              <ThumbsUp className={cn('h-5 w-5', voteStatus === 'up' && 'fill-current')} />
+              <ThumbsUp
+                className={cn('h-5 w-5', voteStatus === 'up' && 'fill-current')}
+              />
               <span>{voteCounts.upvotes}</span>
             </Button>
             <Button
@@ -439,7 +506,12 @@ export function PostCard({ post }: PostCardProps) {
                 voteStatus === 'down' && 'text-red-500'
               )}
             >
-              <ThumbsDown className={cn('h-5 w-5', voteStatus === 'down' && 'fill-current')} />
+              <ThumbsDown
+                className={cn(
+                  'h-5 w-5',
+                  voteStatus === 'down' && 'fill-current'
+                )}
+              />
               <span>{voteCounts.downvotes}</span>
             </Button>
             <div className="flex items-center">

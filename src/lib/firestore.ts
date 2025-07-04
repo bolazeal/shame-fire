@@ -234,6 +234,7 @@ export const createPost = async (
     createdAt: serverTimestamp(),
     commentsCount: 0,
     reposts: 0,
+    repostedBy: [],
     upvotes: 0,
     downvotes: 0,
     bookmarks: 0,
@@ -327,6 +328,26 @@ export const getBookmarkedPosts = async (userId: string): Promise<Post[]> => {
 
 
 // INTERACTION functions
+export const toggleRepost = async (
+  userId: string,
+  postId: string,
+  isReposted: boolean
+) => {
+  if (!db) throw new Error('Firestore not initialized');
+  const postRef = doc(db, 'posts', postId);
+  if (isReposted) {
+    await updateDoc(postRef, {
+      repostedBy: arrayRemove(userId),
+      reposts: increment(-1),
+    });
+  } else {
+    await updateDoc(postRef, {
+      repostedBy: arrayUnion(userId),
+      reposts: increment(1),
+    });
+  }
+};
+
 export const toggleBookmark = async (
   userId: string,
   postId: string,

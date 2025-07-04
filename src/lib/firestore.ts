@@ -313,6 +313,19 @@ export const getPost = async (postId: string): Promise<Post | null> => {
   return null;
 };
 
+export const getBookmarkedPosts = async (userId: string): Promise<Post[]> => {
+  if (!db) return [];
+  const postsRef = collection(db, 'posts');
+  const q = query(
+    postsRef,
+    where('bookmarkedBy', 'array-contains', userId),
+    orderBy('createdAt', 'desc')
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => fromFirestore<Post>(doc));
+};
+
+
 // INTERACTION functions
 export const toggleBookmark = async (
   userId: string,

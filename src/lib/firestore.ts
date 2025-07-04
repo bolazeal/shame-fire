@@ -20,12 +20,13 @@ import {
   updateDoc,
   deleteDoc,
   runTransaction,
+  onSnapshot,
   type FieldValue,
   type WhereFilterOp,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
-import type { Post, User, Comment, FlaggedContent, Dispute, Poll, Notification } from './types';
+import type { Post, User, Comment, FlaggedContent, Dispute, Poll, Notification, Conversation, Message } from './types';
 import type { z } from 'zod';
 import type { createPostFormSchema } from '@/components/create-post-form';
 import { suggestTrustScore } from '@/ai/flows/suggest-trust-score';
@@ -819,6 +820,75 @@ export const addVerdictToDispute = async (
     verdict: verdict,
     status: 'closed',
   });
+};
+
+// MESSAGE-related functions
+export const getConversations = (
+  userId: string,
+  callback: (conversations: Conversation[]) => void
+): (() => void) => {
+  if (!db) return () => {};
+  const conversationsRef = collection(db, 'conversations');
+  const q = query(
+    conversationsRef,
+    where('participantIds', 'array-contains', userId),
+    orderBy('lastMessageTimestamp', 'desc')
+  );
+
+  const unsubscribe = onSnapshot(q, async (snapshot) => {
+    const conversations = snapshot.docs.map((doc) =>
+      fromFirestore<Conversation>(doc)
+    );
+    callback(conversations);
+  });
+
+  return unsubscribe;
+};
+
+export const getMessages = (
+  conversationId: string,
+  callback: (messages: Message[]) => void
+): (() => void) => {
+  if (!db) return () => {};
+  const messagesRef = collection(db, `conversations/${conversationId}/messages`);
+  const q = query(messagesRef, orderBy('createdAt', 'asc'));
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const messages = snapshot.docs.map((doc) => fromFirestore<Message>(doc));
+    callback(messages);
+  });
+
+  return unsubscribe;
+};
+
+export const sendMessage = async (
+  conversationId: string,
+  senderId: string,
+  text: string
+): Promise<void> => {
+  if (!db) throw new Error('Firestore not initialized');
+
+  const conversationRef = doc(db, 'conversations', conversationId);
+  const messageRef = doc(collection(conversationRef, 'messages'));
+
+  const batch = writeBatch(db);
+
+  const newMessage: Omit<Message, 'id' | 'createdAt'> & {
+    createdAt: FieldValue;
+  } = {
+    senderId,
+    text,
+    createdAt: serverTimestamp(),
+  };
+  batch.set(messageRef, newMessage);
+
+  batch.update(conversationRef, {
+    lastMessageText: text,
+    lastMessageSenderId: senderId,
+    lastMessageTimestamp: serverTimestamp(),
+  });
+
+  await batch.commit();
 };
 
 // SEARCH-related functions

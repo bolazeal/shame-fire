@@ -1,4 +1,3 @@
-
 'use server';
 import type { ElementType } from 'react';
 import type { z } from 'zod';
@@ -24,6 +23,29 @@ export type User = {
   followingCount: number;
   createdAt: string;
   accountStatus: 'active' | 'suspended' | 'banned';
+};
+
+export type Participant = {
+  id: string;
+  name: string;
+  username: string;
+  avatarUrl?: string;
+};
+
+export type Conversation = {
+  id: string;
+  participantIds: string[];
+  participants: Participant[];
+  lastMessageText?: string;
+  lastMessageTimestamp?: string;
+  lastMessageSenderId?: string;
+};
+
+export type Message = {
+  id: string;
+  senderId: string;
+  text: string;
+  createdAt: string;
 };
 
 export type MedalInfo = {

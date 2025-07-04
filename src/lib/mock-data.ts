@@ -1,4 +1,4 @@
-import type { User, Post, Dispute, FlaggedContent, Comment } from '@/lib/types';
+import type { User, Post, Dispute, FlaggedContent, Comment, Conversation, Message } from '@/lib/types';
 
 const mockAdminUser: User = {
     id: 'user1',
@@ -204,3 +204,43 @@ export const userActivity = [
 ];
 
 export const mockPosts: Post[] = []; // This is needed for ContentBreakdownChart but can be empty.
+
+
+// --- Mock Data for Messages ---
+export const mockConversations: Conversation[] = [
+    {
+      id: 'convo1',
+      participantIds: ['user1', 'user2'],
+      participants: [
+          { id: 'user1', name: 'Alex Doe', username: 'alexdoe', avatarUrl: 'https://placehold.co/100x100.png' },
+          { id: 'user2', name: 'Jane Smith', username: 'janesmith', avatarUrl: 'https://placehold.co/100x100.png' }
+      ],
+      lastMessageText: "Sounds good, I'll review the PR now.",
+      lastMessageTimestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+      lastMessageSenderId: 'user1',
+    },
+    {
+      id: 'convo2',
+      participantIds: ['user1', 'user3'],
+      participants: [
+          { id: 'user1', name: 'Alex Doe', username: 'alexdoe', avatarUrl: 'https://placehold.co/100x100.png' },
+          { id: 'user3', name: 'Samuel Green', username: 'samgreen', avatarUrl: 'https://placehold.co/100x100.png' }
+      ],
+      lastMessageText: "Can you check on that report for Speedy Shippers?",
+      lastMessageTimestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      lastMessageSenderId: 'user3',
+    }
+  ];
+  
+  export const mockMessages: { [key: string]: Message[] } = {
+      'convo1': [
+          { id: 'msg1', senderId: 'user2', text: 'Hey Alex, did you see the latest numbers for user engagement?', createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString() },
+          { id: 'msg2', senderId: 'user1', text: "Just saw them, looking great! We should discuss the new moderation queue features.", createdAt: new Date(Date.now() - 8 * 60 * 1000).toISOString() },
+          { id: 'msg3', senderId: 'user1', text: "I'm about to push an update for it.", createdAt: new Date(Date.now() - 7 * 60 * 1000).toISOString() },
+          { id: 'msg4', senderId: 'user2', text: "Perfect, let me know when it's up.", createdAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() },
+          { id: 'msg5', senderId: 'user1', text: "Sounds good, I'll review the PR now.", createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString() },
+      ],
+      'convo2': [
+          { id: 'msg6', senderId: 'user3', text: "Can you check on that report for Speedy Shippers?", createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
+      ]
+  };

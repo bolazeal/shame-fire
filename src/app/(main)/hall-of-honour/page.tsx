@@ -1,13 +1,13 @@
 import { MedalCard } from '@/components/medal-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserAvatar } from '@/components/user-avatar';
+import { getHonourRollUsers } from '@/lib/firestore';
 import { medals } from '@/lib/medals';
-import { mockUsers } from '@/lib/mock-data';
-import { Crown, Info, Medal, Trophy } from 'lucide-react';
+import { Crown, Info, Trophy } from 'lucide-react';
 import Link from 'next/link';
 
-export default function HallOfHonourPage() {
-  const pastWinners = [mockUsers.user2, mockUsers.user1, mockUsers.user5];
+export default async function HallOfHonourPage() {
+  const laureates = await getHonourRollUsers();
 
   return (
     <div>
@@ -30,33 +30,49 @@ export default function HallOfHonourPage() {
           </div>
         </section>
 
-        <section id="past-winners">
+        <section id="recent-laureates">
           <h2 className="mb-4 text-2xl font-bold font-headline">
-            Recent Winners
+            Recent Laureates
           </h2>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Crown className="h-5 w-5 text-amber-500" />
-                Laureates of 2023
+                Top 5 Users by Trust Score
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {pastWinners.map((user) => (
-                <Link
-                  key={user.id}
-                  href={`/profile/${user.id}`}
-                  className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-accent/50"
-                >
-                  <div className="flex items-center gap-4">
-                    <UserAvatar user={user} className="h-14 w-14" />
-                    <div>
-                      <p className="text-lg font-bold">{user.name}</p>
-                      <p className="text-muted-foreground">@{user.username}</p>
+              {laureates.length > 0 ? (
+                laureates.map((user) => (
+                  <Link
+                    key={user.id}
+                    href={`/profile/${user.id}`}
+                    className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-accent/50"
+                  >
+                    <div className="flex items-center gap-4">
+                      <UserAvatar user={user} className="h-14 w-14" />
+                      <div>
+                        <p className="text-lg font-bold">{user.name}</p>
+                        <p className="text-muted-foreground">
+                          @{user.username}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-primary">
+                        {user.trustScore}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Trust Score
+                      </p>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground">
+                  No laureates to display yet.
+                </p>
+              )}
             </CardContent>
           </Card>
         </section>

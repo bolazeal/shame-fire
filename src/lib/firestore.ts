@@ -146,6 +146,15 @@ export const getAllUsers = async (): Promise<User[]> => {
   return snapshot.docs.map((doc) => fromFirestore<User>(doc));
 };
 
+export const getHonourRollUsers = async (): Promise<User[]> => {
+  if (!db) return [];
+  const usersRef = collection(db, 'users');
+  // Fetch top 5 users ordered by their trust score
+  const q = query(usersRef, orderBy('trustScore', 'desc'), limit(5));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => fromFirestore<User>(doc));
+};
+
 export const nominateUserForMedal = async (
   nominatedUserId: string,
   nominatorId: string

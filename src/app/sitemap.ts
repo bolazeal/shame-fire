@@ -1,36 +1,10 @@
 import { MetadataRoute } from 'next'
  
 export default function sitemap(): MetadataRoute.Sitemap {
-  // NOTE: In a real application, you would fetch this data from your database
-  // to generate URLs for all posts, profiles, and disputes dynamically.
-  // For this demo, we are using static mock data.
-
-  const mockPostIds = ['post1', 'post2', 'post3', 'post4', 'post5', 'post6', 'post7', 'post8'];
-  const mockUserIds = ['user1', 'user2', 'user3', 'user5', 'clarityOfficial'];
-  const mockDisputeIds = ['dispute1', 'dispute2'];
-
-  const baseUrl = 'https://www.clarity-app.com';
-
-  const posts = mockPostIds.map((id) => ({
-    url: `${baseUrl}/post/${id}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }));
-
-  const profiles = mockUserIds.map((id) => ({
-    url: `${baseUrl}/profile/${id}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.8,
-  }));
-
-  const disputes = mockDisputeIds.map((id) => ({
-    url: `${baseUrl}/dispute/${id}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }));
+  // In a real application, you would fetch dynamic data (e.g., posts, profiles) 
+  // from your database to generate a complete sitemap.
+  // For this project, we are defining the static routes.
+  const baseUrl = 'https://shame-app.com'; // Replace with your actual domain
  
   return [
     {
@@ -69,8 +43,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'yearly',
       priority: 0.5,
     },
-    ...posts,
-    ...profiles,
-    ...disputes,
   ]
 }

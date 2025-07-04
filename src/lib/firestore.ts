@@ -650,3 +650,30 @@ export const castVote = async (disputeId: string, poll: Poll, optionText: string
         'poll.voters': arrayUnion(userId) // Add user to voters list
     });
 }
+
+export const addVerdictToDispute = async (
+  disputeId: string,
+  decision: string,
+  reason: string,
+  moderator: User
+): Promise<void> => {
+  if (!db) throw new Error('Firestore not initialized');
+  const disputeRef = doc(db, 'disputes', disputeId);
+
+  const verdict = {
+    moderator: {
+        id: moderator.id,
+        name: moderator.name,
+        username: moderator.username,
+        avatarUrl: moderator.avatarUrl,
+        // We only embed the necessary fields to avoid data duplication
+    },
+    decision,
+    reason,
+  };
+
+  await updateDoc(disputeRef, {
+    verdict: verdict,
+    status: 'closed',
+  });
+};

@@ -4,6 +4,8 @@ import { useParams } from 'next/navigation';
 import {
   Card,
   CardContent,
+  CardHeader,
+  CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -20,6 +22,7 @@ import type { Dispute, Comment, Poll } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
 import { getDispute, getDisputeComments, addDisputeComment, castVote, getUserProfile } from '@/lib/firestore';
+import { ModeratorVerdictForm } from '@/components/moderator-verdict-form';
 
 function DisputePageSkeleton() {
     return (
@@ -64,7 +67,7 @@ function DisputePageSkeleton() {
 
 export default function DisputePage() {
   const params = useParams<{ id: string }>();
-  const { user: authUser } = useAuth();
+  const { user: authUser, fullProfile } = useAuth();
   const { toast } = useToast();
 
   const [dispute, setDispute] = useState<Dispute | null>(null);
@@ -287,7 +290,7 @@ export default function DisputePage() {
                     </p>
                     <div className="flex items-center gap-2 pt-2">
                       <UserAvatar
-                        user={dispute.verdict.moderator}
+                        user={dispute.verdict.moderator as any}
                         className="h-6 w-6"
                       />
                       <span className="text-xs font-semibold">
@@ -296,6 +299,23 @@ export default function DisputePage() {
                     </div>
                   </AlertDescription>
                 </Alert>
+              </>
+            )}
+
+            {fullProfile?.isAdmin && dispute.status !== 'closed' && (
+              <>
+                <Separator />
+                <Card className="mt-6 border-amber-500/50 bg-amber-500/5">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 font-headline text-lg">
+                      <Gavel className="h-5 w-5" />
+                      Moderator Zone
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ModeratorVerdictForm disputeId={dispute.id} onSuccess={fetchDisputeData} />
+                  </CardContent>
+                </Card>
               </>
             )}
 

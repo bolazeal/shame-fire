@@ -93,7 +93,12 @@ export type Poll = {
 };
 
 export type Verdict = {
-  moderator: User;
+  moderator: {
+    id: string;
+    name: string;
+    username: string;
+    avatarUrl?: string;
+  };
   decision: string;
   reason: string;
 };

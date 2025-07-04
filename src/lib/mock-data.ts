@@ -151,7 +151,12 @@ export const mockDisputes: Dispute[] = [
       voters: ['user1', 'user2', 'user3'],
     },
     verdict: {
-        moderator: mockAdminUser,
+        moderator: {
+            id: mockAdminUser.id,
+            name: mockAdminUser.name,
+            username: mockAdminUser.username,
+            avatarUrl: mockAdminUser.avatarUrl,
+        },
         decision: "The endorsement is deemed promotional.",
         reason: "After review, evidence suggested a coordinated campaign. The endorsement has been flagged as sponsored content."
     },

@@ -77,7 +77,7 @@ export default function PostPage() {
           const authorProfile = await getUserProfile(authUser.uid);
           if (!authorProfile) throw new Error("Could not find user profile.");
 
-          await addComment(post.id, newComment, authorProfile);
+          await addComment(post.id, post.authorId, newComment, authorProfile);
           setNewComment("");
           // Refetch comments to show the new one
           const commentsData = await getComments(post.id);

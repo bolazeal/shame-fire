@@ -25,7 +25,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
-import type { Post, User, Comment, FlaggedContent, Dispute, Poll } from './types';
+import type { Post, User, Comment, FlaggedContent, Dispute, Poll, Notification } from './types';
 import type { z } from 'zod';
 import type { createPostFormSchema } from '@/components/create-post-form';
 import { suggestTrustScore } from '@/ai/flows/suggest-trust-score';
@@ -214,6 +214,16 @@ export const toggleFollow = async (
     });
     batch.update(currentUserRef, { followingCount: increment(1) });
     batch.update(targetUserRef, { followersCount: increment(1) });
+
+    // Create notification
+    const sender = await getUserProfile(currentUserId);
+    if (sender) {
+      await createNotification({
+        type: 'follow',
+        recipientId: targetUserId,
+        sender,
+      });
+    }
   }
 
   await batch.commit();
@@ -370,6 +380,18 @@ export const toggleRepost = async (
       repostedBy: arrayUnion(userId),
       reposts: increment(1),
     });
+    // Create notification
+    const post = await getPost(postId);
+    const sender = await getUserProfile(userId);
+    if (post && sender && post.authorId !== userId) {
+        await createNotification({
+            type: 'repost',
+            recipientId: post.authorId,
+            sender,
+            postId: post.id,
+            postText: post.text,
+        });
+    }
   }
 };
 
@@ -434,6 +456,17 @@ export const toggleVoteOnPost = async (
             downvotes: increment(-1),
           };
         }
+        // Create notification for upvote
+        const sender = await getUserProfile(userId);
+        if (sender && data.authorId !== userId) {
+            await createNotification({
+                type: 'upvote',
+                recipientId: data.authorId,
+                sender,
+                postId: data.id,
+                postText: data.text
+            });
+        }
       }
     } else if (voteType === 'down') {
       if (isDownvoted) {
@@ -466,6 +499,7 @@ export const toggleVoteOnPost = async (
 
 export const addComment = async (
   postId: string,
+  postAuthorId: string,
   text: string,
   author: User
 ): Promise<void> => {
@@ -493,6 +527,20 @@ export const addComment = async (
   await updateDoc(postRef, {
     commentsCount: increment(1),
   });
+
+  // Create notification for post author
+  if (author.id !== postAuthorId) {
+    const post = await getPost(postId);
+    if(post) {
+        await createNotification({
+            type: 'comment',
+            recipientId: postAuthorId,
+            sender: author,
+            postId,
+            postText: post.text,
+        });
+    }
+  }
 };
 
 export const getComments = async (postId: string): Promise<Comment[]> => {
@@ -502,6 +550,55 @@ export const getComments = async (postId: string): Promise<Comment[]> => {
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => fromFirestore<Comment>(doc));
 };
+
+// NOTIFICATION functions
+export const createNotification = async (
+  data: Omit<Notification, 'id' | 'createdAt' | 'read'>
+): Promise<void> => {
+  if (!db) throw new Error('Firestore not initialized');
+  // Prevent users from notifying themselves
+  if (data.sender.id === data.recipientId) {
+    return;
+  }
+  const notificationRef = collection(db, `users/${data.recipientId}/notifications`);
+  const newNotification: Omit<Notification, 'id' | 'createdAt'> & {
+    createdAt: FieldValue;
+  } = {
+    ...data,
+    sender: {
+        id: data.sender.id,
+        name: data.sender.name,
+        username: data.sender.username,
+        avatarUrl: data.sender.avatarUrl,
+    },
+    read: false,
+    createdAt: serverTimestamp(),
+  };
+  await addDoc(notificationRef, newNotification);
+};
+
+
+export const getNotifications = async (userId: string): Promise<Notification[]> => {
+  if (!db) return [];
+  const ref = collection(db, `users/${userId}/notifications`);
+  const q = query(ref, orderBy('createdAt', 'desc'), limit(50));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => fromFirestore<Notification>(doc));
+};
+
+
+export const markAllNotificationsAsRead = async (userId: string): Promise<void> => {
+  if (!db) throw new Error('Firestore not initialized');
+  const batch = writeBatch(db);
+  const ref = collection(db, `users/${userId}/notifications`);
+  const q = query(ref, where('read', '==', false));
+  const snapshot = await getDocs(q);
+  snapshot.docs.forEach(doc => {
+    batch.update(doc.ref, { read: true });
+  });
+  await batch.commit();
+};
+
 
 // ADMIN & MODERATION functions
 export const getCollectionCount = async (

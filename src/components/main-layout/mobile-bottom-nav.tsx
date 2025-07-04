@@ -7,10 +7,13 @@ import { cn } from '@/lib/utils';
 import { CreatePostDialog } from '../create-post-dialog';
 import { Button } from '../ui/button';
 import { useAuth } from '@/hooks/use-auth';
+import { useNotification } from '@/hooks/use-notification';
+import { Badge } from '../ui/badge';
 
 export function MobileBottomNav() {
   const pathname = usePathname();
   const { user } = useAuth();
+  const { unreadCount } = useNotification();
 
   const getLinkClass = (href: string) => {
     if (href.startsWith('/profile')) {
@@ -57,11 +60,16 @@ export function MobileBottomNav() {
           <Link
             href="/notifications"
             className={cn(
-              'flex-1 p-2 text-muted-foreground transition-colors hover:text-primary',
+              'relative flex-1 p-2 text-muted-foreground transition-colors hover:text-primary',
               getLinkClass('/notifications') && 'text-primary'
             )}
           >
             <Bell className="mx-auto h-7 w-7" />
+            {unreadCount > 0 && (
+                <Badge className="absolute right-3 top-2 h-5 w-5 justify-center rounded-full p-0 text-xs">
+                    {unreadCount}
+                </Badge>
+            )}
           </Link>
           <Link
             href={`/profile/${user?.uid || 'user1'}`}

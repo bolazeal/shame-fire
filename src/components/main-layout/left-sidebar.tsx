@@ -24,8 +24,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { UserAvatar } from '../user-avatar';
+import { useNotification } from '@/hooks/use-notification';
+import { Badge } from '../ui/badge';
 
 const navItems = [
   { href: '/home', icon: Home, text: 'Home' },
@@ -40,14 +41,10 @@ const navItems = [
 
 export function LeftSidebar() {
   const { user, logout, fullProfile } = useAuth();
+  const { unreadCount } = useNotification();
 
   const handleLogout = async () => {
     await logout();
-  };
-
-  const getUsername = (email: string | null): string => {
-    if (!email) return 'user';
-    return email.split('@')[0];
   };
 
   return (
@@ -64,16 +61,23 @@ export function LeftSidebar() {
               return null;
             }
             if(item.href.startsWith('/profile')) {
-                // Link to the current user's profile
                 item.href = `/profile/${user?.uid}`;
             }
+            const isNotifications = item.text === 'Notifications';
             return (
               <Link
                 key={item.text}
                 href={item.href}
-                className="flex items-center gap-4 rounded-full px-4 py-3 text-lg font-medium transition-colors hover:bg-accent/50"
+                className="group flex items-center gap-4 rounded-full px-4 py-3 text-lg font-medium transition-colors hover:bg-accent/50"
               >
-                <item.icon className="h-6 w-6" />
+                <div className="relative">
+                  <item.icon className="h-6 w-6" />
+                  {isNotifications && unreadCount > 0 && (
+                    <Badge className="absolute -right-2 -top-1 h-5 w-5 justify-center rounded-full p-0 text-xs">
+                        {unreadCount}
+                    </Badge>
+                  )}
+                </div>
                 <span className="font-sans">{item.text}</span>
               </Link>
             );

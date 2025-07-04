@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { ReactNode, useEffect } from 'react';
 import { ModerationProvider } from '@/context/moderation-context';
 import { MobileBottomNav } from '@/components/main-layout/mobile-bottom-nav';
+import { NotificationProvider } from '@/context/notification-context';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
@@ -56,12 +57,14 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
   return (
     <ModerationProvider>
-      <div className="container mx-auto flex min-h-screen">
-        <LeftSidebar />
-        <main className="flex-1 border-x border-border pb-16 lg:pb-0">{children}</main>
-        <RightSidebar />
-      </div>
-      <MobileBottomNav />
+      <NotificationProvider>
+        <div className="container mx-auto flex min-h-screen">
+          <LeftSidebar />
+          <main className="flex-1 border-x border-border pb-16 lg:pb-0">{children}</main>
+          <RightSidebar />
+        </div>
+        <MobileBottomNav />
+      </NotificationProvider>
     </ModerationProvider>
   );
 }

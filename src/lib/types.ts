@@ -135,3 +135,27 @@ export interface ModerationContextType {
     reason: string
   ) => Promise<void>;
 }
+
+export type Notification = {
+  id: string;
+  type: 'follow' | 'upvote' | 'repost' | 'comment' | 'mention' | 'dispute';
+  sender: {
+    id: string;
+    name: string;
+    username: string;
+    avatarUrl?: string;
+  };
+  recipientId: string;
+  postId?: string;
+  postText?: string;
+  disputeId?: string;
+  read: boolean;
+  createdAt: string;
+};
+
+export interface NotificationContextType {
+  notifications: Notification[];
+  unreadCount: number;
+  loading: boolean;
+  markAllAsRead: () => Promise<void>;
+}

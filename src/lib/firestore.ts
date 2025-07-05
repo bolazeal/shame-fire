@@ -721,6 +721,18 @@ export const getComments = async (postId: string): Promise<Comment[]> => {
   return snapshot.docs.map((doc) => fromFirestore<Comment>(doc));
 };
 
+export const deleteComment = async (postId: string, commentId: string): Promise<void> => {
+  if (!db) throw new Error('Firestore not initialized');
+  const batch = writeBatch(db);
+  const commentRef = doc(db, `posts/${postId}/comments`, commentId);
+  batch.delete(commentRef);
+
+  const postRef = doc(db, 'posts', postId);
+  batch.update(postRef, { commentsCount: increment(-1) });
+
+  await batch.commit();
+}
+
 // NOTIFICATION functions
 export const createNotification = async (
   data: Omit<Notification, 'id' | 'createdAt' | 'read'>
@@ -979,6 +991,19 @@ export const listenToDisputeComments = (
   
     return unsubscribe;
   };
+
+export const deleteDisputeComment = async (disputeId:string, commentId:string): Promise<void> => {
+  if (!db) throw new Error('Firestore not initialized');
+  const batch = writeBatch(db);
+
+  const commentRef = doc(db, `disputes/${disputeId}/comments`, commentId);
+  batch.delete(commentRef);
+
+  const disputeRef = doc(db, 'disputes', disputeId);
+  batch.update(disputeRef, { commentsCount: increment(-1) });
+
+  await batch.commit();
+}
 
 export const castVote = async (disputeId: string, poll: Poll, optionText: string, userId: string): Promise<void> => {
     if (!db) throw new Error('Firestore not initialized');

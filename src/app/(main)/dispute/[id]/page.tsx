@@ -27,6 +27,7 @@ import {
   addDisputeComment,
   castVote,
   getUserProfile,
+  deleteDisputeComment,
 } from '@/lib/firestore';
 import { ModeratorVerdictForm } from '@/components/moderator-verdict-form';
 
@@ -164,6 +165,12 @@ export default function DisputePage() {
     } finally {
         setIsSubmittingComment(false);
     }
+  };
+
+  const handleDeleteDisputeComment = async (commentId: string) => {
+    if (!dispute) throw new Error("Dispute not found");
+    // The real-time listener will handle the UI update automatically.
+    await deleteDisputeComment(dispute.id, commentId);
   };
 
 
@@ -346,7 +353,7 @@ export default function DisputePage() {
                   </div>
                 </div>
                 {comments.map((comment) => (
-                  <CommentCard key={comment.id} comment={comment} />
+                  <CommentCard key={comment.id} comment={comment} onDelete={handleDeleteDisputeComment} />
                 ))}
               </div>
             </div>

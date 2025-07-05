@@ -8,11 +8,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
 import { useState, useEffect, useCallback } from 'react';
-import { getPost, getComments, addComment, getUserProfile } from '@/lib/firestore';
+import { getPost, getComments, addComment, getUserProfile, deleteComment } from '@/lib/firestore';
 import type { Post, Comment } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 function PostPageSkeleton() {
     return (
@@ -38,6 +39,7 @@ function PostPageSkeleton() {
 export default function PostPage() {
   const params = useParams<{ id: string }>();
   const { user: authUser } = useAuth();
+  const { toast } = useToast();
   
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -80,13 +82,24 @@ export default function PostPage() {
           await addComment(post.id, post.authorId, newComment, authorProfile);
           setNewComment("");
           // Refetch comments to show the new one
-          const commentsData = await getComments(post.id);
-          setComments(commentsData);
+          fetchPostAndComments();
       } catch (error) {
           console.error("Failed to add comment", error);
+          toast({
+            title: 'Comment Failed',
+            description: 'Could not post your comment.',
+            variant: 'destructive',
+          });
       } finally {
           setIsSubmitting(false);
       }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!post) throw new Error("Post not found");
+    await deleteComment(post.id, commentId);
+    // After deletion, refetch to update UI
+    fetchPostAndComments();
   };
 
 
@@ -143,7 +156,7 @@ export default function PostPage() {
         {comments.length > 0 ? (
           <div className="flex flex-col gap-4">
             {comments.map((comment) => (
-              <CommentCard key={comment.id} comment={comment} />
+              <CommentCard key={comment.id} comment={comment} onDelete={handleDeleteComment} />
             ))}
           </div>
         ) : (

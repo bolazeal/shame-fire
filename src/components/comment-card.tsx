@@ -3,16 +3,44 @@
 import type { Comment } from '@/lib/types';
 import { UserAvatar } from './user-avatar';
 import { Button } from './ui/button';
-import { ThumbsUp, ThumbsDown, MessageSquare } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageSquare, MoreHorizontal, Trash2, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useAuth } from '@/hooks/use-auth';
+import { useState } from 'react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface CommentCardProps {
   comment: Comment;
   isReply?: boolean;
+  onDelete?: (commentId: string) => Promise<void>;
 }
 
-export function CommentCard({ comment, isReply = false }: CommentCardProps) {
+export function CommentCard({ comment, isReply = false, onDelete }: CommentCardProps) {
   const commentDate = comment.createdAt ? new Date(comment.createdAt) : new Date();
+  const { user: authUser } = useAuth();
+  const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+
+  const isAuthor = authUser?.uid === comment.author.id;
+
+  const handleDelete = async () => {
+    if (!onDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await onDelete(comment.id);
+      toast({ title: "Comment Deleted", description: "Your comment has been successfully removed."});
+      setIsAlertOpen(false); // Close the dialog on success
+    } catch (error) {
+        console.error("Failed to delete comment:", error);
+        toast({ title: "Error", description: "Could not delete comment.", variant: 'destructive' });
+    } finally {
+        setIsDeleting(false);
+    }
+  }
 
   return (
     <div className={`flex gap-4 ${isReply ? 'ml-12' : ''}`}>
@@ -29,19 +57,60 @@ export function CommentCard({ comment, isReply = false }: CommentCardProps) {
           </div>
           <p className="mt-2 text-base">{comment.text}</p>
         </div>
-        <div className="mt-2 flex items-center gap-2 text-muted-foreground">
-          <Button variant="ghost" size="sm" className="flex items-center gap-1">
-            <ThumbsUp className="h-4 w-4" />
-            <span>{comment.upvotes}</span>
-          </Button>
-          <Button variant="ghost" size="sm" className="flex items-center gap-1">
-            <ThumbsDown className="h-4 w-4" />
-            <span>{comment.downvotes}</span>
-          </Button>
-          <Button variant="ghost" size="sm" className="flex items-center gap-1">
-            <MessageSquare className="h-4 w-4" />
-            <span>Reply</span>
-          </Button>
+        <div className="mt-2 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Button variant="ghost" size="sm" className="flex items-center gap-1">
+              <ThumbsUp className="h-4 w-4" />
+              <span>{comment.upvotes}</span>
+            </Button>
+            <Button variant="ghost" size="sm" className="flex items-center gap-1">
+              <ThumbsDown className="h-4 w-4" />
+              <span>{comment.downvotes}</span>
+            </Button>
+            <Button variant="ghost" size="sm" className="flex items-center gap-1">
+              <MessageSquare className="h-4 w-4" />
+              <span>Reply</span>
+            </Button>
+          </div>
+          
+          {isAuthor && onDelete && (
+            <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete your
+                    comment.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                    {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Delete Comment
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
         {/* Reply functionality to be implemented */}
       </div>

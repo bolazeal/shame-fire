@@ -51,6 +51,8 @@ import {
   createDispute,
   toggleVoteOnPost,
   toggleRepost,
+  getUserByEntityName,
+  nominateUserForMedal,
 } from '@/lib/firestore';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -77,6 +79,8 @@ export function PostCard({ post }: PostCardProps) {
   const [isReposted, setIsReposted] = useState(false);
   const [repostCount, setRepostCount] = useState(post.reposts);
   const [isRepostLoading, setIsRepostLoading] = useState(false);
+  
+  const [isNominating, setIsNominating] = useState(false);
 
   useEffect(() => {
     if (authUser) {
@@ -224,6 +228,35 @@ export function PostCard({ post }: PostCardProps) {
       });
     } finally {
       setIsEscalating(false);
+    }
+  };
+  
+  const handleNominateFromPost = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!authUser || !post.entity) {
+        toast({ title: "Cannot nominate from this post.", variant: "destructive" });
+        return;
+    }
+    setIsNominating(true);
+    try {
+        const targetUser = await getUserByEntityName(post.entity);
+        if (!targetUser) {
+            throw new Error(`User "${post.entity}" not found.`);
+        }
+        await nominateUserForMedal(targetUser.id, authUser.uid);
+        toast({
+            title: "Nomination successful!",
+            description: `${post.entity} has been nominated for a Medal of Honour.`,
+        });
+    } catch (error: any) {
+        toast({
+            title: "Nomination failed",
+            description: error.message,
+            variant: "destructive",
+        });
+    } finally {
+        setIsNominating(false);
     }
   };
 
@@ -416,14 +449,50 @@ export function PostCard({ post }: PostCardProps) {
 
           {post.type === 'endorsement' && (
             <div className="mt-4 flex justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-full font-bold"
-              >
-                <Trophy className="mr-2 h-4 w-4 text-amber-500" />
-                Nominate {post.entity} for Medal
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger
+                  asChild
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full font-bold"
+                    disabled={isNominating}
+                  >
+                    {isNominating ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trophy className="mr-2 h-4 w-4 text-amber-500" />
+                    )}
+                    Nominate {post.entity} for Medal
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Nominate {post.entity}?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will formally nominate {post.entity} for a Medal of
+                      Honour, recognizing their positive impact. This action is
+                      public.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel onClick={(e) => e.stopPropagation()}>
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleNominateFromPost}
+                      disabled={isNominating}
+                    >
+                      Confirm Nomination
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           )}
 

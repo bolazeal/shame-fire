@@ -54,6 +54,7 @@ import {
   toggleRepost,
   getUserByEntityName,
   nominateUserForMedal,
+  hasUserNominated,
 } from '@/lib/firestore';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -82,6 +83,7 @@ export function PostCard({ post }: PostCardProps) {
   const [isRepostLoading, setIsRepostLoading] = useState(false);
   
   const [isNominating, setIsNominating] = useState(false);
+  const [hasNominated, setHasNominated] = useState(false);
 
   useEffect(() => {
     if (authUser) {
@@ -95,12 +97,32 @@ export function PostCard({ post }: PostCardProps) {
         setVoteStatus(null);
       }
     }
+    
+    const checkNominationStatus = async () => {
+      if (authUser && post.entity && post.type === 'endorsement') {
+        try {
+          const targetUser = await getUserByEntityName(post.entity);
+          if (targetUser) {
+            const nominated = await hasUserNominated(
+              authUser.uid,
+              targetUser.id
+            );
+            setHasNominated(nominated);
+          }
+        } catch (error) {
+          console.error('Error checking nomination status', error);
+        }
+      }
+    };
+    checkNominationStatus();
   }, [
     authUser,
     post.bookmarkedBy,
     post.repostedBy,
     post.upvotedBy,
     post.downvotedBy,
+    post.entity,
+    post.type,
   ]);
 
   const handleVoteClick = async (
@@ -246,6 +268,7 @@ export function PostCard({ post }: PostCardProps) {
             throw new Error(`User "${post.entity}" not found.`);
         }
         await nominateUserForMedal(targetUser.id, authUser.uid);
+        setHasNominated(true);
         toast({
             title: "Nomination successful!",
             description: `${post.entity} has been nominated for a Medal of Honour.`,
@@ -462,14 +485,14 @@ export function PostCard({ post }: PostCardProps) {
                     variant="outline"
                     size="sm"
                     className="rounded-full font-bold"
-                    disabled={isNominating}
+                    disabled={isNominating || hasNominated}
                   >
                     {isNominating ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
                       <Trophy className="mr-2 h-4 w-4 text-amber-500" />
                     )}
-                    Nominate {post.entity} for Medal
+                    {hasNominated ? 'Nominated' : `Nominate ${post.entity} for Medal`}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent onClick={(e) => e.stopPropagation()}>

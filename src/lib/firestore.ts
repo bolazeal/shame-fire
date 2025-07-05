@@ -194,15 +194,14 @@ export const nominateUserForMedal = async (
 ): Promise<void> => {
   if (!db) throw new Error('Firestore not initialized');
 
-  const nominationRef = doc(db, `users/${nominatedUserId}/nominators`, nominatorId);
-  const nominationSnap = await getDoc(nominationRef);
-  if (nominationSnap.exists()) {
+  if (await hasUserNominated(nominatorId, nominatedUserId)) {
     throw new Error('You have already nominated this user.');
   }
 
   const batch = writeBatch(db);
 
   // Add to a subcollection to track who nominated
+  const nominationRef = doc(db, `users/${nominatedUserId}/nominators`, nominatorId);
   batch.set(nominationRef, { timestamp: serverTimestamp() });
 
   // Increment the public count on the user's profile
@@ -210,6 +209,16 @@ export const nominateUserForMedal = async (
   batch.update(userRef, { nominations: increment(1) });
 
   await batch.commit();
+};
+
+export const hasUserNominated = async (
+  nominatorId: string,
+  nominatedUserId: string
+): Promise<boolean> => {
+  if (!db) return false;
+  const nominationRef = doc(db, `users/${nominatedUserId}/nominators`, nominatorId);
+  const docSnap = await getDoc(nominationRef);
+  return docSnap.exists();
 };
 
 

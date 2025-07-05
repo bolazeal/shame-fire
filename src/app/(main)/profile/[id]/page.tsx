@@ -31,6 +31,7 @@ import {
   isFollowing,
   toggleFollow,
   nominateUserForMedal,
+  hasUserNominated,
 } from '@/lib/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -102,8 +103,12 @@ export default function ProfilePage() {
         const userProfile = await getUserProfile(userId as string);
         setProfileUser(userProfile);
         if (authUser && authUser.uid !== userId) {
-          const isUserFollowing = await isFollowing(authUser.uid, userId as string);
+          const [isUserFollowing, userHasNominated] = await Promise.all([
+            isFollowing(authUser.uid, userId as string),
+            hasUserNominated(authUser.uid, userId as string),
+          ]);
           setFollowing(isUserFollowing);
+          setHasNominated(userHasNominated);
         }
     } catch (error) {
         console.error("Failed to fetch profile", error);
@@ -286,9 +291,13 @@ export default function ProfilePage() {
                       <Button
                         variant="outline"
                         className="w-full font-bold"
-                        disabled={hasNominated}
+                        disabled={isNominating || hasNominated}
                       >
-                        <Trophy className="mr-2 h-4 w-4 text-amber-500" />
+                        {isNominating ? (
+                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                           <Trophy className="mr-2 h-4 w-4 text-amber-500" />
+                        )}
                         {hasNominated ? 'Nominated' : 'Nominate for Medal'}
                       </Button>
                     </AlertDialogTrigger>

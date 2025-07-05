@@ -37,7 +37,7 @@ const navItems = [
   { href: '/bookmarks', icon: Bookmark, text: 'Bookmarks' },
   { href: '/village-square', icon: Landmark, text: 'Village Square' },
   { href: '/hall-of-honour', icon: Trophy, text: 'Hall of Honour' },
-  { href: '/profile/user1', icon: User, text: 'Profile' },
+  { href: '/profile', icon: User, text: 'Profile' },
   { href: '/admin', icon: Shield, text: 'Admin Panel' },
 ];
 
@@ -62,21 +62,22 @@ export function LeftSidebar() {
             if (item.href === '/admin' && !fullProfile?.isAdmin) {
               return null;
             }
-            if(item.href.startsWith('/profile')) {
-                item.href = `/profile/${user?.uid}`;
-            }
+
+            const href =
+              item.text === 'Profile' ? `/profile/${user?.uid}` : item.href;
             const isNotifications = item.text === 'Notifications';
+
             return (
               <Link
                 key={item.text}
-                href={item.href}
+                href={href}
                 className="group flex items-center gap-4 rounded-full px-4 py-3 text-lg font-medium transition-colors hover:bg-accent/50"
               >
                 <div className="relative">
                   <item.icon className="h-6 w-6" />
                   {isNotifications && unreadCount > 0 && (
                     <Badge className="absolute -right-2 -top-1 h-5 w-5 justify-center rounded-full p-0 text-xs">
-                        {unreadCount}
+                      {unreadCount}
                     </Badge>
                   )}
                 </div>
@@ -95,31 +96,31 @@ export function LeftSidebar() {
       </div>
       <div className="p-4">
         {user && fullProfile && (
-            <DropdownMenu>
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button
+              <Button
                 variant="ghost"
                 className="flex h-auto w-full items-center justify-between rounded-full p-2 text-left hover:bg-accent/50"
-                >
+              >
                 <div className="flex items-center gap-2">
-                    <UserAvatar user={fullProfile} className="h-10 w-10" />
-                    <div>
+                  <UserAvatar user={fullProfile} className="h-10 w-10" />
+                  <div>
                     <p className="font-bold">{fullProfile.name}</p>
                     <p className="text-sm text-muted-foreground">
-                        @{fullProfile.username}
+                      @{fullProfile.username}
                     </p>
-                    </div>
+                  </div>
                 </div>
                 <MoreHorizontal className="h-5 w-5" />
-                </Button>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuItem onClick={handleLogout}>
+              <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
-                </DropdownMenuItem>
+              </DropdownMenuItem>
             </DropdownMenuContent>
-            </DropdownMenu>
+          </DropdownMenu>
         )}
       </div>
     </aside>

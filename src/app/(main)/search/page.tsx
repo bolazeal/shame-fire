@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Search as SearchIcon, Loader2 } from 'lucide-react';
@@ -18,9 +19,11 @@ function UserResultCard({ user }: { user: User }) {
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(true);
 
+  const isCurrentUser = authUser?.uid === user.id;
+
   useEffect(() => {
     async function checkFollowStatus() {
-      if (!authUser) {
+      if (!authUser || isCurrentUser) {
         setIsCheckingStatus(false);
         return;
       }
@@ -30,11 +33,9 @@ function UserResultCard({ user }: { user: User }) {
       setIsCheckingStatus(false);
     }
     checkFollowStatus();
-  }, [authUser, user.id]);
+  }, [authUser, user.id, isCurrentUser]);
 
-  const handleFollowToggle = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleFollowToggle = async () => {
     if (!authUser || isFollowLoading || isCheckingStatus) return;
 
     setIsFollowLoading(true);
@@ -49,40 +50,33 @@ function UserResultCard({ user }: { user: User }) {
     }
   };
 
-  const isCurrentUser = authUser?.uid === user.id;
-
   return (
-    <Link
-      href={`/profile/${user.id}`}
-      className="block transition-colors hover:bg-accent/50"
-    >
-      <div className="flex items-center justify-between p-4">
-        <div className="flex items-center gap-4">
+    <div className="flex items-center justify-between p-4 transition-colors hover:bg-accent/50">
+      <Link href={`/profile/${user.id}`} className="flex flex-1 items-center gap-4 overflow-hidden">
           <UserAvatar user={user} />
-          <div>
-            <p className="font-bold">{user.name}</p>
-            <p className="text-muted-foreground">@{user.username}</p>
+          <div className="overflow-hidden">
+              <p className="truncate font-bold">{user.name}</p>
+              <p className="truncate text-muted-foreground">@{user.username}</p>
           </div>
-        </div>
-        {!isCurrentUser && (
+      </Link>
+      {!isCurrentUser && authUser && (
           <Button
-            variant={isFollowingState ? 'secondary' : 'outline'}
-            size="sm"
-            className="w-[100px] rounded-full font-bold"
-            onClick={handleFollowToggle}
-            disabled={isFollowLoading || isCheckingStatus}
+              variant={isFollowingState ? 'secondary' : 'outline'}
+              size="sm"
+              className="ml-4 w-[100px] shrink-0 rounded-full font-bold"
+              onClick={handleFollowToggle}
+              disabled={isFollowLoading || isCheckingStatus}
           >
-            {isFollowLoading || isCheckingStatus ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : isFollowingState ? (
-              'Following'
-            ) : (
-              'Follow'
-            )}
+              {isFollowLoading || isCheckingStatus ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isFollowingState ? (
+                  'Following'
+              ) : (
+                  'Follow'
+              )}
           </Button>
-        )}
-      </div>
-    </Link>
+      )}
+    </div>
   );
 }
 

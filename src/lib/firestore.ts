@@ -941,6 +941,65 @@ export const addVerdictToDispute = async (
   });
 };
 
+// SEARCH-related functions
+export const searchUsers = async (searchText: string): Promise<User[]> => {
+    if (!db) return [];
+    const usersRef = collection(db, 'users');
+    
+    // Firestore doesn't support case-insensitive or full-text search natively.
+    // This is a common workaround for prefix matching.
+    const usernameQuery = query(
+        usersRef,
+        where('username', '>=', searchText),
+        where('username', '<=', searchText + '\uf8ff'),
+        limit(5)
+    );
+    
+    const nameQuery = query(
+        usersRef,
+        where('name', '>=', searchText),
+        where('name', '<=', searchText + '\uf8ff'),
+        limit(5)
+    );
+
+    const [usernameSnapshot, nameSnapshot] = await Promise.all([
+        getDocs(usernameQuery),
+        getDocs(nameQuery),
+    ]);
+
+    const usersMap = new Map<string, User>();
+    usernameSnapshot.docs.forEach(doc => {
+        const user = fromFirestore<User>(doc);
+        usersMap.set(user.id, user);
+    });
+    nameSnapshot.docs.forEach(doc => {
+        const user = fromFirestore<User>(doc);
+        usersMap.set(user.id, user);
+    });
+    
+    return Array.from(usersMap.values());
+};
+
+export const searchPosts = async (searchText: string): Promise<Post[]> => {
+    if (!db) return [];
+    const postsRef = collection(db, 'posts');
+
+    // As with users, true full-text search requires a dedicated search service.
+    // For this demo, we will search for posts where the category matches the search text
+    // as a prefix. This demonstrates the concept.
+    const categoryQuery = query(
+        postsRef,
+        where('category', '>=', searchText),
+        where('category', '<=', searchText + '\uf8ff'),
+        orderBy('category'),
+        orderBy('createdAt', 'desc'),
+        limit(10)
+    );
+    
+    const snapshot = await getDocs(categoryQuery);
+    return snapshot.docs.map(doc => fromFirestore<Post>(doc));
+};
+
 // MESSAGE-related functions
 export const getConversations = (
   userId: string,
@@ -1008,63 +1067,4 @@ export const sendMessage = async (
   });
 
   await batch.commit();
-};
-
-// SEARCH-related functions
-export const searchUsers = async (searchText: string): Promise<User[]> => {
-    if (!db) return [];
-    const usersRef = collection(db, 'users');
-    
-    // Firestore doesn't support case-insensitive or full-text search natively.
-    // This is a common workaround for prefix matching.
-    const usernameQuery = query(
-        usersRef,
-        where('username', '>=', searchText),
-        where('username', '<=', searchText + '\uf8ff'),
-        limit(5)
-    );
-    
-    const nameQuery = query(
-        usersRef,
-        where('name', '>=', searchText),
-        where('name', '<=', searchText + '\uf8ff'),
-        limit(5)
-    );
-
-    const [usernameSnapshot, nameSnapshot] = await Promise.all([
-        getDocs(usernameQuery),
-        getDocs(nameQuery),
-    ]);
-
-    const usersMap = new Map<string, User>();
-    usernameSnapshot.docs.forEach(doc => {
-        const user = fromFirestore<User>(doc);
-        usersMap.set(user.id, user);
-    });
-    nameSnapshot.docs.forEach(doc => {
-        const user = fromFirestore<User>(doc);
-        usersMap.set(user.id, user);
-    });
-    
-    return Array.from(usersMap.values());
-};
-
-export const searchPosts = async (searchText: string): Promise<Post[]> => {
-    if (!db) return [];
-    const postsRef = collection(db, 'posts');
-
-    // As with users, true full-text search requires a dedicated search service.
-    // For this demo, we will search for posts where the category matches the search text
-    // as a prefix. This demonstrates the concept.
-    const categoryQuery = query(
-        postsRef,
-        where('category', '>=', searchText),
-        where('category', '<=', searchText + '\uf8ff'),
-        orderBy('category'),
-        orderBy('createdAt', 'desc'),
-        limit(10)
-    );
-    
-    const snapshot = await getDocs(categoryQuery);
-    return snapshot.docs.map(doc => fromFirestore<Post>(doc));
 };

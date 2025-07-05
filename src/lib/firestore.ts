@@ -333,6 +333,15 @@ export const createPost = async (
     downvotedBy: [],
     isEscalated: false,
   };
+  
+  const entityContact: Post['entityContact'] = {};
+  if (postData.entityContactEmail) entityContact.email = postData.entityContactEmail;
+  if (postData.entityContactPhone) entityContact.phone = postData.entityContactPhone;
+  if (postData.entityContactSocialMedia) entityContact.socialMedia = postData.entityContactSocialMedia;
+  
+  if (Object.keys(entityContact).length > 0) {
+      newPost.entityContact = entityContact;
+  }
 
   // Step 2: AI analysis for reports and endorsements
   if (postData.type !== 'post') {

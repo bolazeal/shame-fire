@@ -8,6 +8,7 @@ import {
   Image as ImageIcon,
   Video as VideoIcon,
   X,
+  ChevronDown,
 } from 'lucide-react';
 import Image from 'next/image';
 import React, { useRef, useState } from 'react';
@@ -38,6 +39,11 @@ import {
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { useAuth } from '@/hooks/use-auth';
 import { createPost, getUserProfile } from '@/lib/firestore';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from './ui/collapsible';
 
 export const createPostFormSchema = z
   .object({
@@ -50,6 +56,17 @@ export const createPostFormSchema = z
     category: z.string().optional(),
     mediaUrl: z.string().optional(),
     mediaType: z.enum(['image', 'video']).optional(),
+    entityContactEmail: z
+      .string()
+      .email({ message: 'Please enter a valid email.' })
+      .optional()
+      .or(z.literal('')),
+    entityContactPhone: z.string().optional(),
+    entityContactSocialMedia: z
+      .string()
+      .url({ message: 'Please enter a valid URL.' })
+      .optional()
+      .or(z.literal('')),
   })
   .refine(
     (data) => {
@@ -104,6 +121,7 @@ export function CreatePostForm({
   } | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const [isContactOpen, setIsContactOpen] = useState(false);
 
   const form = useForm<z.infer<typeof createPostFormSchema>>({
     resolver: zodResolver(createPostFormSchema),
@@ -272,6 +290,71 @@ export function CreatePostForm({
                   </FormItem>
                 )}
               />
+            )}
+
+            {activeTab !== 'post' && (
+              <Collapsible open={isContactOpen} onOpenChange={setIsContactOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="link" className="p-0 text-sm">
+                    Add Contact Information (Optional)
+                    <ChevronDown
+                      className={`ml-1 h-4 w-4 transition-transform ${
+                        isContactOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4 pt-4">
+                  <p className="text-xs text-muted-foreground">
+                    Provide this info if the person/entity isn't on this
+                    platform. This helps us contact them about this post.
+                  </p>
+                  <FormField
+                    control={form.control}
+                    name="entityContactEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Entity's Email</FormLabel>
+                        <FormControl>
+                          <Input placeholder="contact@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="entityContactPhone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Entity's Phone Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="+1-555-123-4567" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="entityContactSocialMedia"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Entity's Social Media Profile URL
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="https://twitter.com/username"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
             )}
 
             <FormField

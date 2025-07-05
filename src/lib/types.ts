@@ -82,6 +82,11 @@ export type Post = {
   authorId: string; // Reference to author's UID
   postingAs?: 'verified' | 'anonymous' | 'whistleblower';
   entity?: string;
+  entityContact?: {
+    email?: string;
+    phone?: string;
+    socialMedia?: string;
+  };
   text: string;
   mediaUrl?: string;
   mediaType?: 'image' | 'video';

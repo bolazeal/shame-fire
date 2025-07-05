@@ -1,6 +1,6 @@
-
 'use client';
 
+import { useRouter } from 'next/navigation';
 import type { Post } from '@/lib/types';
 import { UserAvatar } from './user-avatar';
 import { Button } from './ui/button';
@@ -63,6 +63,7 @@ interface PostCardProps {
 }
 
 export function PostCard({ post }: PostCardProps) {
+  const router = useRouter();
   const { user: authUser } = useAuth();
   const { toast } = useToast();
 
@@ -81,7 +82,7 @@ export function PostCard({ post }: PostCardProps) {
   const [isReposted, setIsReposted] = useState(false);
   const [repostCount, setRepostCount] = useState(post.reposts);
   const [isRepostLoading, setIsRepostLoading] = useState(false);
-  
+
   const [isNominating, setIsNominating] = useState(false);
   const [hasNominated, setHasNominated] = useState(false);
 
@@ -97,7 +98,7 @@ export function PostCard({ post }: PostCardProps) {
         setVoteStatus(null);
       }
     }
-    
+
     const checkNominationStatus = async () => {
       if (authUser && post.entity && post.type === 'endorsement') {
         try {
@@ -253,34 +254,34 @@ export function PostCard({ post }: PostCardProps) {
       setIsEscalating(false);
     }
   };
-  
+
   const handleNominateFromPost = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!authUser || !post.entity) {
-        toast({ title: "Cannot nominate from this post.", variant: "destructive" });
-        return;
+      toast({ title: 'Cannot nominate from this post.', variant: 'destructive' });
+      return;
     }
     setIsNominating(true);
     try {
-        const targetUser = await getUserByEntityName(post.entity);
-        if (!targetUser) {
-            throw new Error(`User "${post.entity}" not found.`);
-        }
-        await nominateUserForMedal(targetUser.id, authUser.uid);
-        setHasNominated(true);
-        toast({
-            title: "Nomination successful!",
-            description: `${post.entity} has been nominated for a Medal of Honour.`,
-        });
+      const targetUser = await getUserByEntityName(post.entity);
+      if (!targetUser) {
+        throw new Error(`User "${post.entity}" not found.`);
+      }
+      await nominateUserForMedal(targetUser.id, authUser.uid);
+      setHasNominated(true);
+      toast({
+        title: 'Nomination successful!',
+        description: `${post.entity} has been nominated for a Medal of Honour.`,
+      });
     } catch (error: any) {
-        toast({
-            title: "Nomination failed",
-            description: error.message,
-            variant: "destructive",
-        });
+      toast({
+        title: 'Nomination failed',
+        description: error.message,
+        variant: 'destructive',
+      });
     } finally {
-        setIsNominating(false);
+      setIsNominating(false);
     }
   };
 
@@ -320,6 +321,11 @@ export function PostCard({ post }: PostCardProps) {
     });
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    router.push(`/post/${post.id}`);
+  };
+
   const canEscalate =
     post.type === 'report' &&
     authUser &&
@@ -330,9 +336,9 @@ export function PostCard({ post }: PostCardProps) {
   const postDate = post.createdAt ? new Date(post.createdAt) : new Date();
 
   return (
-    <Link
-      href={`/post/${post.id}`}
-      className="block transition-colors hover:bg-accent/10"
+    <article
+      onClick={handleCardClick}
+      className="cursor-pointer transition-colors hover:bg-accent/10"
     >
       <div className="flex gap-4 border-b p-4">
         {isAnonymous || isWhistleblower ? (
@@ -351,13 +357,19 @@ export function PostCard({ post }: PostCardProps) {
         <div className="flex-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm">
-              <span className="font-bold hover:underline">{authorName}</span>
+              <Link
+                href={`/profile/${post.author.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="font-bold hover:underline"
+              >
+                {authorName}
+              </Link>
               {showVerifiedBadge && (
                 <ShieldCheck className="h-4 w-4 text-primary" />
               )}
               <span className="text-muted-foreground">@{authorUsername}</span>
               <span className="text-muted-foreground">·</span>
-              <span className="text-muted-foreground hover:underline" suppressHydrationWarning>
+              <span className="text-muted-foreground" suppressHydrationWarning>
                 {formatDistanceToNow(postDate, { addSuffix: true })}
               </span>
             </div>
@@ -416,6 +428,7 @@ export function PostCard({ post }: PostCardProps) {
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 rounded-full"
+                onClick={(e) => e.stopPropagation()}
               >
                 <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
               </Button>
@@ -452,7 +465,10 @@ export function PostCard({ post }: PostCardProps) {
           )}
 
           {post.mediaUrl && (
-            <div className="relative mt-2 aspect-video w-full overflow-hidden rounded-xl border">
+            <div
+              className="relative mt-2 aspect-video w-full overflow-hidden rounded-xl border"
+              onClick={(e) => e.stopPropagation()}
+            >
               {post.mediaType === 'image' ? (
                 <Image
                   src={post.mediaUrl}
@@ -466,6 +482,7 @@ export function PostCard({ post }: PostCardProps) {
                   src={post.mediaUrl}
                   controls
                   className="h-full w-full bg-black object-contain"
+                  onClick={(e) => e.stopPropagation()}
                 />
               )}
             </div>
@@ -492,12 +509,16 @@ export function PostCard({ post }: PostCardProps) {
                     ) : (
                       <Trophy className="mr-2 h-4 w-4 text-amber-500" />
                     )}
-                    {hasNominated ? 'Nominated' : `Nominate ${post.entity} for Medal`}
+                    {hasNominated
+                      ? 'Nominated'
+                      : `Nominate ${post.entity} for Medal`}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Nominate {post.entity}?</AlertDialogTitle>
+                    <AlertDialogTitle>
+                      Nominate {post.entity}?
+                    </AlertDialogTitle>
                     <AlertDialogDescription>
                       This will formally nominate {post.entity} for a Medal of
                       Honour, recognizing their positive impact. This action is
@@ -571,7 +592,11 @@ export function PostCard({ post }: PostCardProps) {
                 isReposted && 'text-green-500'
               )}
             >
-              {isRepostLoading ? <Loader2 className="animate-spin h-5 w-5" /> : <Repeat className="h-5 w-5" />}
+              {isRepostLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Repeat className="h-5 w-5" />
+              )}
               <span>{repostCount}</span>
             </Button>
             <Button
@@ -584,9 +609,16 @@ export function PostCard({ post }: PostCardProps) {
                 voteStatus === 'up' && 'text-sky-500'
               )}
             >
-              {isVoteLoading && voteStatus !== 'down' ? <Loader2 className="animate-spin h-5 w-5" /> : <ThumbsUp
-                className={cn('h-5 w-5', voteStatus === 'up' && 'fill-current')}
-              />}
+              {isVoteLoading && voteStatus !== 'down' ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <ThumbsUp
+                  className={cn(
+                    'h-5 w-5',
+                    voteStatus === 'up' && 'fill-current'
+                  )}
+                />
+              )}
               <span>{voteCounts.upvotes}</span>
             </Button>
             <Button
@@ -599,12 +631,16 @@ export function PostCard({ post }: PostCardProps) {
                 voteStatus === 'down' && 'text-red-500'
               )}
             >
-              {isVoteLoading && voteStatus !== 'up' ? <Loader2 className="animate-spin h-5 w-5" /> : <ThumbsDown
-                className={cn(
-                  'h-5 w-5',
-                  voteStatus === 'down' && 'fill-current'
-                )}
-              />}
+              {isVoteLoading && voteStatus !== 'up' ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <ThumbsDown
+                  className={cn(
+                    'h-5 w-5',
+                    voteStatus === 'down' && 'fill-current'
+                  )}
+                />
+              )}
               <span>{voteCounts.downvotes}</span>
             </Button>
             <div className="flex items-center">
@@ -618,9 +654,13 @@ export function PostCard({ post }: PostCardProps) {
                 onClick={handleBookmarkClick}
                 disabled={isBookmarkLoading}
               >
-                {isBookmarkLoading ? <Loader2 className="animate-spin h-5 w-5" /> : <Bookmark
-                  className={cn('h-5 w-5', isBookmarked && 'fill-current')}
-                />}
+                {isBookmarkLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Bookmark
+                    className={cn('h-5 w-5', isBookmarked && 'fill-current')}
+                  />
+                )}
                 {bookmarkCount > 0 && <span>{bookmarkCount}</span>}
               </Button>
               <Button
@@ -635,6 +675,6 @@ export function PostCard({ post }: PostCardProps) {
           </div>
         </div>
       </div>
-    </Link>
+    </article>
   );
 }

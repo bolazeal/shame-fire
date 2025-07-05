@@ -54,6 +54,12 @@ export const createUserProfile = async (
   username: string
 ): Promise<void> => {
   if (!db) throw new Error('Firestore not initialized');
+
+  // Check if this will be the first user to determine admin status
+  const usersCheckQuery = query(collection(db, 'users'), limit(1));
+  const usersCheckSnapshot = await getDocs(usersCheckQuery);
+  const isFirstUser = usersCheckSnapshot.empty;
+
   const userRef = doc(db, 'users', firebaseUser.uid);
   const usernameRef = doc(db, 'usernames', username.toLowerCase());
 
@@ -74,7 +80,7 @@ export const createUserProfile = async (
         avatarUrl: firebaseUser.photoURL || 'https://placehold.co/100x100.png',
         trustScore: 50,
         isVerified: false,
-        isAdmin: false,
+        isAdmin: isFirstUser, // Grant admin rights to the first user
         bio: 'New user on Shame.',
         location: '',
         website: '',

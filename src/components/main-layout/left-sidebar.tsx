@@ -13,6 +13,9 @@ import {
   Trophy,
   Tv,
   User,
+  Sun,
+  Moon,
+  Laptop,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -23,11 +26,17 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '../user-avatar';
 import { useNotification } from '@/hooks/use-notification';
 import { Badge } from '../ui/badge';
+import { useTheme } from 'next-themes';
 
 const navItems = [
   { href: '/home', icon: Home, text: 'Home' },
@@ -44,6 +53,7 @@ const navItems = [
 export function LeftSidebar() {
   const { user, logout, fullProfile } = useAuth();
   const { unreadCount } = useNotification();
+  const { setTheme } = useTheme();
 
   const handleLogout = async () => {
     await logout();
@@ -115,6 +125,29 @@ export function LeftSidebar() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Sun className="mr-2 h-4 w-4" />
+                  <span>Toggle Theme</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem onClick={() => setTheme('light')}>
+                      <Sun className="mr-2 h-4 w-4" />
+                      <span>Light</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme('dark')}>
+                      <Moon className="mr-2 h-4 w-4" />
+                      <span>Dark</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme('system')}>
+                      <Laptop className="mr-2 h-4 w-4" />
+                      <span>System</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>

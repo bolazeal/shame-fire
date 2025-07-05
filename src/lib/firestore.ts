@@ -531,16 +531,25 @@ export const toggleVoteOnPost = async (
   if (!db) throw new Error('Firestore not initialized');
   const postRef = doc(db, 'posts', postId);
 
-  await runTransaction(db, async (transaction) => {
-    const postDoc = await transaction.get(postRef);
-    if (!postDoc.exists()) {
-      throw "Document does not exist!";
-    }
+  // Get necessary data before the transaction
+  const postSnap = await getDoc(postRef);
+  if (!postSnap.exists()) {
+    throw 'Document does not exist!';
+  }
+  const postData = postSnap.data() as Post;
 
-    const data = postDoc.data() as Post;
+  let shouldSendNotification = false;
+
+  // Transaction for atomic update
+  await runTransaction(db, async (transaction) => {
+    const freshPostDoc = await transaction.get(postRef);
+    if (!freshPostDoc.exists()) {
+      throw 'Document does not exist during transaction!';
+    }
+    const data = freshPostDoc.data() as Post;
     const isUpvoted = data.upvotedBy.includes(userId);
     const isDownvoted = data.downvotedBy.includes(userId);
-    
+
     let updates: Record<string, any> = {};
 
     if (voteType === 'up') {
@@ -551,7 +560,8 @@ export const toggleVoteOnPost = async (
           upvotes: increment(-1),
         };
       } else {
-        // User is adding an upvote
+        // User is adding an upvote. This is when we notify.
+        shouldSendNotification = true;
         updates = {
           upvotedBy: arrayUnion(userId),
           upvotes: increment(1),
@@ -564,20 +574,9 @@ export const toggleVoteOnPost = async (
             downvotes: increment(-1),
           };
         }
-        // Create notification for upvote
-        const sender = await getUserProfile(userId);
-        if (sender && data.authorId !== userId) {
-            // This needs to be run outside the transaction
-            createNotification({
-                type: 'upvote',
-                recipientId: data.authorId,
-                sender,
-                postId: postDoc.id,
-                postText: data.text
-            });
-        }
       }
     } else if (voteType === 'down') {
+      // No notification for downvotes
       if (isDownvoted) {
         // User is toggling off their downvote
         updates = {
@@ -600,9 +599,23 @@ export const toggleVoteOnPost = async (
         }
       }
     }
-    
+
     transaction.update(postRef, updates);
   });
+
+  // Create notification outside the transaction if needed
+  if (shouldSendNotification && postData.authorId !== userId) {
+    const sender = await getUserProfile(userId);
+    if (sender) {
+      await createNotification({
+        type: 'upvote',
+        recipientId: postData.authorId,
+        sender,
+        postId: postId,
+        postText: postData.text,
+      });
+    }
+  }
 };
 
 

@@ -15,4 +15,5 @@ export interface AuthContextType {
   login: (email, password) => Promise<User | undefined>;
   loginWithGoogle: () => Promise<User | undefined>;
   logout: () => Promise<void>;
+  sendPasswordResetEmail: (email: string) => Promise<void>;
 }

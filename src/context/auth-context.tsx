@@ -10,6 +10,7 @@ import {
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, db, isFirebaseConfigured } from '@/lib/firebase';
 import type { AuthContextType } from '@/lib/types/auth';
@@ -234,7 +235,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const value = { user, fullProfile, loading, signup, login, loginWithGoogle, logout };
+  const sendPasswordResetEmailFunc = async (email: string) => {
+    if (!isFirebaseConfigured) {
+      console.warn('Mock Password Reset: Simulating email sent.');
+      toast({
+        title: 'Password Reset Email Sent',
+        description:
+          'If an account exists for this email, a reset link has been sent (simulated).',
+      });
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast({
+        title: 'Password Reset Email Sent',
+        description:
+          'If an account exists with that email, a password reset link has been sent to it.',
+      });
+    } catch (error: any) {
+      // Avoid revealing if a user exists or not for security reasons.
+      // The toast message is intentionally the same as on success.
+      console.error('Password reset error:', error);
+      toast({
+        title: 'Password Reset Email Sent',
+        description:
+          'If an account exists with that email, a password reset link has been sent to it.',
+      });
+    }
+  };
+
+  const value = { user, fullProfile, loading, signup, login, loginWithGoogle, logout, sendPasswordResetEmail: sendPasswordResetEmailFunc };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

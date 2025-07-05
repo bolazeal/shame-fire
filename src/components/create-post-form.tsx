@@ -15,8 +15,6 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { suggestCategories } from '@/ai/flows/suggest-categories';
-import { detectHarmfulContent } from '@/ai/flows/detect-harmful-content';
-import { analyzeSentiment } from '@/ai/flows/analyze-sentiment';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -38,11 +36,8 @@ import {
   TooltipTrigger,
 } from './ui/tooltip';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import { generateEndorsementSummary } from '@/ai/flows/generate-endorsement-summary';
 import { useAuth } from '@/hooks/use-auth';
-import { useModeration } from '@/hooks/use-moderation';
-import { createPost, getUserProfile, getUserByEntityName, updateUserProfile } from '@/lib/firestore';
-import { suggestTrustScore } from '@/ai/flows/suggest-trust-score';
+import { createPost, getUserProfile } from '@/lib/firestore';
 
 export const createPostFormSchema = z
   .object({
@@ -103,7 +98,6 @@ export function CreatePostForm({
   const [suggestedCategories, setSuggestedCategories] = useState<string[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { addFlaggedItem } = useModeration();
   const [mediaPreview, setMediaPreview] = useState<{
     url: string;
     type: 'image' | 'video';
@@ -202,80 +196,35 @@ export function CreatePostForm({
     }
 
     setIsSubmitting(true);
-
     try {
-      // AI Checks
-      const moderationResult = await detectHarmfulContent({
-        text: values.text,
-      });
-      if (moderationResult.isHarmful) {
-        const authorProfile = await getUserProfile(user.uid);
-        if (!authorProfile) throw new Error('Could not find user profile.');
-
-        await addFlaggedItem(values, authorProfile, moderationResult.reason);
-
-        toast({
-          title: 'Post Held for Review',
-          description: `Our AI moderation has flagged this content: ${moderationResult.reason}. A human moderator will assess it shortly.`,
-          variant: 'destructive',
-        });
-        setIsSubmitting(false);
-        onPostCreated();
-        return;
-      }
-
-      let finalValues: any = { ...values };
-
-      if (values.type !== 'post') {
-        const [sentimentResult, summaryResult] = await Promise.all([
-          analyzeSentiment({ text: values.text }),
-          generateEndorsementSummary({ endorsementText: values.text }),
-        ]);
-        finalValues.sentiment = sentimentResult;
-        finalValues.summary = summaryResult.summary;
-
-        // Update trust score of the entity being posted about
-        if (values.entity) {
-          const targetUser = await getUserByEntityName(values.entity);
-          if (targetUser && targetUser.id !== user.uid) {
-            try {
-              const scoreResult = await suggestTrustScore({
-                currentTrustScore: targetUser.trustScore,
-                postType: values.type as 'report' | 'endorsement',
-                postSentimentScore: sentimentResult.sentimentScore,
-              });
-
-              if (scoreResult.newTrustScore !== targetUser.trustScore) {
-                await updateUserProfile(targetUser.id, {
-                  trustScore: scoreResult.newTrustScore,
-                });
-              }
-            } catch (e) {
-              console.error('Failed to suggest or update trust score:', e);
-            }
-          }
-        }
-      }
-
-      // Get full author profile
       const authorProfile = await getUserProfile(user.uid);
       if (!authorProfile) throw new Error('Could not find user profile.');
 
-      await createPost(finalValues, authorProfile);
+      await createPost(values, authorProfile);
 
       toast({
         title: 'Post created!',
         description: `Your ${values.type} has been successfully submitted.`,
       });
       onPostCreated();
-    } catch (error) {
-      console.error('Failed to create post:', error);
-      toast({
-        title: 'Failed to create post',
-        description:
-          'An error occurred while submitting your post. Please try again.',
-        variant: 'destructive',
-      });
+    } catch (error: any) {
+      if (error.message?.startsWith('MODERATION_FLAG:')) {
+        const reason = error.message.split(':')[1];
+        toast({
+          title: 'Post Held for Review',
+          description: `Our AI moderation has flagged this content: ${reason}. A human moderator will assess it shortly.`,
+          variant: 'destructive',
+        });
+        onPostCreated(); // Close the dialog even if flagged
+      } else {
+        console.error('Failed to create post:', error);
+        toast({
+          title: 'Failed to create post',
+          description:
+            'An error occurred while submitting your post. Please try again.',
+          variant: 'destructive',
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }

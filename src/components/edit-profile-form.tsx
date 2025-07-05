@@ -20,7 +20,7 @@ import { Camera, Loader2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { UserAvatar } from './user-avatar';
 import Image from 'next/image';
-import { updateUserProfile } from '@/lib/firestore';
+import { updateProfileAction } from '@/lib/actions/user';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -84,17 +84,17 @@ export function EditProfileForm({ user, onSave }: EditProfileFormProps) {
   async function onSubmit(data: ProfileFormValues) {
     setIsSubmitting(true);
     try {
-      await updateUserProfile(user.id, data);
+      await updateProfileAction(user.id, data);
       onSave(data);
       toast({
         title: 'Profile updated',
         description: 'Your changes have been saved.',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update profile:', error);
       toast({
         title: 'Update Failed',
-        description: 'Could not save your profile changes.',
+        description: error.message || 'Could not save your profile changes.',
         variant: 'destructive',
       });
     } finally {

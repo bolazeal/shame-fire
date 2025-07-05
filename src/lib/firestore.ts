@@ -26,12 +26,11 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
-import type { Post, User, Comment, FlaggedContent, Dispute, Poll, Notification, Conversation, Message, Video } from './types';
-import type { z } from 'zod';
-import type { createPostFormSchema } from '@/components/create-post-form';
+import type { Post, User, Comment, FlaggedContent, Dispute, Poll, Notification, Conversation, Video, PostCreationData } from './types';
 import { suggestTrustScore } from '@/ai/flows/suggest-trust-score';
 import { analyzeSentiment } from '@/ai/flows/analyze-sentiment';
 import { generateEndorsementSummary } from '@/ai/flows/generate-endorsement-summary';
+import { detectHarmfulContent } from '@/ai/flows/detect-harmful-content';
 
 // Helper to convert Firestore doc to a serializable object
 export function fromFirestore<T>(doc): T {
@@ -128,16 +127,6 @@ export const getUserByEntityName = async (entityName: string): Promise<User | nu
     return null;
   }
   return fromFirestore<User>(snapshot.docs[0]);
-};
-
-
-export const updateUserProfile = async (
-  userId: string,
-  data: Partial<User>
-): Promise<void> => {
-    if (!db) throw new Error('Firestore not initialized');
-    const userRef = doc(db, 'users', userId);
-    await updateDoc(userRef, data);
 };
 
 export const updateUserAccountStatus = async (
@@ -283,15 +272,29 @@ export const toggleFollow = async (
 
 // POST-related functions
 export const createPost = async (
-  postData: z.infer<typeof createPostFormSchema>,
+  postData: PostCreationData,
   author: User
 ): Promise<string> => {
   if (!db) throw new Error('Firestore not initialized');
 
+  // Step 1: Content Moderation Check
+  const moderationResult = await detectHarmfulContent({ text: postData.text });
+  if (moderationResult.isHarmful) {
+    await addFlaggedItemToQueue({
+      postData,
+      author,
+      reason: moderationResult.reason,
+    });
+    // Throw a special error that the client can interpret
+    throw new Error(`MODERATION_FLAG:${moderationResult.reason}`);
+  }
+
+  const batch = writeBatch(db);
+  const postRef = doc(collection(db, 'posts'));
+  
   const newPost: Omit<Post, 'id' | 'createdAt'> & { createdAt: FieldValue } = {
     type: postData.type,
     author: {
-      // Embed author data for reads
       id: author.id,
       name:
         postData.postingAs === 'verified'
@@ -328,14 +331,45 @@ export const createPost = async (
     bookmarkedBy: [],
     upvotedBy: [],
     downvotedBy: [],
-    sentiment: (postData as any).sentiment,
-    summary: (postData as any).summary,
     isEscalated: false,
   };
 
-  const docRef = await addDoc(collection(db, 'posts'), newPost);
+  // Step 2: AI analysis for reports and endorsements
+  if (postData.type !== 'post') {
+    const [sentimentResult, summaryResult] = await Promise.all([
+      analyzeSentiment({ text: postData.text }),
+      generateEndorsementSummary({ endorsementText: postData.text }),
+    ]);
+    newPost.sentiment = sentimentResult;
+    newPost.summary = summaryResult.summary;
 
-  // Check for mentions and create notifications
+    // Step 3: Update trust score of the entity being posted about
+    if (postData.entity) {
+        const targetUser = await getUserByEntityName(postData.entity);
+        if (targetUser && targetUser.id !== author.id) {
+          try {
+            const scoreResult = await suggestTrustScore({
+              currentTrustScore: targetUser.trustScore,
+              postType: postData.type as 'report' | 'endorsement',
+              postSentimentScore: sentimentResult.sentimentScore,
+            });
+
+            if (scoreResult.newTrustScore !== targetUser.trustScore) {
+                const targetUserRef = doc(db, 'users', targetUser.id);
+                batch.update(targetUserRef, { trustScore: scoreResult.newTrustScore });
+            }
+          } catch (e) {
+            console.error('Failed to suggest or update trust score:', e);
+            // Non-fatal error, we can still create the post
+          }
+        }
+      }
+  }
+
+  // Step 4: Write post to DB
+  batch.set(postRef, newPost);
+
+  // Step 5: Handle Mentions
   const mentionRegex = /@([a-zA-Z0-9_]+)/g;
   const mentionedUsernames = [...new Set(Array.from(postData.text.matchAll(mentionRegex), m => m[1]))];
 
@@ -348,11 +382,13 @@ export const createPost = async (
         if (usernameSnap.exists()) {
             const recipientId = usernameSnap.data().userId;
             if (recipientId && recipientId !== author.id) {
+                // We create notification outside the batch as it's a separate write
+                // and not critical to the post creation itself.
                 await createNotification({
                     type: 'mention',
                     recipientId: recipientId,
                     sender: author,
-                    postId: docRef.id,
+                    postId: postRef.id,
                     postText: postData.text
                 });
             }
@@ -362,8 +398,11 @@ export const createPost = async (
       }
     }
   }
+  
+  // Step 6: Commit all batched writes
+  await batch.commit();
 
-  return docRef.id;
+  return postRef.id;
 };
 
 export const getPosts = async (
@@ -782,17 +821,8 @@ export const approveFlaggedItem = async (item: FlaggedContent) => {
   const authorProfile = await getUserProfile(item.author.id);
   if (!authorProfile) throw new Error('Could not find author profile.');
   
-  const postData = { ...item.postData };
-  
-  // Re-run AI analysis during approval to get sentiment and summary
-  if (postData.type !== 'post') {
-      const sentimentResult = await analyzeSentiment({ text: postData.text });
-      const summaryResult = await generateEndorsementSummary({ endorsementText: postData.text });
-      (postData as any).sentiment = sentimentResult;
-      (postData as any).summary = summaryResult.summary;
-  }
-  
-  await createPost(postData, authorProfile);
+  // Re-run the full, secure createPost flow for the approved content
+  await createPost(item.postData, authorProfile);
 
   // Then, remove it from the moderation queue
   await removeFlaggedItem(item.id);

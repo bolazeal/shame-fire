@@ -25,7 +25,7 @@ export function CommentCard({ comment, isReply = false }: CommentCardProps) {
               @{comment.author.username}
             </span>
             <span className="text-muted-foreground">·</span>
-            <span className="text-muted-foreground">{formatDistanceToNow(commentDate, { addSuffix: true })}</span>
+            <span className="text-muted-foreground" suppressHydrationWarning>{formatDistanceToNow(commentDate, { addSuffix: true })}</span>
           </div>
           <p className="mt-2 text-base">{comment.text}</p>
         </div>

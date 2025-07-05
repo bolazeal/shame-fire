@@ -77,7 +77,7 @@ export function ConversationList({
                   <div className="flex items-baseline justify-between">
                     <p className="truncate font-bold">{otherParticipant.name}</p>
                     {lastMessageDate && (
-                      <p className="flex-shrink-0 text-xs text-muted-foreground">
+                      <p className="flex-shrink-0 text-xs text-muted-foreground" suppressHydrationWarning>
                         {formatDistanceToNow(lastMessageDate, { addSuffix: true })}
                       </p>
                     )}

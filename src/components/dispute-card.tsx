@@ -33,7 +33,7 @@ export function DisputeCard({ dispute }: DisputeCardProps) {
               {dispute.status}
             </div>
             <h2 className="mt-2 font-headline text-xl">{dispute.title}</h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground" suppressHydrationWarning>
               Dispute opened {formatDistanceToNow(disputeDate, { addSuffix: true })}
             </p>
           </div>

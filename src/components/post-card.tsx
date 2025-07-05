@@ -333,7 +333,7 @@ export function PostCard({ post }: PostCardProps) {
               )}
               <span className="text-muted-foreground">@{authorUsername}</span>
               <span className="text-muted-foreground">·</span>
-              <span className="text-muted-foreground hover:underline">
+              <span className="text-muted-foreground hover:underline" suppressHydrationWarning>
                 {formatDistanceToNow(postDate, { addSuffix: true })}
               </span>
             </div>

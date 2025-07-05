@@ -79,7 +79,7 @@ export function NotificationCard({ notification }: NotificationCardProps) {
         </div>
         <div className="flex-1">
           <p className="text-base text-foreground">{text}</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground" suppressHydrationWarning>
             {formatDistanceToNow(notificationDate, { addSuffix: true })}
           </p>
         </div>

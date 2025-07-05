@@ -339,7 +339,7 @@ export default function ProfilePage() {
            )}
           <div className="flex items-center gap-1">
             <Calendar className="h-4 w-4" />
-            <span>Joined {formatDistanceToNow(joinedDate, { addSuffix: true })}</span>
+            <span suppressHydrationWarning>Joined {formatDistanceToNow(joinedDate, { addSuffix: true })}</span>
           </div>
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4" />

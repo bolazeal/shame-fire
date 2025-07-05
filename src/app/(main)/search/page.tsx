@@ -111,7 +111,7 @@ export default function SearchPage() {
     <div>
       <header className="sticky top-0 z-10 border-b border-border bg-background/80 p-2 backdrop-blur-sm sm:p-4">
         <div className="relative mx-auto max-w-xl">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <SearchIcon className="absolute left-3 top-1/2 z-10 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             placeholder="Search for users or categories..."
             className="w-full rounded-full bg-muted pl-10"

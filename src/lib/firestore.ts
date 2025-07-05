@@ -541,7 +541,7 @@ export const toggleVoteOnPost = async (
     const isUpvoted = data.upvotedBy.includes(userId);
     const isDownvoted = data.downvotedBy.includes(userId);
     
-    let updates = {};
+    let updates: Record<string, any> = {};
 
     if (voteType === 'up') {
       if (isUpvoted) {
@@ -567,11 +567,12 @@ export const toggleVoteOnPost = async (
         // Create notification for upvote
         const sender = await getUserProfile(userId);
         if (sender && data.authorId !== userId) {
-            await createNotification({
+            // This needs to be run outside the transaction
+            createNotification({
                 type: 'upvote',
                 recipientId: data.authorId,
                 sender,
-                postId: data.id,
+                postId: postDoc.id,
                 postText: data.text
             });
         }

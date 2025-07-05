@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Post } from '@/lib/types';
@@ -547,7 +548,7 @@ export function PostCard({ post }: PostCardProps) {
                 isReposted && 'text-green-500'
               )}
             >
-              <Repeat className="h-5 w-5" />
+              {isRepostLoading ? <Loader2 className="animate-spin h-5 w-5" /> : <Repeat className="h-5 w-5" />}
               <span>{repostCount}</span>
             </Button>
             <Button
@@ -560,9 +561,9 @@ export function PostCard({ post }: PostCardProps) {
                 voteStatus === 'up' && 'text-sky-500'
               )}
             >
-              <ThumbsUp
+              {isVoteLoading && voteStatus !== 'down' ? <Loader2 className="animate-spin h-5 w-5" /> : <ThumbsUp
                 className={cn('h-5 w-5', voteStatus === 'up' && 'fill-current')}
-              />
+              />}
               <span>{voteCounts.upvotes}</span>
             </Button>
             <Button
@@ -575,12 +576,12 @@ export function PostCard({ post }: PostCardProps) {
                 voteStatus === 'down' && 'text-red-500'
               )}
             >
-              <ThumbsDown
+              {isVoteLoading && voteStatus !== 'up' ? <Loader2 className="animate-spin h-5 w-5" /> : <ThumbsDown
                 className={cn(
                   'h-5 w-5',
                   voteStatus === 'down' && 'fill-current'
                 )}
-              />
+              />}
               <span>{voteCounts.downvotes}</span>
             </Button>
             <div className="flex items-center">
@@ -594,9 +595,9 @@ export function PostCard({ post }: PostCardProps) {
                 onClick={handleBookmarkClick}
                 disabled={isBookmarkLoading}
               >
-                <Bookmark
+                {isBookmarkLoading ? <Loader2 className="animate-spin h-5 w-5" /> : <Bookmark
                   className={cn('h-5 w-5', isBookmarked && 'fill-current')}
-                />
+                />}
                 {bookmarkCount > 0 && <span>{bookmarkCount}</span>}
               </Button>
               <Button

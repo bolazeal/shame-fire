@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { PostCard } from '@/components/post-card';
 import { useAuth } from '@/hooks/use-auth';
 import { isFollowing, toggleFollow } from '@/lib/firestore';
+import { useSearchParams } from 'next/navigation';
 
 function UserResultCard({ user }: { user: User }) {
   const { user: authUser } = useAuth();
@@ -81,13 +82,16 @@ function UserResultCard({ user }: { user: User }) {
 }
 
 export default function SearchPage() {
-  const [query, setQuery] = useState('');
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get('q') || '';
+
+  const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<{ users: User[]; posts: Post[] } | null>(null);
   const [isSearching, startSearchTransition] = useTransition();
-  const [isInitialState, setIsInitialState] = useState(true);
+  const [isInitialState, setIsInitialState] = useState(!initialQuery);
 
   const handleSearch = useCallback((searchTerm: string) => {
-    if (searchTerm.length > 1) {
+    if (searchTerm.trim().length > 1) {
       setIsInitialState(false);
       startSearchTransition(async () => {
         const searchResults = await searchAction(searchTerm);

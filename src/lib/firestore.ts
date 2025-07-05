@@ -433,6 +433,42 @@ export const getBookmarkedPosts = async (userId: string): Promise<Post[]> => {
   return snapshot.docs.map((doc) => fromFirestore<Post>(doc));
 };
 
+// TRENDS-related functions
+export const getTrendingTopics = async (): Promise<{ category: string; count: number }[]> => {
+  if (!db) return [];
+  
+  // Fetch recent posts (e.g., last 50) that have a category
+  const postsRef = collection(db, 'posts');
+  const q = query(
+      postsRef, 
+      where('category', '!=', null),
+      orderBy('category'),
+      orderBy('createdAt', 'desc'), 
+      limit(100)
+  );
+  
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return [];
+
+  const posts = snapshot.docs.map(doc => fromFirestore<Post>(doc));
+
+  // Aggregate categories
+  const categoryCounts = new Map<string, number>();
+  for (const post of posts) {
+      if (post.category) {
+          categoryCounts.set(post.category, (categoryCounts.get(post.category) || 0) + 1);
+      }
+  }
+
+  // Sort by count and take the top 5
+  const sortedTrends = Array.from(categoryCounts.entries())
+      .map(([category, count]) => ({ category, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+  return sortedTrends;
+};
+
 
 // INTERACTION functions
 export const toggleRepost = async (

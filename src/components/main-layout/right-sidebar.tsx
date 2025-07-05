@@ -6,18 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { UserAvatar } from '@/components/user-avatar';
-import { Trophy, Medal, Info, FileText, Loader2 } from 'lucide-react';
+import { Trophy, Medal, Info, FileText, Loader2, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
-import { getUsersToFollow, toggleFollow, isFollowing } from '@/lib/firestore';
+import { getUsersToFollow, toggleFollow, isFollowing, getTrendingTopics } from '@/lib/firestore';
 import type { User } from '@/lib/types';
 
-const trends = [
-  { category: 'Technology', topic: '#AI_Ethics', posts: '12.5K' },
-  { category: 'Business', topic: 'RemoteWork', posts: '45K' },
-  { category: 'Health', topic: '#Mindfulness', posts: '23K' },
-];
-
+interface Trend {
+    category: string;
+    count: number;
+}
 interface UserToFollow extends User {
     isFollowing: boolean;
     isFollowLoading: boolean;
@@ -26,15 +24,33 @@ interface UserToFollow extends User {
 export function RightSidebar() {
     const { user: authUser } = useAuth();
     const [usersToFollow, setUsersToFollow] = useState<UserToFollow[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loadingUsers, setLoadingUsers] = useState(true);
+
+    const [trends, setTrends] = useState<Trend[]>([]);
+    const [loadingTrends, setLoadingTrends] = useState(true);
+
+    useEffect(() => {
+        async function fetchTrends() {
+            setLoadingTrends(true);
+            try {
+                const trendingTopics = await getTrendingTopics();
+                setTrends(trendingTopics);
+            } catch (error) {
+                console.error("Failed to fetch trends:", error);
+            } finally {
+                setLoadingTrends(false);
+            }
+        }
+        fetchTrends();
+    }, []);
 
     useEffect(() => {
         async function fetchUsers() {
             if (!authUser) {
-                setLoading(false);
+                setLoadingUsers(false);
                 return;
             }
-            setLoading(true);
+            setLoadingUsers(true);
             const users = await getUsersToFollow(authUser.uid);
             const usersWithFollowStatus = await Promise.all(
                 users.map(async (user) => {
@@ -43,7 +59,7 @@ export function RightSidebar() {
                 })
             );
             setUsersToFollow(usersWithFollowStatus);
-            setLoading(false);
+            setLoadingUsers(false);
         }
 
         fetchUsers();
@@ -113,25 +129,34 @@ export function RightSidebar() {
 
             <Card>
                 <CardHeader>
-                <CardTitle>What’s happening</CardTitle>
+                <CardTitle className="flex items-center gap-2 font-headline">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    What’s happening
+                </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                 <div className="flex flex-col">
-                    {trends.map((trend) => (
-                    <Link
-                        key={trend.topic}
-                        href="#"
-                        className="border-b px-6 py-4 transition-colors last:border-b-0 hover:bg-accent/50"
-                    >
-                        <p className="text-sm text-muted-foreground">
-                        {trend.category}
-                        </p>
-                        <p className="font-bold">{trend.topic}</p>
-                        <p className="text-sm text-muted-foreground">
-                        {trend.posts} posts
-                        </p>
-                    </Link>
-                    ))}
+                    {loadingTrends ? (
+                         <div className="py-4 text-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                    ) : trends.length > 0 ? (
+                        trends.map((trend) => (
+                            <Link
+                                key={trend.category}
+                                href={`/search?q=${encodeURIComponent(trend.category)}`}
+                                className="border-b px-6 py-4 transition-colors last:border-b-0 hover:bg-accent/50"
+                            >
+                                <p className="text-sm text-muted-foreground">
+                                Trending in Shame
+                                </p>
+                                <p className="font-bold">#{trend.category.replace(/\s+/g, '')}</p>
+                                <p className="text-sm text-muted-foreground">
+                                {trend.count.toLocaleString()} posts
+                                </p>
+                            </Link>
+                        ))
+                    ) : (
+                        <p className="p-4 text-center text-muted-foreground">No trends right now.</p>
+                    )}
                 </div>
                 </CardContent>
             </Card>
@@ -140,7 +165,7 @@ export function RightSidebar() {
                 <CardTitle>Who to follow</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col px-6">
-                {loading ? (
+                {loadingUsers ? (
                     <div className="py-4 text-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
                 ) : (
                     usersToFollow.map((user, index) => (

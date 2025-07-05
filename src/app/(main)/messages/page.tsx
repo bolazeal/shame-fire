@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Mail, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import type { Conversation, Message } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
 import {
@@ -12,8 +11,6 @@ import {
 import { ConversationList } from '@/components/messages/conversation-list';
 import { ChatWindow } from '@/components/messages/chat-window';
 import { cn } from '@/lib/utils';
-import { isFirebaseConfigured } from '@/lib/firebase';
-import { mockConversations, mockMessages } from '@/lib/mock-data';
 
 export default function MessagesPage() {
   const { user } = useAuth();
@@ -29,22 +26,16 @@ export default function MessagesPage() {
   const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
-
-    let unsubscribe: () => void;
-    if (isFirebaseConfigured) {
-      unsubscribe = getConversations(user.uid, (convos) => {
-        setConversations(convos);
-        setLoadingConversations(false);
-      });
-    } else {
-      // Mock mode
-      setTimeout(() => {
-        setConversations(mockConversations);
-        setLoadingConversations(false);
-      }, 500);
-      unsubscribe = () => {};
+    if (!user) {
+      setLoadingConversations(false);
+      return;
     }
+
+    setLoadingConversations(true);
+    const unsubscribe = getConversations(user.uid, (convos) => {
+      setConversations(convos);
+      setLoadingConversations(false);
+    });
 
     return () => unsubscribe();
   }, [user]);
@@ -56,21 +47,10 @@ export default function MessagesPage() {
     }
 
     setLoadingMessages(true);
-    let unsubscribe: () => void;
-    if (isFirebaseConfigured) {
-        unsubscribe = getMessages(selectedConversationId, (msgs) => {
-            setMessages(msgs);
-            setLoadingMessages(false);
-        });
-    } else {
-        // Mock mode
-        setTimeout(() => {
-            setMessages(mockMessages[selectedConversationId] || []);
-            setLoadingMessages(false);
-        }, 300);
-        unsubscribe = () => {};
-    }
-
+    const unsubscribe = getMessages(selectedConversationId, (msgs) => {
+      setMessages(msgs);
+      setLoadingMessages(false);
+    });
 
     return () => unsubscribe();
   }, [selectedConversationId]);
@@ -82,32 +62,18 @@ export default function MessagesPage() {
 
   const handleSendMessage = async (text: string) => {
     if (!selectedConversationId || !user) return;
-
-    if(isFirebaseConfigured) {
-        await sendMessage(selectedConversationId, user.uid, text);
-    } else {
-        // Mock mode
-        const newMessage: Message = {
-            id: `msg_${Date.now()}`,
-            senderId: user.uid,
-            text,
-            createdAt: new Date().toISOString()
-        };
-        setMessages(prev => [...prev, newMessage]);
-    }
-
+    await sendMessage(selectedConversationId, user.uid, text);
   };
-  
-  const selectedConversation = conversations.find(c => c.id === selectedConversationId);
+
+  const selectedConversation = conversations.find(
+    (c) => c.id === selectedConversationId
+  );
 
   return (
     <div className="h-[calc(100vh-65px)] overflow-hidden lg:h-full">
       <main className="grid h-full grid-cols-1 md:grid-cols-3 xl:grid-cols-4">
         <div
-          className={cn(
-            'col-span-1 h-full',
-            showChat && 'hidden md:block'
-          )}
+          className={cn('col-span-1 h-full', showChat && 'hidden md:block')}
         >
           <ConversationList
             conversations={conversations}

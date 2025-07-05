@@ -325,6 +325,35 @@ export const createPost = async (
   };
 
   const docRef = await addDoc(collection(db, 'posts'), newPost);
+
+  // Check for mentions and create notifications
+  const mentionRegex = /@([a-zA-Z0-9_]+)/g;
+  const mentionedUsernames = [...new Set(Array.from(postData.text.matchAll(mentionRegex), m => m[1]))];
+
+  if (mentionedUsernames.length > 0) {
+    for (const username of mentionedUsernames) {
+      try {
+        const usernameRef = doc(db, 'usernames', username.toLowerCase());
+        const usernameSnap = await getDoc(usernameRef);
+
+        if (usernameSnap.exists()) {
+            const recipientId = usernameSnap.data().userId;
+            if (recipientId && recipientId !== author.id) {
+                await createNotification({
+                    type: 'mention',
+                    recipientId: recipientId,
+                    sender: author,
+                    postId: docRef.id,
+                    postText: postData.text
+                });
+            }
+        }
+      } catch (error) {
+        console.error(`Failed to process mention for @${username}:`, error);
+      }
+    }
+  }
+
   return docRef.id;
 };
 
@@ -629,6 +658,12 @@ export const getNotifications = async (userId: string): Promise<Notification[]> 
   return snapshot.docs.map(doc => fromFirestore<Notification>(doc));
 };
 
+
+export const markNotificationAsRead = async (userId: string, notificationId: string): Promise<void> => {
+    if (!db) throw new Error('Firestore not initialized');
+    const notificationRef = doc(db, `users/${userId}/notifications`, notificationId);
+    await updateDoc(notificationRef, { read: true });
+};
 
 export const markAllNotificationsAsRead = async (userId: string): Promise<void> => {
   if (!db) throw new Error('Firestore not initialized');

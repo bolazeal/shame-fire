@@ -6,7 +6,9 @@ import { UserAvatar } from './user-avatar';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
-import { MessageCircle, ThumbsUp, Repeat, UserPlus } from 'lucide-react';
+import { MessageCircle, ThumbsUp, Repeat, UserPlus, AtSign } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { markNotificationAsRead } from '@/lib/firestore';
 
 interface NotificationCardProps {
   notification: Notification;
@@ -17,6 +19,7 @@ const notificationIcons = {
   upvote: ThumbsUp,
   repost: Repeat,
   comment: MessageCircle,
+  mention: AtSign,
 };
 
 const getNotificationTextAndLink = (notification: Notification) => {
@@ -46,6 +49,12 @@ const getNotificationTextAndLink = (notification: Notification) => {
           href: `/post/${notification.postId}`,
           Icon: notificationIcons.comment,
         };
+      case 'mention':
+        return {
+            text: <>{sender} mentioned you in a post: <span className="italic">"{notification.postText}"</span></>,
+            href: `/post/${notification.postId}`,
+            Icon: notificationIcons.mention,
+        };
       default:
         return {
           text: <>New notification</>,
@@ -56,11 +65,24 @@ const getNotificationTextAndLink = (notification: Notification) => {
 };
 
 export function NotificationCard({ notification }: NotificationCardProps) {
+  const { user } = useAuth();
   const { text, href, Icon } = getNotificationTextAndLink(notification);
   const notificationDate = new Date(notification.createdAt);
 
+  const handleClick = async () => {
+    if (user && !notification.read) {
+      try {
+        await markNotificationAsRead(user.uid, notification.id);
+      } catch (error) {
+        console.error("Failed to mark notification as read:", error);
+        // Do not show toast for this background action
+      }
+    }
+  };
+
+
   return (
-    <Link href={href}>
+    <Link href={href} onClick={handleClick}>
       <div
         className={cn(
           'flex items-start gap-4 p-4 border-b transition-colors hover:bg-accent/50',
@@ -73,7 +95,7 @@ export function NotificationCard({ notification }: NotificationCardProps) {
                 <Icon className={cn("h-5 w-5", {
                     'text-sky-500': notification.type === 'upvote',
                     'text-green-500': notification.type === 'repost',
-                    'text-primary': ['follow', 'comment'].includes(notification.type),
+                    'text-primary': ['follow', 'comment', 'mention'].includes(notification.type),
                 })} />
             </div>
         </div>

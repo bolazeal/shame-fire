@@ -1,37 +1,46 @@
-# Shame: A Next.js Platform for Public Accountability
+# Shame: A Platform for Public Accountability
 
-**Shame** is a full-stack social media application designed to foster public accountability and transparency. Built with Next.js, Firebase, and Google's Genkit AI, this platform allows users to post reports of misconduct and endorsements of positive actions, creating a community-driven ecosystem of trust and public record.
+![Shame App Screenshot](https://placehold.co/1200x600.png "Shame App UI")
 
-The application features a robust, real-time architecture, an AI-powered moderation and analysis system, and a comprehensive admin panel for platform management.
+**Shame** is a modern, full-stack social media application built to promote transparency and public accountability. Leveraging Next.js, Firebase, and Google's Genkit AI, it provides a feature-rich platform where users can report misconduct, endorse positive actions, and engage in community-governed dispute resolution.
 
-![Shame App Screenshot](https://placehold.co/1200x600.png)
+This project showcases a complete, production-ready application with real-time features, AI-powered content analysis, and comprehensive administrative tools.
 
-## Core Features
+## Key Features
 
--   **Dynamic Social Feed**: A central, filterable feed for posts, reports, and endorsements with real-time updates for interactions like votes, reposts, and comments.
--   **Real-Time Direct Messaging**: A fully-featured, private messaging system allowing users to have one-on-one conversations.
--   **Full User Authentication**: Secure sign-up and login via email/password and Google OAuth, with password reset functionality and persistent sessions.
--   **Comprehensive User Profiles**: Customizable profiles with banners, avatars, bios, and a dynamic, AI-calculated **Trust Score** that adjusts based on community feedback.
--   **Shame or Shine TV**: A dedicated section for long-form video content, including interviews, investigative reports, and community spotlights.
--   **Advanced Content Creation**: A unified dialog for creating posts, detailed reports, or positive endorsements, complete with media uploads and AI-powered category suggestions.
--   **AI-Powered Content Analysis**:
-    -   **Harmful Content Detection**: An AI flow automatically flags potentially harmful content and sends it to a moderation queue for human review.
-    -   **Sentiment Analysis & Bias Detection**: Reports and endorsements are analyzed for sentiment and bias, with results displayed on each post.
-    -   **AI Summarization**: Long-form content is automatically summarized into a single, concise sentence.
--   **Community Governance**:
-    -   **Village Square**: A dedicated space for escalating reports into public disputes, allowing for real-time community discussion and polling.
-    -   **Hall of Honour**: A system for recognizing trustworthy users and entities through community nominations and medals, with a dynamic leaderboard.
--   **Full-Featured Admin Panel**: A protected dashboard for administrators to monitor platform metrics, manage users (suspend/ban/reset score), review AI-flagged content, and oversee community disputes.
--   **Responsive Design**: A modern, three-column desktop layout that cleanly adapts to a mobile-first experience with a dedicated bottom navigation bar.
+### User & Social
+*   **Complete Authentication**: Secure user sign-up, login (email/password & Google OAuth), and session management.
+*   **Dynamic Social Feed**: A central hub for posts, reports, and endorsements with live updates for votes, reposts, and comments.
+*   **Real-Time Messaging**: A private, one-on-one direct messaging system with live updates.
+*   **Comprehensive Profiles**: Customizable user profiles with banners, avatars, bios, and follower/following counts.
+*   **User Mentions**: Users can tag others in posts with `@username` to send notifications and foster engagement.
+
+### AI & Content
+*   **Advanced Content Creation**: A single, intuitive dialog for creating general updates, detailed reports, or positive endorsements with media upload support.
+*   **AI-Powered Analysis**:
+    *   **Harmful Content Detection**: Automatically flags posts that violate platform policies and places them in a moderation queue.
+    -   **Sentiment & Bias Analysis**: Analyzes reports and endorsements for sentiment and bias, displaying scores and warnings directly on posts.
+    -   **AI Summaries**: Generates concise, single-sentence summaries for long-form content.
+    -   **Trust Score Calculation**: Dynamically adjusts a user's "Trust Score" based on the sentiment and nature of community feedback.
+
+### Community & Governance
+*   **Community Governance**:
+    *   **Village Square**: A dedicated space for escalating reports into public disputes, featuring real-time community polling and discussion.
+    *   **Hall of Honour**: Recognizes highly-trusted users through a medal and nomination system.
+*   **Full-Featured Admin Panel**: A protected dashboard for administrators to monitor platform metrics, manage users (suspend/ban), and review AI-flagged content.
+
+### Media & Design
+*   **Shame or Shine TV**: A section for long-form video content, including interviews and investigative reports.
+*   **Responsive Design**: A modern, three-column layout that adapts seamlessly to mobile devices with a dedicated bottom navigation bar.
+*   **Theme Customization**: User-selectable light, dark, and system themes.
 
 ## Tech Stack
 
 -   **Framework**: **Next.js** (App Router)
--   **UI**: **React** with **TypeScript**
--   **Styling**: **Tailwind CSS** with **ShadCN UI** for components and theming.
--   **AI Integration**: **Google AI** & **Genkit** for all generative AI features (summarization, analysis, content flagging).
--   **Database**: **Firebase Firestore** for real-time data storage (posts, users, disputes).
--   **Authentication**: **Firebase Auth** for email/password and Google OAuth.
--   **State Management**: **React Context** for global state (authentication, moderation, notifications).
--   **Form Handling**: **React Hook Form** with **Zod** for robust, type-safe validation.
--   **Deployment**: Production-ready configuration with a standalone server output.
+-   **Language**: **TypeScript**
+-   **UI**: **React**, **Tailwind CSS**, and **ShadCN UI**
+-   **AI Integration**: **Google AI** & **Genkit**
+-   **Backend**: **Firebase** (Firestore, Auth)
+-   **State Management**: React Context
+-   **Forms**: React Hook Form with Zod validation
+-   **Deployment**: Configured for standalone production builds.

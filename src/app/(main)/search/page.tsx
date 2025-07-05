@@ -9,10 +9,48 @@ import { UserAvatar } from '@/components/user-avatar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PostCard } from '@/components/post-card';
+import { useAuth } from '@/hooks/use-auth';
+import { isFollowing, toggleFollow } from '@/lib/firestore';
 
 function UserResultCard({ user }: { user: User }) {
-  // NOTE: A real implementation would fetch the initial follow state from the DB.
-  const [isFollowing, setIsFollowing] = useState(false);
+  const { user: authUser } = useAuth();
+  const [isFollowingState, setIsFollowingState] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(true);
+
+  useEffect(() => {
+    async function checkFollowStatus() {
+      if (!authUser) {
+        setIsCheckingStatus(false);
+        return;
+      }
+      setIsCheckingStatus(true);
+      const followingStatus = await isFollowing(authUser.uid, user.id);
+      setIsFollowingState(followingStatus);
+      setIsCheckingStatus(false);
+    }
+    checkFollowStatus();
+  }, [authUser, user.id]);
+
+  const handleFollowToggle = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!authUser || isFollowLoading || isCheckingStatus) return;
+
+    setIsFollowLoading(true);
+    try {
+      await toggleFollow(authUser.uid, user.id, isFollowingState);
+      setIsFollowingState(!isFollowingState);
+    } catch (error) {
+      console.error('Failed to toggle follow:', error);
+      // Optional: show a toast notification on error
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
+
+  const isCurrentUser = authUser?.uid === user.id;
+
   return (
     <Link
       href={`/profile/${user.id}`}
@@ -26,17 +64,23 @@ function UserResultCard({ user }: { user: User }) {
             <p className="text-muted-foreground">@{user.username}</p>
           </div>
         </div>
-        <Button
-          variant={isFollowing ? 'secondary' : 'outline'}
-          size="sm"
-          className="rounded-full font-bold"
-          onClick={(e) => {
-            e.preventDefault();
-            setIsFollowing(!isFollowing);
-          }}
-        >
-          {isFollowing ? 'Following' : 'Follow'}
-        </Button>
+        {!isCurrentUser && (
+          <Button
+            variant={isFollowingState ? 'secondary' : 'outline'}
+            size="sm"
+            className="w-[100px] rounded-full font-bold"
+            onClick={handleFollowToggle}
+            disabled={isFollowLoading || isCheckingStatus}
+          >
+            {isFollowLoading || isCheckingStatus ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isFollowingState ? (
+              'Following'
+            ) : (
+              'Follow'
+            )}
+          </Button>
+        )}
       </div>
     </Link>
   );

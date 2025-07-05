@@ -192,4 +192,5 @@ export type Video = {
   channel: string;
   views: string;
   uploadedAt: string;
+  createdAt: string; // ISO string from Firestore timestamp for sorting
 };

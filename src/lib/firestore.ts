@@ -26,7 +26,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
-import type { Post, User, Comment, FlaggedContent, Dispute, Poll, Notification, Conversation, Message } from './types';
+import type { Post, User, Comment, FlaggedContent, Dispute, Poll, Notification, Conversation, Message, Video } from './types';
 import type { z } from 'zod';
 import type { createPostFormSchema } from '@/components/create-post-form';
 import { suggestTrustScore } from '@/ai/flows/suggest-trust-score';
@@ -1057,6 +1057,16 @@ export const searchPosts = async (searchText: string): Promise<Post[]> => {
     
     const snapshot = await getDocs(categoryQuery);
     return snapshot.docs.map(doc => fromFirestore<Post>(doc));
+};
+
+// VIDEO-related functions
+export const getVideos = async (): Promise<Video[]> => {
+    if (!db) return [];
+    const videosRef = collection(db, 'videos');
+    // Assuming 'createdAt' is a Timestamp field in Firestore for sorting
+    const q = query(videosRef, orderBy('createdAt', 'desc'), limit(20));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => fromFirestore<Video>(doc));
 };
 
 // MESSAGE-related functions

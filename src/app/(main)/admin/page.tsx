@@ -506,7 +506,7 @@ export default function AdminPage() {
                                 size="icon"
                                 disabled={
                                   updatingUserId === user.id ||
-                                  user.id === fullProfile?.id ||
+                                  user.isAdmin ||
                                   updatingTrustScore === user.id
                                 }
                               >

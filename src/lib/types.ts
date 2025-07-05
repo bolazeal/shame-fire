@@ -180,3 +180,16 @@ export interface NotificationContextType {
   loading: boolean;
   markAllAsRead: () => Promise<void>;
 }
+
+export type Video = {
+  id: string;
+  title: string;
+  description: string;
+  thumbnailUrl: string;
+  'data-ai-hint'?: string;
+  videoUrl: string;
+  duration: string;
+  channel: string;
+  views: string;
+  uploadedAt: string;
+};

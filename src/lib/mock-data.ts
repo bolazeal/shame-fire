@@ -1,4 +1,4 @@
-import type { User, Post, Dispute, FlaggedContent, Comment, Conversation, Message } from '@/lib/types';
+import type { User, Post, Dispute, FlaggedContent, Comment, Conversation, Message, Video } from '@/lib/types';
 
 const mockAdminUser: User = {
     id: 'user1',
@@ -238,3 +238,54 @@ export const mockConversations: Conversation[] = [
           { id: 'msg6', senderId: 'user3', text: "Can you check on that report for Speedy Shippers?", createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
       ]
   };
+
+  export const mockVideos: Video[] = [
+    {
+      id: 'video1',
+      title: 'Interview with CEO of "Innovate Corp" on Recent Controversy',
+      description: 'We sit down with the CEO to discuss the recent data breach and what they are doing to regain public trust.',
+      thumbnailUrl: 'https://placehold.co/1280x720.png',
+      'data-ai-hint': 'business interview',
+      videoUrl: '#',
+      duration: '25:10',
+      channel: 'Shame or Shine TV',
+      views: '1.2M views',
+      uploadedAt: '2 days ago',
+    },
+    {
+      id: 'video2',
+      title: 'On the Ground: How "Green Co-op" is Cleaning Up Local Parks',
+      description: 'A feel-good story about a local cooperative making a real difference in their community.',
+      thumbnailUrl: 'https://placehold.co/1280x720.png',
+      'data-ai-hint': 'volunteers park',
+      videoUrl: '#',
+      duration: '8:45',
+      channel: 'Shame or Shine TV',
+      views: '450K views',
+      uploadedAt: '5 days ago',
+    },
+    {
+      id: 'video3',
+      title: 'Exposed: The Truth Behind "Miracle Cure" Products',
+      description: 'An investigative report into the misleading claims made by a popular wellness brand.',
+      thumbnailUrl: 'https://placehold.co/1280x720.png',
+      'data-ai-hint': 'science laboratory',
+      videoUrl: '#',
+      duration: '18:22',
+      channel: 'Shame or Shine TV',
+      views: '2.5M views',
+      uploadedAt: '1 week ago',
+    },
+    {
+        id: 'video4',
+        title: 'Community Spotlight: The Local Bakery That Feeds the Homeless',
+        description: 'Every day, "The Good Loaf Bakery" donates their unsold bread to local shelters. We tell their story.',
+        thumbnailUrl: 'https://placehold.co/1280x720.png',
+        'data-ai-hint': 'bakery interior',
+        videoUrl: '#',
+        duration: '12:15',
+        channel: 'Shame or Shine TV',
+        views: '800K views',
+        uploadedAt: '2 weeks ago',
+    }
+];

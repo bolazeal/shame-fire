@@ -11,6 +11,7 @@ import {
   PenSquare,
   Shield,
   Trophy,
+  Tv,
   User,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -30,6 +31,7 @@ import { Badge } from '../ui/badge';
 
 const navItems = [
   { href: '/home', icon: Home, text: 'Home' },
+  { href: '/tv', icon: Tv, text: 'Shame or Shine TV' },
   { href: '/notifications', icon: Bell, text: 'Notifications' },
   { href: '/messages', icon: Mail, text: 'Messages' },
   { href: '/bookmarks', icon: Bookmark, text: 'Bookmarks' },

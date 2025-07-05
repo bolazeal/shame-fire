@@ -8,7 +8,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { userActivity } from '@/lib/mock-data';
 
 const chartConfig = {
   signups: {
@@ -17,18 +16,24 @@ const chartConfig = {
   },
 };
 
-export function UserActivityChart() {
+interface UserActivityChartProps {
+    data: {
+        date: string;
+        signups: number;
+    }[];
+}
+
+export function UserActivityChart({ data }: UserActivityChartProps) {
   return (
     <div className="h-64 w-full">
       <ChartContainer config={chartConfig}>
-        <BarChart accessibilityLayer data={userActivity}>
+        <BarChart accessibilityLayer data={data}>
           <CartesianGrid vertical={false} />
           <XAxis
             dataKey="date"
             tickLine={false}
             tickMargin={10}
             axisLine={false}
-            tickFormatter={(value) => value.slice(0, 3)}
           />
           <YAxis
             axisLine={false}

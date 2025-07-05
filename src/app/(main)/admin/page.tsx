@@ -89,6 +89,7 @@ export default function AdminPage() {
 
   const [stats, setStats] = useState({
     totalUsers: 0,
+    totalPosts: 0,
     totalReports: 0,
     totalEndorsements: 0,
     activeDisputes: 0,
@@ -101,6 +102,9 @@ export default function AdminPage() {
   const [updatingTrustScore, setUpdatingTrustScore] = useState<string | null>(
     null
   );
+  
+  const [contentBreakdownData, setContentBreakdownData] = useState<any[]>([]);
+  const [userActivityData, setUserActivityData] = useState<any[]>([]);
 
   const activeDisputes = useMemo(
     () => allDisputes.filter((d) => d.status !== 'closed'),
@@ -116,6 +120,7 @@ export default function AdminPage() {
     try {
       const [
         userCount,
+        postCount,
         reportCount,
         endorsementCount,
         flagged,
@@ -123,6 +128,7 @@ export default function AdminPage() {
         usersData,
       ] = await Promise.all([
         getCollectionCount('users'),
+        getCollectionCount('posts', 'type', '==', 'post'),
         getCollectionCount('posts', 'type', '==', 'report'),
         getCollectionCount('posts', 'type', '==', 'endorsement'),
         getFlaggedContent(),
@@ -130,13 +136,53 @@ export default function AdminPage() {
         getAllUsers(),
       ]);
 
-      setStats({
+      const newStats = {
         totalUsers: userCount,
+        totalPosts: postCount,
         totalReports: reportCount,
         totalEndorsements: endorsementCount,
-        activeDisputes: disputesData.filter((d) => d.status !== 'closed')
-          .length,
-      });
+        activeDisputes: disputesData.filter((d) => d.status !== 'closed').length,
+      };
+
+      setStats(newStats);
+      setContentBreakdownData([
+        { type: 'posts', count: newStats.totalPosts },
+        { type: 'reports', count: newStats.totalReports },
+        { type: 'endorsements', count: newStats.totalEndorsements },
+      ]);
+      
+      const processUserActivity = (users: User[]) => {
+        const last7Days = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date();
+            d.setHours(0, 0, 0, 0);
+            d.setDate(d.getDate() - i);
+            return d;
+        }).reverse(); 
+
+        const dailySignups = last7Days.map(day => ({
+            date: day.toLocaleDateString('en-US', { weekday: 'short' }),
+            signups: 0
+        }));
+
+        users.forEach(user => {
+            const signupDate = new Date(user.createdAt);
+            signupDate.setHours(0,0,0,0);
+            
+            const diffTime = new Date().setHours(0,0,0,0) - signupDate.getTime();
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays >= 0 && diffDays < 7) {
+                const dayIndex = 6 - diffDays;
+                if(dailySignups[dayIndex]) {
+                    dailySignups[dayIndex].signups++;
+                }
+            }
+        });
+        return dailySignups;
+    };
+    
+      setUserActivityData(processUserActivity(usersData));
+
       setFlaggedContent(flagged);
       setAllDisputes(disputesData);
       setAllUsers(usersData);
@@ -342,7 +388,7 @@ export default function AdminPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <UserActivityChart />
+                  <UserActivityChart data={userActivityData} />
                 </CardContent>
               </Card>
               <Card>
@@ -353,7 +399,7 @@ export default function AdminPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ContentBreakdownChart />
+                  <ContentBreakdownChart data={contentBreakdownData} />
                 </CardContent>
               </Card>
             </section>

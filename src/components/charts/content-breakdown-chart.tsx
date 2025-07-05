@@ -8,7 +8,6 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from '@/components/ui/chart';
-import { mockPosts } from '@/lib/mock-data';
 import { Label, Pie, PieChart } from 'recharts';
 
 const chartConfig = {
@@ -26,16 +25,20 @@ const chartConfig = {
   },
 };
 
-export function ContentBreakdownChart() {
-  const totalPosts = mockPosts.length;
-  const chartData = Object.keys(chartConfig).map((key) => {
-    const type = key.slice(0, -1);
-    return {
-      type: key,
-      count: mockPosts.filter((p) => p.type === type).length,
-      fill: `var(--color-${key})`,
-    };
-  });
+interface ContentBreakdownChartProps {
+    data: {
+        type: string;
+        count: number;
+    }[];
+}
+
+export function ContentBreakdownChart({ data }: ContentBreakdownChartProps) {
+  const totalContent = data.reduce((acc, item) => acc + item.count, 0);
+
+  const chartData = data.map(item => ({
+      ...item,
+      fill: `var(--color-${item.type})`
+  }));
 
   return (
     <div className="h-64 w-full">
@@ -56,9 +59,10 @@ export function ContentBreakdownChart() {
             strokeWidth={5}
             labelLine={false}
             label={(props: any) => {
-              const { value, cx, cy, x, y, textAnchor, dominantBaseline } =
+              const { payload, value, cx, cy, x, y, textAnchor, dominantBaseline } =
                 props;
-              if (value === undefined || totalPosts === 0) return null;
+              if (value === undefined || totalContent === 0) return null;
+              if (value === 0) return null; // Don't show label for 0%
               return (
                 <text
                   x={x}
@@ -66,8 +70,9 @@ export function ContentBreakdownChart() {
                   textAnchor={textAnchor}
                   dominantBaseline={dominantBaseline}
                   fill="hsl(var(--foreground))"
+                  className="text-xs"
                 >
-                  {`${((value / totalPosts) * 100).toFixed(0)}%`}
+                  {`${((value / totalContent) * 100).toFixed(0)}%`}
                 </text>
               );
             }}
@@ -87,7 +92,7 @@ export function ContentBreakdownChart() {
                         y={viewBox.cy}
                         className="fill-foreground text-3xl font-bold"
                       >
-                        {totalPosts.toLocaleString()}
+                        {totalContent.toLocaleString()}
                       </tspan>
                       <tspan
                         x={viewBox.cx}

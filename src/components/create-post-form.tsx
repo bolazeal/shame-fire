@@ -38,7 +38,8 @@ import {
 } from './ui/tooltip';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { useAuth } from '@/hooks/use-auth';
-import { createPost, getUserProfile } from '@/lib/firestore';
+import { getUserProfile } from '@/lib/firestore';
+import { createPostAction } from '@/lib/actions/post';
 import {
   Collapsible,
   CollapsibleContent,
@@ -218,7 +219,7 @@ export function CreatePostForm({
       const authorProfile = await getUserProfile(user.uid);
       if (!authorProfile) throw new Error('Could not find user profile.');
 
-      await createPost(values, authorProfile);
+      await createPostAction(values, authorProfile);
 
       toast({
         title: 'Post created!',

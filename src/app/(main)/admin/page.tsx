@@ -53,7 +53,6 @@ import { ContentBreakdownChart } from '@/components/charts/content-breakdown-cha
 import {
   getCollectionCount,
   getFlaggedContent,
-  approveFlaggedItem,
   removeFlaggedItem,
   getAllDisputes,
   getAllUsers,
@@ -61,6 +60,7 @@ import {
   resetUserTrustScore,
   deletePostAndFlags,
 } from '@/lib/firestore';
+import { approvePostAction } from '@/lib/actions/post';
 import type { Post, Dispute, FlaggedContent, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -224,7 +224,7 @@ export default function AdminPage() {
         });
         return;
       }
-      await approveFlaggedItem(item);
+      await approvePostAction(item);
       toast({
         title: 'Content Approved',
         description: 'The content has been posted successfully.',

@@ -27,10 +27,6 @@ import {
 import { db } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
 import type { Post, User, Comment, FlaggedContent, Dispute, Poll, Notification, Conversation, Video, PostCreationData } from './types';
-import { suggestTrustScore } from '@/ai/flows/suggest-trust-score';
-import { analyzeSentiment } from '@/ai/flows/analyze-sentiment';
-import { generateEndorsementSummary } from '@/ai/flows/generate-endorsement-summary';
-import { detectHarmfulContent } from '@/ai/flows/detect-harmful-content';
 
 // Helper to convert Firestore doc to a serializable object
 export function fromFirestore<T>(doc): T {
@@ -303,153 +299,6 @@ export const toggleFollow = async (
 };
 
 // POST-related functions
-export const createPost = async (
-  postData: PostCreationData,
-  author: User,
-  skipModeration: boolean = false
-): Promise<string> => {
-  if (!db) throw new Error('Firestore not initialized');
-
-  // Step 1: Content Moderation Check
-  if (!skipModeration) {
-    const moderationResult = await detectHarmfulContent({ text: postData.text });
-    if (moderationResult.isHarmful) {
-      await addFlaggedItemToQueue({
-        postData,
-        author,
-        reason: moderationResult.reason,
-      });
-      // Throw a special error that the client can interpret
-      throw new Error(`MODERATION_FLAG:${moderationResult.reason}`);
-    }
-  }
-
-  const batch = writeBatch(db);
-  const postRef = doc(collection(db, 'posts'));
-  
-  const newPost: Omit<Post, 'id' | 'createdAt'> & { createdAt: FieldValue } = {
-    type: postData.type,
-    author: {
-      id: author.id,
-      name:
-        postData.postingAs === 'verified'
-          ? author.name
-          : postData.postingAs === 'anonymous'
-          ? 'Anonymous'
-          : 'Whistleblower',
-      username:
-        postData.postingAs === 'verified'
-          ? author.username
-          : postData.postingAs === 'anonymous'
-          ? 'anonymous'
-          : 'whistleblower',
-      avatarUrl:
-        postData.postingAs === 'verified'
-          ? author.avatarUrl
-          : 'https://placehold.co/100x100.png',
-      isVerified: postData.postingAs === 'verified' ? author.isVerified : false,
-    },
-    authorId: author.id,
-    postingAs: postData.postingAs,
-    entity: postData.entity,
-    text: postData.text,
-    mediaUrl: postData.mediaUrl,
-    mediaType: postData.mediaType,
-    category: postData.category,
-    createdAt: serverTimestamp(),
-    commentsCount: 0,
-    reposts: 0,
-    repostedBy: [],
-    upvotes: 0,
-    downvotes: 0,
-    bookmarks: 0,
-    bookmarkedBy: [],
-    upvotedBy: [],
-    downvotedBy: [],
-    flaggedBy: [],
-    isEscalated: false,
-  };
-  
-  const entityContact: Post['entityContact'] = {};
-  if (postData.entityContactEmail) entityContact.email = postData.entityContactEmail;
-  if (postData.entityContactPhone) entityContact.phone = postData.entityContactPhone;
-  if (postData.entityContactSocialMedia) entityContact.socialMedia = postData.entityContactSocialMedia;
-  
-  if (Object.keys(entityContact).length > 0) {
-      newPost.entityContact = entityContact;
-  }
-
-  // Step 2: AI analysis for reports and endorsements
-  if (postData.type !== 'post') {
-    const [sentimentResult, summaryResult] = await Promise.all([
-      analyzeSentiment({ text: postData.text }),
-      generateEndorsementSummary({ endorsementText: postData.text }),
-    ]);
-    newPost.sentiment = sentimentResult;
-    newPost.summary = summaryResult.summary;
-
-    // Step 3: Update trust score of the entity being posted about
-    if (postData.entity) {
-        const targetUser = await getUserByEntityName(postData.entity);
-        if (targetUser && targetUser.id !== author.id) {
-          try {
-            const scoreResult = await suggestTrustScore({
-              currentTrustScore: targetUser.trustScore,
-              postType: postData.type as 'report' | 'endorsement',
-              postSentimentScore: sentimentResult.sentimentScore,
-            });
-
-            if (scoreResult.newTrustScore !== targetUser.trustScore) {
-                const targetUserRef = doc(db, 'users', targetUser.id);
-                batch.update(targetUserRef, { trustScore: scoreResult.newTrustScore });
-            }
-          } catch (e) {
-            console.error('Failed to suggest or update trust score:', e);
-            // Non-fatal error, we can still create the post
-          }
-        }
-      }
-  }
-
-  // Step 4: Write post to DB
-  batch.set(postRef, newPost);
-
-  // Step 5: Handle Mentions
-  const mentionRegex = /@([a-zA-Z0-9_]+)/g;
-  const mentionedUsernames = [...new Set(Array.from(postData.text.matchAll(mentionRegex), m => m[1]))];
-
-  if (mentionedUsernames.length > 0) {
-    for (const username of mentionedUsernames) {
-      try {
-        const usernameRef = doc(db, 'usernames', username.toLowerCase());
-        const usernameSnap = await getDoc(usernameRef);
-
-        if (usernameSnap.exists()) {
-            const recipientId = usernameSnap.data().userId;
-            if (recipientId && recipientId !== author.id) {
-                // We create notification outside the batch as it's a separate write
-                // and not critical to the post creation itself.
-                await createNotification({
-                    type: 'mention',
-                    recipientId: recipientId,
-                    sender: author,
-                    postId: postRef.id,
-                    postText: postData.text
-                });
-            }
-        }
-      } catch (error) {
-        console.error(`Failed to process mention for @${username}:`, error);
-      }
-    }
-  }
-  
-  // Step 6: Commit all batched writes
-  await batch.commit();
-
-  return postRef.id;
-};
-
 export const getPosts = async (
   filter: 'foryou' | 'posts' | 'reports' | 'endorsements'
 ): Promise<Post[]> => {
@@ -871,22 +720,6 @@ export const addFlaggedItemToQueue = async (
 export const removeFlaggedItem = async (flaggedItemId: string) => {
   if (!db) throw new Error('Firestore not initialized');
   await deleteDoc(doc(db, 'flagged_content', flaggedItemId));
-};
-
-export const approveFlaggedItem = async (item: FlaggedContent) => {
-  if (!db) throw new Error('Firestore not initialized');
-  if (!item.postData) {
-    throw new Error(
-      'This item cannot be approved, it was a flag on an existing post.'
-    );
-  }
-
-  const authorProfile = await getUserProfile(item.author.id as string);
-  if (!authorProfile) throw new Error('Could not find author profile.');
-
-  await createPost(item.postData, authorProfile, true);
-
-  await removeFlaggedItem(item.id);
 };
 
 export const flagExistingPost = async (

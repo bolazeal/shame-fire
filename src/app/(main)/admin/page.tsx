@@ -29,6 +29,7 @@ import {
   UserX,
   Ban,
   RotateCcw,
+  UserCog,
 } from 'lucide-react';
 import {
   Tabs,
@@ -82,6 +83,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { UserAvatar } from '@/components/user-avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function AdminPage() {
   const { fullProfile, loading: authLoading } = useAuth();
@@ -352,6 +354,7 @@ export default function AdminPage() {
   }
 
   return (
+    <TooltipProvider>
     <div>
       <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/80 p-4 backdrop-blur-sm">
         <Shield className="h-6 w-6 text-primary" />
@@ -563,6 +566,9 @@ export default function AdminPage() {
                       <TableHead className="hidden sm:table-cell">
                         Trust Score
                       </TableHead>
+                       <TableHead className="hidden text-center sm:table-cell">
+                        Mod Nominations
+                       </TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -586,6 +592,19 @@ export default function AdminPage() {
                         </TableCell>
                         <TableCell className="hidden text-center sm:table-cell">
                           {user.trustScore}
+                        </TableCell>
+                        <TableCell className="hidden text-center sm:table-cell">
+                            <Tooltip>
+                                <TooltipTrigger>
+                                <div className="flex items-center justify-center gap-1">
+                                    <UserCog className="h-4 w-4"/>
+                                    <span>{user.moderatorNominationsCount || 0}</span>
+                                </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Moderator Nominations</p>
+                                </TooltipContent>
+                            </Tooltip>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap items-center gap-1">
@@ -875,5 +894,6 @@ export default function AdminPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </TooltipProvider>
   );
 }

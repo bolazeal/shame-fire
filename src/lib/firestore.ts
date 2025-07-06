@@ -84,6 +84,7 @@ export const createUserProfile = async (
         location: '',
         website: '',
         nominations: 0,
+        moderatorNominationsCount: 0,
         publicVotes: 0,
         followersCount: 0,
         followingCount: 0,
@@ -209,6 +210,37 @@ export const hasUserNominated = async (
   const docSnap = await getDoc(nominationRef);
   return docSnap.exists();
 };
+
+export const nominateUserForModerator = async (
+    nominatedUserId: string,
+    nominatorId: string
+  ): Promise<void> => {
+    if (!db) throw new Error('Firestore not initialized');
+  
+    if (await hasUserNominatedForModerator(nominatorId, nominatedUserId)) {
+      throw new Error('You have already nominated this user to be a moderator.');
+    }
+  
+    const batch = writeBatch(db);
+  
+    const nominationRef = doc(db, `users/${nominatedUserId}/moderatorNominators`, nominatorId);
+    batch.set(nominationRef, { timestamp: serverTimestamp() });
+  
+    const userRef = doc(db, 'users', nominatedUserId);
+    batch.update(userRef, { moderatorNominationsCount: increment(1) });
+  
+    await batch.commit();
+  };
+
+  export const hasUserNominatedForModerator = async (
+    nominatorId: string,
+    nominatedUserId: string
+  ): Promise<boolean> => {
+    if (!db) return false;
+    const nominationRef = doc(db, `users/${nominatedUserId}/moderatorNominators`, nominatorId);
+    const docSnap = await getDoc(nominationRef);
+    return docSnap.exists();
+  };
 
 
 // FOLLOW-related functions

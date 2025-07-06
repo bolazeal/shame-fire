@@ -18,6 +18,7 @@ import {
   Trophy,
   Users,
   Loader2,
+  UserCog,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -32,6 +33,8 @@ import {
   toggleFollow,
   nominateUserForMedal,
   hasUserNominated,
+  nominateUserForModerator,
+  hasUserNominatedForModerator,
 } from '@/lib/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -91,6 +94,8 @@ export default function ProfilePage() {
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [isNominating, setIsNominating] = useState(false);
   const [hasNominated, setHasNominated] = useState(false);
+  const [isNominatingMod, setIsNominatingMod] = useState(false);
+  const [hasNominatedMod, setHasNominatedMod] = useState(false);
 
 
   const userId = params.id;
@@ -103,12 +108,14 @@ export default function ProfilePage() {
         const userProfile = await getUserProfile(userId as string);
         setProfileUser(userProfile);
         if (authUser && authUser.uid !== userId) {
-          const [isUserFollowing, userHasNominated] = await Promise.all([
+          const [isUserFollowing, userHasNominated, userHasNominatedForMod] = await Promise.all([
             isFollowing(authUser.uid, userId as string),
             hasUserNominated(authUser.uid, userId as string),
+            hasUserNominatedForModerator(authUser.uid, userId as string),
           ]);
           setFollowing(isUserFollowing);
           setHasNominated(userHasNominated);
+          setHasNominatedMod(userHasNominatedForMod);
         }
     } catch (error) {
         console.error("Failed to fetch profile", error);
@@ -169,6 +176,36 @@ export default function ProfilePage() {
       });
     } finally {
       setIsNominating(false);
+    }
+  };
+
+  const handleNominateForModerator = async () => {
+    if (!authUser || !profileUser) return;
+    setIsNominatingMod(true);
+    try {
+      await nominateUserForModerator(profileUser.id, authUser.uid);
+      toast({
+        title: 'Moderator Nomination Successful!',
+        description: `${profileUser.name} has been nominated for a moderator position.`,
+      });
+      setHasNominatedMod(true);
+      setProfileUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              moderatorNominationsCount:
+                prev.moderatorNominationsCount + 1,
+            }
+          : null
+      );
+    } catch (error: any) {
+      toast({
+        title: 'Moderator nomination failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsNominatingMod(false);
     }
   };
 
@@ -319,6 +356,48 @@ export default function ProfilePage() {
                           disabled={isNominating}
                         >
                           {isNominating && (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          )}
+                          Confirm Nomination
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+                 {profileUser.trustScore > 75 && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full font-bold"
+                        disabled={isNominatingMod || hasNominatedMod}
+                      >
+                        {isNominatingMod ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <UserCog className="mr-2 h-4 w-4" />
+                        )}
+                        {hasNominatedMod ? 'Nominated' : 'Nominate for Moderator'}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Nominate {profileUser.name} for Moderator?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will submit {profileUser.name}'s profile to the
+                          administrators for moderator consideration. This action is
+                          confidential.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleNominateForModerator}
+                          disabled={isNominatingMod}
+                        >
+                          {isNominatingMod && (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           )}
                           Confirm Nomination

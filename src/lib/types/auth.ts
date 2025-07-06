@@ -1,4 +1,3 @@
-'use server';
 import type { User as AppUser } from '@/lib/types';
 import type { User } from 'firebase/auth';
 

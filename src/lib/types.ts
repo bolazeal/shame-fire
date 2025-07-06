@@ -1,5 +1,3 @@
-
-'use server';
 import type { ElementType } from 'react';
 import { z } from 'zod';
 

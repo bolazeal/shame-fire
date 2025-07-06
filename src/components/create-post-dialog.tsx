@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -7,9 +8,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { CreatePostForm, type createPostFormSchema } from './create-post-form';
+import { CreatePostForm } from './create-post-form';
 import { useState } from 'react';
 import type { z } from 'zod';
+import { type createPostFormSchema } from '@/lib/types';
 
 interface CreatePostDialogProps {
   trigger: React.ReactNode;

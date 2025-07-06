@@ -1,7 +1,62 @@
+
 'use server';
 import type { ElementType } from 'react';
-import type { z } from 'zod';
-import type { createPostFormSchema } from '@/components/create-post-form';
+import { z } from 'zod';
+
+export const createPostFormSchema = z
+  .object({
+    type: z.enum(['report', 'endorsement', 'post']),
+    postingAs: z.enum(['verified', 'anonymous', 'whistleblower']),
+    entity: z.string().optional(),
+    text: z.string().min(1, {
+      message: "This field can't be empty.",
+    }),
+    category: z.string().optional(),
+    mediaUrl: z.string().optional(),
+    mediaType: z.enum(['image', 'video']).optional(),
+    entityContactEmail: z
+      .string()
+      .email({ message: 'Please enter a valid email.' })
+      .optional()
+      .or(z.literal('')),
+    entityContactPhone: z.string().optional(),
+    entityContactSocialMedia: z
+      .string()
+      .url({ message: 'Please enter a valid URL.' })
+      .optional()
+      .or(z.literal('')),
+  })
+  .refine(
+    (data) => {
+      if (data.type === 'post') return true;
+      return data.entity && data.entity.length >= 2;
+    },
+    {
+      message: 'Entity name must be at least 2 characters.',
+      path: ['entity'],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.type === 'post') return true;
+      return data.text && data.text.length >= 10;
+    },
+    {
+      message:
+        'Description must be at least 10 characters for reports and endorsements.',
+      path: ['text'],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.type === 'post') return true;
+      return data.category && data.category.length > 0;
+    },
+    {
+      message: 'A category must be selected.',
+      path: ['category'],
+    }
+  );
 
 export type User = {
   id: string; // Firebase Auth UID

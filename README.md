@@ -9,25 +9,26 @@ This project showcases a complete, production-ready application with real-time f
 ## Key Features
 
 ### User & Social
-*   **Complete Authentication**: Secure user sign-up, login (email/password & Google OAuth), and session management.
+*   **Complete Authentication**: Secure user sign-up, login (email/password & Google OAuth), and session management with account status checks (active, suspended, banned).
 *   **Dynamic Social Feed**: A central hub for posts, reports, and endorsements with live updates for votes, reposts, and comments.
 *   **Real-Time Messaging**: A private, one-on-one direct messaging system with live updates.
 *   **Comprehensive Profiles**: Customizable user profiles with banners, avatars, bios, and follower/following counts.
 *   **User Mentions**: Users can tag others in posts with `@username` to send notifications and foster engagement.
 
 ### AI & Content
-*   **Advanced Content Creation**: A single, intuitive dialog for creating general updates, detailed reports, or positive endorsements with media upload support.
+*   **Advanced Content Creation**: A single, intuitive dialog for creating general updates, detailed reports, or positive endorsements with media upload support and optional contact info for off-platform entities.
 *   **AI-Powered Analysis**:
-    *   **Harmful Content Detection**: Automatically flags posts that violate platform policies and places them in a moderation queue.
-    -   **Sentiment & Bias Analysis**: Analyzes reports and endorsements for sentiment and bias, displaying scores and warnings directly on posts.
-    -   **AI Summaries**: Generates concise, single-sentence summaries for long-form content.
-    -   **Trust Score Calculation**: Dynamically adjusts a user's "Trust Score" based on the sentiment and nature of community feedback.
+    *   **Harmful Content Detection**: Automatically flags posts that violate platform policies and places them in a moderation queue before they are published.
+    *   **Sentiment & Bias Analysis**: Analyzes reports and endorsements for sentiment and bias, displaying scores and warnings directly on posts.
+    *   **AI Summaries**: Generates concise, single-sentence summaries for long-form content.
+    *   **Trust Score Calculation**: Dynamically adjusts a user's "Trust Score" based on the sentiment and nature of community feedback.
 
 ### Community & Governance
 *   **Community Governance**:
     *   **Village Square**: A dedicated space for escalating reports into public disputes, featuring real-time community polling and discussion.
     *   **Hall of Honour**: Recognizes highly-trusted users through a medal and nomination system.
-*   **Full-Featured Admin Panel**: A protected dashboard for administrators to monitor platform metrics, manage users (suspend/ban), and review AI-flagged content.
+    *   **Moderator Selection**: Community members can nominate trusted users (with high Trust Scores) to be considered for moderator roles.
+*   **Full-Featured Admin Panel**: A protected dashboard for administrators to monitor platform metrics, manage users (suspend/ban/reset trust score), and review AI-flagged and user-flagged content.
 *   **Content Flagging**: Users can flag inappropriate content to send it to the admin moderation queue.
 
 ### Media & Design
@@ -42,6 +43,5 @@ This project showcases a complete, production-ready application with real-time f
 -   **UI**: **React**, **Tailwind CSS**, and **ShadCN UI**
 -   **AI Integration**: **Google AI** & **Genkit**
 -   **Backend**: **Firebase** (Firestore, Auth)
--   **State Management**: React Context
--   **Forms**: React Hook Form with Zod validation
--   **Deployment**: Configured for standalone production builds.
+-   **State Management**: React Context & React Hook Form with Zod validation
+-   **Deployment**: Configured for standalone production builds on Firebase App Hosting.

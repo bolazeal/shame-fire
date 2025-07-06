@@ -273,20 +273,23 @@ export const toggleFollow = async (
 // POST-related functions
 export const createPost = async (
   postData: PostCreationData,
-  author: User
+  author: User,
+  skipModeration: boolean = false
 ): Promise<string> => {
   if (!db) throw new Error('Firestore not initialized');
 
   // Step 1: Content Moderation Check
-  const moderationResult = await detectHarmfulContent({ text: postData.text });
-  if (moderationResult.isHarmful) {
-    await addFlaggedItemToQueue({
-      postData,
-      author,
-      reason: moderationResult.reason,
-    });
-    // Throw a special error that the client can interpret
-    throw new Error(`MODERATION_FLAG:${moderationResult.reason}`);
+  if (!skipModeration) {
+    const moderationResult = await detectHarmfulContent({ text: postData.text });
+    if (moderationResult.isHarmful) {
+      await addFlaggedItemToQueue({
+        postData,
+        author,
+        reason: moderationResult.reason,
+      });
+      // Throw a special error that the client can interpret
+      throw new Error(`MODERATION_FLAG:${moderationResult.reason}`);
+    }
   }
 
   const batch = writeBatch(db);
@@ -331,6 +334,7 @@ export const createPost = async (
     bookmarkedBy: [],
     upvotedBy: [],
     downvotedBy: [],
+    flaggedBy: [],
     isEscalated: false,
   };
   
@@ -827,6 +831,7 @@ export const addFlaggedItemToQueue = async (
   if (!db) throw new Error('Firestore not initialized');
   await addDoc(collection(db, 'flagged_content'), {
     ...item,
+    postText: item.postData?.text,
     flaggedAt: serverTimestamp(),
   });
 };
@@ -838,15 +843,71 @@ export const removeFlaggedItem = async (flaggedItemId: string) => {
 
 export const approveFlaggedItem = async (item: FlaggedContent) => {
   if (!db) throw new Error('Firestore not initialized');
-  // First, create the post from the flagged data
-  const authorProfile = await getUserProfile(item.author.id);
-  if (!authorProfile) throw new Error('Could not find author profile.');
-  
-  // Re-run the full, secure createPost flow for the approved content
-  await createPost(item.postData, authorProfile);
+  if (!item.postData) {
+    throw new Error(
+      'This item cannot be approved, it was a flag on an existing post.'
+    );
+  }
 
-  // Then, remove it from the moderation queue
+  const authorProfile = await getUserProfile(item.author.id as string);
+  if (!authorProfile) throw new Error('Could not find author profile.');
+
+  await createPost(item.postData, authorProfile, true);
+
   await removeFlaggedItem(item.id);
+};
+
+export const flagExistingPost = async (
+  postId: string,
+  postText: string,
+  postAuthor: Post['author'],
+  flaggingUserId: string
+): Promise<void> => {
+  if (!db) throw new Error('Firestore not initialized');
+  const postRef = doc(db, 'posts', postId);
+
+  const postSnap = await getDoc(postRef);
+  if (postSnap.exists()) {
+    const postData = postSnap.data() as Post;
+    if (postData.flaggedBy?.includes(flaggingUserId)) {
+      throw new Error('You have already flagged this post.');
+    }
+  }
+
+  const batch = writeBatch(db);
+
+  const flaggedContentRef = doc(collection(db, 'flagged_content'));
+  batch.set(flaggedContentRef, {
+    postId,
+    postText,
+    author: postAuthor,
+    reason: 'Manually flagged by user',
+    flaggedAt: serverTimestamp(),
+    flaggedByUserId,
+  });
+
+  batch.update(postRef, {
+    flaggedBy: arrayUnion(flaggingUserId),
+  });
+
+  await batch.commit();
+};
+
+export const deletePostAndFlags = async (postId: string): Promise<void> => {
+  if (!db) throw new Error('Firestore not initialized');
+  const batch = writeBatch(db);
+
+  const postRef = doc(db, 'posts', postId);
+  batch.delete(postRef);
+
+  const flagsQuery = query(
+    collection(db, 'flagged_content'),
+    where('postId', '==', postId)
+  );
+  const flagsSnapshot = await getDocs(flagsQuery);
+  flagsSnapshot.forEach((doc) => batch.delete(doc.ref));
+
+  await batch.commit();
 };
 
 

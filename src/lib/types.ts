@@ -102,6 +102,7 @@ export type Post = {
   bookmarkedBy: string[]; // Array of user IDs who bookmarked
   upvotedBy: string[];
   downvotedBy: string[];
+  flaggedBy?: string[]; // Array of user IDs who flagged the post
   sentiment?: {
     score: number;
     biasDetected: boolean;
@@ -148,11 +149,15 @@ export type PostCreationData = z.infer<typeof createPostFormSchema>;
 
 export type FlaggedContent = {
   id: string;
-  postData: PostCreationData;
-  author: User; // The full user object of who tried to post it
-  reason: string; // AI's reason for flagging
+  postData?: PostCreationData;
+  postId?: string;
+  postText?: string;
+  author: Partial<User>;
+  reason: string;
   flaggedAt: string;
+  flaggedByUserId?: string;
 };
+
 
 export interface ModerationContextType {
   addFlaggedItem: (

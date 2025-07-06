@@ -58,6 +58,7 @@ import {
   getAllUsers,
   updateUserAccountStatus,
   resetUserTrustScore,
+  deletePostAndFlags,
 } from '@/lib/firestore';
 import type { Post, Dispute, FlaggedContent, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -210,6 +211,15 @@ export default function AdminPage() {
 
   const handleApprove = async (item: FlaggedContent) => {
     try {
+      if (!item.postData) {
+        toast({
+          title: 'Invalid Action',
+          description:
+            'This is a flag on an existing post and cannot be "approved". Use "Dismiss" instead.',
+          variant: 'destructive',
+        });
+        return;
+      }
       await approveFlaggedItem(item);
       toast({
         title: 'Content Approved',
@@ -225,14 +235,26 @@ export default function AdminPage() {
     }
   };
 
-  const handleRemove = async (itemId: string) => {
+  const handleRemove = async (item: FlaggedContent) => {
     try {
-      await removeFlaggedItem(itemId);
-      toast({
-        title: 'Content Removed',
-        description: 'The flagged content has been deleted.',
-        variant: 'destructive',
-      });
+      if (item.postId) {
+        // This is a flag on an existing post. "Remove" means delete the original post.
+        await deletePostAndFlags(item.postId);
+        toast({
+          title: 'Post Removed',
+          description:
+            'The original post and all its flags have been deleted.',
+          variant: 'destructive',
+        });
+      } else {
+        // This is a flag on content held before creation. "Remove" means just delete the flag.
+        await removeFlaggedItem(item.id);
+        toast({
+          title: 'Content Removed',
+          description: 'The flagged content has been deleted from the queue.',
+          variant: 'destructive',
+        });
+      }
       fetchData(); // Refresh data
     } catch (error) {
       toast({
@@ -242,6 +264,24 @@ export default function AdminPage() {
       });
     }
   };
+
+  const handleDismissFlag = async (flaggedItemId: string) => {
+    try {
+      await removeFlaggedItem(flaggedItemId);
+      toast({
+        title: 'Flag Dismissed',
+        description: 'The flag has been removed, the original post remains.',
+      });
+      fetchData(); // Refresh data
+    } catch (error) {
+      toast({
+        title: 'Dismissal Failed',
+        description: 'Could not dismiss the flag.',
+        variant: 'destructive',
+      });
+    }
+  };
+
 
   const handleUpdateUserStatus = async (
     userId: string,
@@ -432,7 +472,7 @@ export default function AdminPage() {
                     {flaggedContent.map((item) => (
                       <TableRow key={item.id}>
                         <TableCell className="max-w-xs truncate font-mono text-xs">
-                          {item.postData.text}
+                          {item.postText || item.postData?.text}
                         </TableCell>
                         <TableCell>
                           <Link
@@ -446,22 +486,45 @@ export default function AdminPage() {
                           <Badge variant="destructive">{item.reason}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleApprove(item)}
-                          >
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Approve
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleRemove(item.id)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Remove
-                          </Button>
+                          {item.postId ? (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDismissFlag(item.id)}
+                              >
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Dismiss Flag
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleRemove(item)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Remove Post
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleApprove(item)}
+                              >
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Approve
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleRemove(item)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Remove
+                              </Button>
+                            </>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

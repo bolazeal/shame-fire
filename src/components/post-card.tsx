@@ -21,6 +21,7 @@ import {
   Megaphone,
   Trophy,
   Loader2,
+  Flag,
 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import Image from 'next/image';
@@ -55,8 +56,16 @@ import {
   getUserByEntityName,
   nominateUserForMedal,
   hasUserNominated,
+  flagExistingPost,
 } from '@/lib/firestore';
 import { formatDistanceToNow } from 'date-fns';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
 
 interface PostCardProps {
   post: Post;
@@ -86,10 +95,15 @@ export function PostCard({ post }: PostCardProps) {
   const [isNominating, setIsNominating] = useState(false);
   const [hasNominated, setHasNominated] = useState(false);
 
+  const [hasFlagged, setHasFlagged] = useState(false);
+  const [isFlagging, setIsFlagging] = useState(false);
+
+
   useEffect(() => {
     if (authUser) {
       setIsBookmarked(post.bookmarkedBy.includes(authUser.uid));
       setIsReposted(post.repostedBy.includes(authUser.uid));
+      setHasFlagged(post.flaggedBy?.includes(authUser.uid) ?? false);
       if (post.upvotedBy.includes(authUser.uid)) {
         setVoteStatus('up');
       } else if (post.downvotedBy.includes(authUser.uid)) {
@@ -124,6 +138,7 @@ export function PostCard({ post }: PostCardProps) {
     post.downvotedBy,
     post.entity,
     post.type,
+    post.flaggedBy,
   ]);
 
   const handleVoteClick = async (
@@ -326,6 +341,34 @@ export function PostCard({ post }: PostCardProps) {
     router.push(`/post/${post.id}`);
   };
 
+  const handleFlagPost = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!authUser) {
+      toast({ title: 'Please log in to flag posts.', variant: 'destructive' });
+      return;
+    }
+    setIsFlagging(true);
+    try {
+      await flagExistingPost(post.id, post.text, post.author, authUser.uid);
+      setHasFlagged(true);
+      toast({
+        title: 'Post Flagged',
+        description: 'Thank you. Our moderators will review this post.',
+      });
+    } catch (error: any) {
+      console.error('Failed to flag post:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Could not flag this post.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsFlagging(false);
+    }
+  };
+
   const canEscalate =
     post.type === 'report' &&
     authUser &&
@@ -424,14 +467,55 @@ export function PostCard({ post }: PostCardProps) {
                   <Gavel className="mr-1 h-3 w-3" /> Escalated
                 </Badge>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-full"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-full"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <DropdownMenuSeparator />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem
+                        className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                        disabled={hasFlagged || isFlagging}
+                        onSelect={(e) => e.preventDefault()}
+                      >
+                        {isFlagging ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Flag className="mr-2 h-4 w-4" />
+                        )}
+                        <span>{hasFlagged ? 'Flagged' : 'Flag Post'}</span>
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Flag this post?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will submit the post for moderator review. Are
+                          you sure this content is inappropriate?
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleFlagPost}>
+                          Confirm Flag
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 

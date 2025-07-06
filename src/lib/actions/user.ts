@@ -1,18 +1,82 @@
 'use server';
 
 import { auth, db } from '@/lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  updateDoc,
+  getDocs,
+  limit,
+  query,
+  runTransaction,
+  serverTimestamp,
+} from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
+import type { User as FirebaseUser } from 'firebase/auth';
+import type { FieldValue } from 'firebase/firestore';
+
+
+export async function createUserProfileAction(
+  firebaseUser: FirebaseUser,
+  username: string
+): Promise<void> {
+  if (!db) throw new Error('Firestore not initialized');
+
+  const usersCheckQuery = query(collection(db, 'users'), limit(1));
+  const usersCheckSnapshot = await getDocs(usersCheckQuery);
+  const isFirstUser = usersCheckSnapshot.empty;
+
+  const userRef = doc(db, 'users', firebaseUser.uid);
+  const usernameRef = doc(db, 'usernames', username.toLowerCase());
+
+  try {
+    await runTransaction(db, async (transaction) => {
+      const usernameDoc = await transaction.get(usernameRef);
+      if (usernameDoc.exists()) {
+        throw new Error('firestore/username-already-in-use');
+      }
+
+      const userProfile: Omit<User, 'id' | 'createdAt'> & {
+        createdAt: FieldValue;
+      } = {
+        name: firebaseUser.displayName || 'Anonymous User',
+        username: username,
+        email: firebaseUser.email || '',
+        avatarUrl: firebaseUser.photoURL || 'https://placehold.co/100x100.png',
+        trustScore: 50,
+        isVerified: false,
+        isAdmin: isFirstUser,
+        bio: 'New user on Shame.',
+        location: '',
+        website: '',
+        nominations: 0,
+        moderatorNominationsCount: 0,
+        publicVotes: 0,
+        followersCount: 0,
+        followingCount: 0,
+        createdAt: serverTimestamp(),
+        accountStatus: 'active',
+      };
+      transaction.set(userRef, userProfile);
+      transaction.set(usernameRef, { userId: firebaseUser.uid });
+    });
+  } catch (error: any) {
+    if (error.message === 'firestore/username-already-in-use') {
+      throw error;
+    }
+    console.error('Create user profile transaction failed: ', error);
+    throw new Error('Failed to create user profile due to a server error.');
+  }
+};
+
 
 export async function updateProfileAction(
   userId: string,
   data: Partial<Omit<User, 'id' | 'email'>>
 ) {
-  // 1. Get current authenticated user from the server session
   const currentUser = auth.currentUser;
 
-  // 2. Authorization Check
   if (!currentUser) {
     throw new Error('You must be logged in to update a profile.');
   }
@@ -20,7 +84,6 @@ export async function updateProfileAction(
     throw new Error('You are not authorized to edit this profile.');
   }
 
-  // 3. Sanitize input: Prevent users from updating protected fields
   const allowedUpdates: Partial<User> = {
     name: data.name,
     bio: data.bio,
@@ -30,20 +93,17 @@ export async function updateProfileAction(
     bannerUrl: data.bannerUrl,
   };
 
-  // Filter out any undefined fields so we don't overwrite with empty values
   const updatesToPerform = Object.fromEntries(
     Object.entries(allowedUpdates).filter(([_, v]) => v !== undefined)
   );
 
   if (Object.keys(updatesToPerform).length === 0) {
-    return; // Nothing to update
+    return;
   }
 
-  // 4. Perform the database update
   if (!db) throw new Error('Firestore not initialized');
   const userRef = doc(db, 'users', userId);
   await updateDoc(userRef, updatesToPerform);
 
-  // 5. Revalidate path to show updated data
   revalidatePath(`/profile/${userId}`);
 }

@@ -49,15 +49,13 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import {
-  toggleBookmark,
-  createDispute,
-  toggleVoteOnPost,
-  toggleRepost,
   getUserByEntityName,
-  nominateUserForMedal,
   hasUserNominated,
-  flagExistingPost,
 } from '@/lib/firestore';
+import { toggleBookmarkAction, toggleVoteOnPostAction, toggleRepostAction, flagExistingPostAction } from '@/lib/actions/interaction';
+import { createDisputeAction } from '@/lib/actions/dispute';
+import { nominateUserForMedalFromPostAction } from '@/lib/actions/nomination';
+
 import { formatDistanceToNow } from 'date-fns';
 import {
   DropdownMenu,
@@ -186,7 +184,7 @@ export function PostCard({ post }: PostCardProps) {
     });
 
     try {
-      await toggleVoteOnPost(authUser.uid, post.id, voteType);
+      await toggleVoteOnPostAction(authUser.uid, post.id, voteType);
     } catch (error) {
       // Revert optimistic update on error
       setVoteStatus(originalVoteStatus);
@@ -207,7 +205,7 @@ export function PostCard({ post }: PostCardProps) {
     }
     setIsRepostLoading(true);
     try {
-      await toggleRepost(authUser.uid, post.id, isReposted);
+      await toggleRepostAction(authUser.uid, post.id, isReposted);
       setIsReposted(!isReposted);
       setRepostCount((prev) => prev + (isReposted ? -1 : 1));
       toast({
@@ -250,7 +248,7 @@ export function PostCard({ post }: PostCardProps) {
 
     setIsEscalating(true);
     try {
-      await createDispute(post, fullProfile);
+      await createDisputeAction(post, fullProfile);
       toast({
         title: 'Post Escalated',
         description:
@@ -279,11 +277,7 @@ export function PostCard({ post }: PostCardProps) {
     }
     setIsNominating(true);
     try {
-      const targetUser = await getUserByEntityName(post.entity);
-      if (!targetUser) {
-        throw new Error(`User "${post.entity}" not found.`);
-      }
-      await nominateUserForMedal(targetUser.id, authUser.uid);
+      await nominateUserForMedalFromPostAction(post.entity, authUser.uid);
       setHasNominated(true);
       toast({
         title: 'Nomination successful!',
@@ -312,7 +306,7 @@ export function PostCard({ post }: PostCardProps) {
     }
     setIsBookmarkLoading(true);
     try {
-      await toggleBookmark(authUser.uid, post.id, isBookmarked);
+      await toggleBookmarkAction(authUser.uid, post.id, isBookmarked);
       setIsBookmarked(!isBookmarked);
       setBookmarkCount((prev) => prev + (isBookmarked ? -1 : 1));
       toast({
@@ -351,7 +345,7 @@ export function PostCard({ post }: PostCardProps) {
     }
     setIsFlagging(true);
     try {
-      await flagExistingPost(post.id, post.text, post.author, authUser.uid);
+      await flagExistingPostAction(post.id, post.text, post.author, authUser.uid);
       setHasFlagged(true);
       toast({
         title: 'Post Flagged',

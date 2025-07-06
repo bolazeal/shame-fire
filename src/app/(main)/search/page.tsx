@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Search as SearchIcon, Loader2 } from 'lucide-react';
@@ -11,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PostCard } from '@/components/post-card';
 import { useAuth } from '@/hooks/use-auth';
-import { isFollowing, toggleFollow } from '@/lib/firestore';
+import { isFollowing } from '@/lib/firestore';
+import { toggleFollowAction } from '@/lib/actions/interaction';
 import { useSearchParams } from 'next/navigation';
 
 function UserResultCard({ user }: { user: User }) {
@@ -41,7 +41,7 @@ function UserResultCard({ user }: { user: User }) {
 
     setIsFollowLoading(true);
     try {
-      await toggleFollow(authUser.uid, user.id, isFollowingState);
+      await toggleFollowAction(authUser.uid, user.id, isFollowingState);
       setIsFollowingState(!isFollowingState);
     } catch (error) {
       console.error('Failed to toggle follow:', error);

@@ -24,10 +24,8 @@ import { useAuth } from '@/hooks/use-auth';
 import {
   listenToDispute,
   listenToDisputeComments,
-  addDisputeComment,
-  castVote,
-  deleteDisputeComment,
 } from '@/lib/firestore';
+import { addDisputeCommentAction, castVoteAction, deleteDisputeCommentAction } from '@/lib/actions/interaction';
 import { ModeratorVerdictForm } from '@/components/moderator-verdict-form';
 
 function DisputePageSkeleton() {
@@ -120,23 +118,9 @@ export default function DisputePage() {
     }
     setIsVoting(true);
     try {
-        await castVote(dispute.id, dispute.poll, selectedOption, authUser.uid);
+        await castVoteAction(dispute.id, selectedOption, authUser.uid);
         
-        // Optimistically update UI to feel responsive
-        setDispute(prevDispute => {
-            if (!prevDispute) return null;
-            const newPoll = { ...prevDispute.poll };
-            newPoll.options = newPoll.options.map(opt => 
-                opt.text === selectedOption ? { ...opt, votes: opt.votes + 1 } : opt
-            );
-            if(newPoll.voters) {
-                newPoll.voters.push(authUser.uid);
-            } else {
-                newPoll.voters = [authUser.uid];
-            }
-            return { ...prevDispute, poll: newPoll };
-        });
-
+        // Listener will update UI
         toast({
             title: 'Vote Cast!',
             description: `You voted for: "${selectedOption}"`,
@@ -153,7 +137,7 @@ export default function DisputePage() {
     if (!newComment.trim() || !fullProfile || !dispute) return;
     setIsSubmittingComment(true);
     try {
-        await addDisputeComment(dispute.id, newComment, fullProfile);
+        await addDisputeCommentAction(dispute.id, newComment, fullProfile);
         setNewComment("");
         // No manual state update needed, the listener will handle it.
     } catch (error) {
@@ -167,7 +151,7 @@ export default function DisputePage() {
   const handleDeleteDisputeComment = async (commentId: string) => {
     if (!dispute) throw new Error("Dispute not found");
     // The real-time listener will handle the UI update automatically.
-    await deleteDisputeComment(dispute.id, commentId);
+    await deleteDisputeCommentAction(dispute.id, commentId);
   };
 
 
@@ -350,7 +334,7 @@ export default function DisputePage() {
                   </div>
                 </div>
                 {comments.map((comment) => (
-                  <CommentCard key={comment.id} comment={comment} onDelete={handleDeleteDisputeComment} />
+                  <CommentCard key={comment.id} comment={comment} onDelete={handleDeleteDisputeComment} disputeId={dispute.id} />
                 ))}
               </div>
             </div>

@@ -10,14 +10,17 @@ import { useState } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { deleteCommentAction, deleteDisputeCommentAction } from '@/lib/actions/interaction';
 
 interface CommentCardProps {
   comment: Comment;
   isReply?: boolean;
-  onDelete?: (commentId: string) => Promise<void>;
+  onDelete: (commentId: string) => Promise<void>;
+  postId?: string;
+  disputeId?: string;
 }
 
-export function CommentCard({ comment, isReply = false, onDelete }: CommentCardProps) {
+export function CommentCard({ comment, isReply = false, onDelete, postId, disputeId }: CommentCardProps) {
   const commentDate = comment.createdAt ? new Date(comment.createdAt) : new Date();
   const { user: authUser } = useAuth();
   const { toast } = useToast();
@@ -27,13 +30,21 @@ export function CommentCard({ comment, isReply = false, onDelete }: CommentCardP
   const isAuthor = authUser?.uid === comment.author.id;
 
   const handleDelete = async () => {
-    if (!onDelete) return;
-
     setIsDeleting(true);
     try {
-      await onDelete(comment.id);
+      if (postId) {
+        await deleteCommentAction(postId, comment.id);
+      } else if (disputeId) {
+        await deleteDisputeCommentAction(disputeId, comment.id);
+      } else {
+        throw new Error("No post or dispute ID provided to delete comment.");
+      }
+      
       toast({ title: "Comment Deleted", description: "Your comment has been successfully removed."});
       setIsAlertOpen(false); // Close the dialog on success
+      if (onDelete) {
+        await onDelete(comment.id);
+      }
     } catch (error) {
         console.error("Failed to delete comment:", error);
         toast({ title: "Error", description: "Could not delete comment.", variant: 'destructive' });

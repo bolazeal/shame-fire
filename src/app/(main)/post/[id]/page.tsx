@@ -8,12 +8,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
 import { useState, useEffect, useCallback } from 'react';
-import { getPost, getComments, addComment, deleteComment } from '@/lib/firestore';
+import { getPost, getComments } from '@/lib/firestore';
 import type { Post, Comment } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { addCommentAction, deleteCommentAction } from '@/lib/actions/interaction';
 
 function PostPageSkeleton() {
     return (
@@ -76,7 +77,7 @@ export default function PostPage() {
 
       setIsSubmitting(true);
       try {
-          await addComment(post.id, post.authorId, newComment, fullProfile);
+          await addCommentAction(post.id, post.authorId, newComment, fullProfile);
           setNewComment("");
           // Refetch comments to show the new one
           fetchPostAndComments();
@@ -94,7 +95,7 @@ export default function PostPage() {
 
   const handleDeleteComment = async (commentId: string) => {
     if (!post) throw new Error("Post not found");
-    await deleteComment(post.id, commentId);
+    await deleteCommentAction(post.id, commentId);
     // After deletion, refetch to update UI
     fetchPostAndComments();
   };
@@ -153,7 +154,7 @@ export default function PostPage() {
         {comments.length > 0 ? (
           <div className="flex flex-col gap-4">
             {comments.map((comment) => (
-              <CommentCard key={comment.id} comment={comment} onDelete={handleDeleteComment} />
+              <CommentCard key={comment.id} comment={comment} onDelete={handleDeleteComment} postId={post.id} />
             ))}
           </div>
         ) : (

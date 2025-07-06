@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PostCard } from '@/components/post-card';
@@ -30,12 +29,11 @@ import {
   getUserProfile,
   getUserPosts,
   isFollowing,
-  toggleFollow,
-  nominateUserForMedal,
   hasUserNominated,
-  nominateUserForModerator,
   hasUserNominatedForModerator,
 } from '@/lib/firestore';
+import { toggleFollowAction } from '@/lib/actions/interaction';
+import { nominateUserForMedalAction, nominateUserForModeratorAction } from '@/lib/actions/nomination';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
@@ -145,7 +143,7 @@ export default function ProfilePage() {
       if (!authUser || !profileUser || isCurrentUserProfile) return;
       setIsFollowLoading(true);
       try {
-          await toggleFollow(authUser.uid, profileUser.id, following);
+          await toggleFollowAction(authUser.uid, profileUser.id, following);
           setFollowing(!following);
           setProfileUser(prev => prev ? { ...prev, followersCount: prev.followersCount + (following ? -1 : 1) } : null);
       } catch (error) {
@@ -159,7 +157,7 @@ export default function ProfilePage() {
     if (!authUser || !profileUser) return;
     setIsNominating(true);
     try {
-      await nominateUserForMedal(profileUser.id, authUser.uid);
+      await nominateUserForMedalAction(profileUser.id, authUser.uid);
       toast({
         title: 'Nomination successful!',
         description: `${profileUser.name} has been nominated for a Medal of Honour.`,
@@ -183,7 +181,7 @@ export default function ProfilePage() {
     if (!authUser || !profileUser) return;
     setIsNominatingMod(true);
     try {
-      await nominateUserForModerator(profileUser.id, authUser.uid);
+      await nominateUserForModeratorAction(profileUser.id, authUser.uid);
       toast({
         title: 'Moderator Nomination Successful!',
         description: `${profileUser.name} has been nominated for a moderator position.`,
@@ -194,7 +192,7 @@ export default function ProfilePage() {
           ? {
               ...prev,
               moderatorNominationsCount:
-                prev.moderatorNominationsCount + 1,
+                (prev.moderatorNominationsCount || 0) + 1,
             }
           : null
       );

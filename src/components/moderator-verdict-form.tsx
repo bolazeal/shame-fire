@@ -16,9 +16,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Gavel, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { addVerdictToDispute } from '@/lib/firestore';
 import { useAuth } from '@/hooks/use-auth';
-import type { User } from '@/lib/types';
+import { addVerdictToDisputeAction } from '@/lib/actions/dispute';
 
 const verdictSchema = z.object({
   decision: z.string().min(10, {
@@ -54,7 +53,7 @@ export function ModeratorVerdictForm({ disputeId, onSuccess }: ModeratorVerdictF
     }
     setIsSubmitting(true);
     try {
-      await addVerdictToDispute(disputeId, values.decision, values.reason, fullProfile);
+      await addVerdictToDisputeAction(disputeId, values.decision, values.reason, fullProfile);
       toast({
         title: 'Verdict Submitted',
         description: 'The dispute has been closed.',

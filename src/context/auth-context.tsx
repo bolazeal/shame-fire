@@ -17,8 +17,8 @@ import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import type { AuthContextType } from '@/lib/types/auth';
 import type { User as AppUser } from '@/lib/types';
+import { createUserProfileAction } from '@/lib/actions/user';
 import {
-  createUserProfile,
   getUserProfile,
   fromFirestore,
 } from '@/lib/firestore';
@@ -129,7 +129,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth as Auth, email, password);
       await updateProfile(userCredential.user, { displayName });
-      await createUserProfile(userCredential.user, username);
+      await createUserProfileAction(userCredential.user, username);
       // onAuthStateChanged will set the user and fullProfile state
       return userCredential.user;
     } finally {
@@ -191,7 +191,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (!docSnap.exists()) {
             const username = user.email ? user.email.split('@')[0] : `user${Date.now()}`;
-            await createUserProfile(user, username);
+            await createUserProfileAction(user, username);
         } else {
             const profile = fromFirestore<AppUser>(docSnap);
             if (profile.accountStatus !== 'active') {

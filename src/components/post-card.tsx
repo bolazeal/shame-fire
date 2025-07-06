@@ -73,7 +73,7 @@ interface PostCardProps {
 
 export function PostCard({ post }: PostCardProps) {
   const router = useRouter();
-  const { user: authUser } = useAuth();
+  const { user: authUser, fullProfile } = useAuth();
   const { toast } = useToast();
 
   const [isBookmarked, setIsBookmarked] = useState(false);
@@ -100,10 +100,15 @@ export function PostCard({ post }: PostCardProps) {
 
 
   useEffect(() => {
-    if (authUser) {
+    let isMounted = true;
+    const checkUserStatus = async () => {
+      if (!authUser || !isMounted) return;
+
+      // Set interaction states based on post data
       setIsBookmarked(post.bookmarkedBy.includes(authUser.uid));
       setIsReposted(post.repostedBy.includes(authUser.uid));
       setHasFlagged(post.flaggedBy?.includes(authUser.uid) ?? false);
+      
       if (post.upvotedBy.includes(authUser.uid)) {
         setVoteStatus('up');
       } else if (post.downvotedBy.includes(authUser.uid)) {
@@ -111,35 +116,30 @@ export function PostCard({ post }: PostCardProps) {
       } else {
         setVoteStatus(null);
       }
-    }
 
-    const checkNominationStatus = async () => {
-      if (authUser && post.entity && post.type === 'endorsement') {
+      // Check nomination status asynchronously
+      if (post.entity && post.type === 'endorsement') {
         try {
           const targetUser = await getUserByEntityName(post.entity);
-          if (targetUser) {
+          if (targetUser && isMounted) {
             const nominated = await hasUserNominated(
               authUser.uid,
               targetUser.id
             );
-            setHasNominated(nominated);
+            if (isMounted) setHasNominated(nominated);
           }
         } catch (error) {
           console.error('Error checking nomination status', error);
         }
       }
     };
-    checkNominationStatus();
-  }, [
-    authUser,
-    post.bookmarkedBy,
-    post.repostedBy,
-    post.upvotedBy,
-    post.downvotedBy,
-    post.entity,
-    post.type,
-    post.flaggedBy,
-  ]);
+
+    checkUserStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authUser, post]);
 
   const handleVoteClick = async (
     e: React.MouseEvent,
@@ -239,7 +239,7 @@ export function PostCard({ post }: PostCardProps) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!authUser || !post.entity) {
+    if (!fullProfile || !post.entity) {
       toast({
         title: 'Error',
         description: 'Cannot escalate this post.',
@@ -250,7 +250,7 @@ export function PostCard({ post }: PostCardProps) {
 
     setIsEscalating(true);
     try {
-      await createDispute(post, authUser as any);
+      await createDispute(post, fullProfile);
       toast({
         title: 'Post Escalated',
         description:
@@ -371,9 +371,8 @@ export function PostCard({ post }: PostCardProps) {
 
   const canEscalate =
     post.type === 'report' &&
-    authUser &&
-    (post.entity === authUser.displayName ||
-      post.text.includes(`@${authUser.email?.split('@')[0]}`)) &&
+    fullProfile &&
+    (post.entity === fullProfile.name || post.entity === fullProfile.username) &&
     !post.isEscalated;
 
   const postDate = post.createdAt ? new Date(post.createdAt) : new Date();

@@ -26,7 +26,6 @@ import {
   listenToDisputeComments,
   addDisputeComment,
   castVote,
-  getUserProfile,
   deleteDisputeComment,
 } from '@/lib/firestore';
 import { ModeratorVerdictForm } from '@/components/moderator-verdict-form';
@@ -151,12 +150,10 @@ export default function DisputePage() {
   };
 
   const handleCommentSubmit = async () => {
-    if (!newComment.trim() || !authUser || !dispute) return;
+    if (!newComment.trim() || !fullProfile || !dispute) return;
     setIsSubmittingComment(true);
     try {
-        const authorProfile = await getUserProfile(authUser.uid);
-        if (!authorProfile) throw new Error("Could not find user profile.");
-        await addDisputeComment(dispute.id, newComment, authorProfile);
+        await addDisputeComment(dispute.id, newComment, fullProfile);
         setNewComment("");
         // No manual state update needed, the listener will handle it.
     } catch (error) {

@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
 import { useState, useEffect, useCallback } from 'react';
-import { getPost, getComments, addComment, getUserProfile, deleteComment } from '@/lib/firestore';
+import { getPost, getComments, addComment, deleteComment } from '@/lib/firestore';
 import type { Post, Comment } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -38,7 +38,7 @@ function PostPageSkeleton() {
 
 export default function PostPage() {
   const params = useParams<{ id: string }>();
-  const { user: authUser } = useAuth();
+  const { user: authUser, fullProfile } = useAuth();
   const { toast } = useToast();
   
   const [post, setPost] = useState<Post | null>(null);
@@ -72,14 +72,11 @@ export default function PostPage() {
   }, [postId, fetchPostAndComments]);
   
   const handleCommentSubmit = async () => {
-      if (!newComment.trim() || !authUser || !post) return;
+      if (!newComment.trim() || !fullProfile || !post) return;
 
       setIsSubmitting(true);
       try {
-          const authorProfile = await getUserProfile(authUser.uid);
-          if (!authorProfile) throw new Error("Could not find user profile.");
-
-          await addComment(post.id, post.authorId, newComment, authorProfile);
+          await addComment(post.id, post.authorId, newComment, fullProfile);
           setNewComment("");
           // Refetch comments to show the new one
           fetchPostAndComments();

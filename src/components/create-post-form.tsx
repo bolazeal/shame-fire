@@ -38,7 +38,6 @@ import {
 } from './ui/tooltip';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { useAuth } from '@/hooks/use-auth';
-import { getUserProfile } from '@/lib/firestore';
 import { createPostAction } from '@/lib/actions/post';
 import {
   Collapsible,
@@ -61,7 +60,7 @@ export function CreatePostForm({
   const [isSuggestingCategories, setIsSuggestingCategories] = useState(false);
   const [suggestedCategories, setSuggestedCategories] = useState<string[]>([]);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, fullProfile } = useAuth();
   const [mediaPreview, setMediaPreview] = useState<{
     url: string;
     type: 'image' | 'video';
@@ -152,7 +151,7 @@ export function CreatePostForm({
   };
 
   async function onSubmit(values: z.infer<typeof createPostFormSchema>) {
-    if (!user) {
+    if (!user || !fullProfile) {
       toast({
         title: 'You must be logged in to post.',
         variant: 'destructive',
@@ -162,10 +161,7 @@ export function CreatePostForm({
 
     setIsSubmitting(true);
     try {
-      const authorProfile = await getUserProfile(user.uid);
-      if (!authorProfile) throw new Error('Could not find user profile.');
-
-      await createPostAction(values, authorProfile);
+      await createPostAction(values, fullProfile);
 
       toast({
         title: 'Post created!',

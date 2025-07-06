@@ -13,6 +13,8 @@ import {
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, db, isFirebaseConfigured } from '@/lib/firebase';
+import type { Auth } from 'firebase/auth';
+import type { Firestore } from 'firebase/firestore';
 import type { AuthContextType } from '@/lib/types/auth';
 import type { User as AppUser } from '@/lib/types';
 import {
@@ -65,11 +67,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [fullProfile, setFullProfile] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const { toast } = useToast() as any; // TODO: Type useToast correctly
 
   useEffect(() => {
-    if (isFirebaseConfigured) {
-      const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (isFirebaseConfigured && auth as Auth && db as Firestore) {
+      const unsubscribe = onAuthStateChanged(auth as Auth, async (user) => {
         if (user) {
           const profile = await getUserProfile(user.uid);
 
@@ -80,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               description: `Your account has been ${profile.accountStatus}. Please contact support.`,
               variant: 'destructive',
             });
-            await signOut(auth); // Sign them out immediately
+            await signOut(auth as Auth); // Sign them out immediately
             setUser(null);
             setFullProfile(null);
           } else {
@@ -113,7 +115,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [isFirebaseConfigured, toast]);
 
   const signup = async (email: string, password: string, displayName: string, username: string) => {
-    if (!isFirebaseConfigured) {
+    if (!isFirebaseConfigured || !auth as Auth || !db as Firestore) {
       console.warn("Mock Signup: Simulating user creation.");
       setLoading(true);
       const newUser = { ...mockAuthUser, uid: `mock_${Date.now()}`, email, displayName };
@@ -125,7 +127,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth as Auth, email, password);
       await updateProfile(userCredential.user, { displayName });
       await createUserProfile(userCredential.user, username);
       // onAuthStateChanged will set the user and fullProfile state
@@ -136,7 +138,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (email: string, password: string) => {
-    if (!isFirebaseConfigured) {
+    if (!isFirebaseConfigured || !auth as Auth || !db as Firestore) {
       console.warn("Mock Login: Simulating login with default user.");
       setLoading(true);
       localStorage.setItem('mockUserSession', JSON.stringify(mockAuthUser));
@@ -148,7 +150,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth as Auth, email, password);
       const profile = await getUserProfile(userCredential.user.uid);
       
       // ENFORCE ACCOUNT STATUS ON LOGIN
@@ -158,7 +160,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           description: `Your account has been ${profile.accountStatus}. Please contact support.`,
           variant: 'destructive',
         });
-        await signOut(auth);
+        await signOut(auth as Auth);
         return undefined; // Return undefined to signify login failure
       }
        // onAuthStateChanged will set the user and fullProfile state if successful
@@ -169,7 +171,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const loginWithGoogle = async () => {
-    if (!isFirebaseConfigured || !db) {
+    if (!isFirebaseConfigured || !db as Firestore) {
         console.warn("Mock Google Login: Simulating login.");
         setLoading(true);
         // Using a different mock user to show a difference from email login
@@ -183,11 +185,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setLoading(true);
     try {
-        const provider = new GoogleAuthProvider();
-        const result = await signInWithPopup(auth, provider);
+      const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth as Auth, provider);
         const user = result.user;
 
-        const userRef = doc(db, 'users', user.uid);
+        const userRef = doc(db as Firestore, 'users', user.uid);
         const docSnap = await getDoc(userRef);
 
         if (!docSnap.exists()) {
@@ -203,7 +205,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     description: `Your account has been ${profile.accountStatus}. Please contact support.`,
                     variant: 'destructive',
                 });
-                await signOut(auth);
+                await signOut(auth as Auth);
                 return undefined;
             }
         }
@@ -216,7 +218,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    if (!isFirebaseConfigured) {
+    if (!isFirebaseConfigured || !auth) {
       console.warn("Mock Logout: Clearing simulated user session.");
       setLoading(true);
       localStorage.removeItem('mockUserSession');
@@ -228,7 +230,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setLoading(true);
     try {
-      await signOut(auth);
+      await signOut(auth as Auth);
        // onAuthStateChanged will set the user and fullProfile state to null
     } finally {
       setLoading(false);
@@ -236,7 +238,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const sendPasswordResetEmailFunc = async (email: string) => {
-    if (!isFirebaseConfigured) {
+    if (!isFirebaseConfigured || !auth) {
       console.warn('Mock Password Reset: Simulating email sent.');
       toast({
         title: 'Password Reset Email Sent',
@@ -247,7 +249,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      await sendPasswordResetEmail(auth, email);
+      await sendPasswordResetEmail(auth as Auth, email);
       toast({
         title: 'Password Reset Email Sent',
         description:

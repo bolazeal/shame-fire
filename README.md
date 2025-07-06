@@ -28,6 +28,7 @@ This project showcases a complete, production-ready application with real-time f
     *   **Village Square**: A dedicated space for escalating reports into public disputes, featuring real-time community polling and discussion.
     *   **Hall of Honour**: Recognizes highly-trusted users through a medal and nomination system.
 *   **Full-Featured Admin Panel**: A protected dashboard for administrators to monitor platform metrics, manage users (suspend/ban), and review AI-flagged content.
+*   **Content Flagging**: Users can flag inappropriate content to send it to the admin moderation queue.
 
 ### Media & Design
 *   **Shame or Shine TV**: A section for long-form video content, including interviews and investigative reports.

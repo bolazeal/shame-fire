@@ -15,7 +15,7 @@ import React, { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { suggestCategories } from '@/ai/flows/suggest-categories';
+import { suggestCategoriesAction } from '@/lib/actions/ai';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -137,7 +137,7 @@ export function CreatePostForm({
     setIsSuggestingCategories(true);
     setSuggestedCategories([]);
     try {
-      const result = await suggestCategories({ reportText: text });
+      const result = await suggestCategoriesAction({ reportText: text });
       setSuggestedCategories(result.suggestedCategories);
     } catch (error) {
       console.error('Failed to suggest categories:', error);

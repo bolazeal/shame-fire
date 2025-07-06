@@ -67,10 +67,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [fullProfile, setFullProfile] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast() as any; // TODO: Type useToast correctly
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (isFirebaseConfigured && auth as Auth && db as Firestore) {
+    if (isFirebaseConfigured) {
       const unsubscribe = onAuthStateChanged(auth as Auth, async (user) => {
         if (user) {
           const profile = await getUserProfile(user.uid);
@@ -102,9 +102,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const mockSession = localStorage.getItem('mockUserSession');
       if (mockSession) {
         try {
-            const mockAuthUser = JSON.parse(mockSession);
-            setUser(mockAuthUser);
-            const mockProfile = Object.values(mockUsers).find(u => u.id === mockAuthUser.uid);
+            const parsedUser = JSON.parse(mockSession);
+            setUser(parsedUser);
+            const mockProfile = Object.values(mockUsers).find(u => u.id === parsedUser.uid);
             setFullProfile(mockProfile || null);
         } catch (e) {
             localStorage.removeItem('mockUserSession');
@@ -112,10 +112,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       setLoading(false);
     }
-  }, [isFirebaseConfigured, toast]);
+  }, [toast]);
 
   const signup = async (email: string, password: string, displayName: string, username: string) => {
-    if (!isFirebaseConfigured || !auth as Auth || !db as Firestore) {
+    if (!isFirebaseConfigured) {
       console.warn("Mock Signup: Simulating user creation.");
       setLoading(true);
       const newUser = { ...mockAuthUser, uid: `mock_${Date.now()}`, email, displayName };
@@ -138,7 +138,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (email: string, password: string) => {
-    if (!isFirebaseConfigured || !auth as Auth || !db as Firestore) {
+    if (!isFirebaseConfigured) {
       console.warn("Mock Login: Simulating login with default user.");
       setLoading(true);
       localStorage.setItem('mockUserSession', JSON.stringify(mockAuthUser));
@@ -153,7 +153,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userCredential = await signInWithEmailAndPassword(auth as Auth, email, password);
       const profile = await getUserProfile(userCredential.user.uid);
       
-      // ENFORCE ACCOUNT STATUS ON LOGIN
       if (profile && profile.accountStatus !== 'active') {
         toast({
           title: 'Login Failed',
@@ -161,9 +160,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           variant: 'destructive',
         });
         await signOut(auth as Auth);
-        return undefined; // Return undefined to signify login failure
+        return undefined; 
       }
-       // onAuthStateChanged will set the user and fullProfile state if successful
       return userCredential.user;
     } finally {
       setLoading(false);
@@ -171,10 +169,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const loginWithGoogle = async () => {
-    if (!isFirebaseConfigured || !db as Firestore) {
+    if (!isFirebaseConfigured) {
         console.warn("Mock Google Login: Simulating login.");
         setLoading(true);
-        // Using a different mock user to show a difference from email login
         const googleMockUserAuth = { ...mockAuthUser, uid: 'user2', email: 'jane@example.com', displayName: 'Jane Smith' };
         localStorage.setItem('mockUserSession', JSON.stringify(googleMockUserAuth));
         setUser(googleMockUserAuth);
@@ -193,12 +190,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const docSnap = await getDoc(userRef);
 
         if (!docSnap.exists()) {
-            // New user via Google, create their profile in Firestore
             const username = user.email ? user.email.split('@')[0] : `user${Date.now()}`;
             await createUserProfile(user, username);
         } else {
             const profile = fromFirestore<AppUser>(docSnap);
-            // ENFORCE ACCOUNT STATUS ON GOOGLE LOGIN
             if (profile.accountStatus !== 'active') {
                 toast({
                     title: 'Login Failed',
@@ -209,8 +204,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 return undefined;
             }
         }
-         // onAuthStateChanged will set the user and fullProfile state
-
         return user;
     } finally {
       setLoading(false);
@@ -218,7 +211,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    if (!isFirebaseConfigured || !auth) {
+    if (!isFirebaseConfigured) {
       console.warn("Mock Logout: Clearing simulated user session.");
       setLoading(true);
       localStorage.removeItem('mockUserSession');
@@ -231,14 +224,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await signOut(auth as Auth);
-       // onAuthStateChanged will set the user and fullProfile state to null
     } finally {
       setLoading(false);
     }
   };
 
   const sendPasswordResetEmailFunc = async (email: string) => {
-    if (!isFirebaseConfigured || !auth) {
+    if (!isFirebaseConfigured) {
       console.warn('Mock Password Reset: Simulating email sent.');
       toast({
         title: 'Password Reset Email Sent',
@@ -255,9 +247,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description:
           'If an account exists with that email, a password reset link has been sent to it.',
       });
-    } catch (error: any) {
-      // Avoid revealing if a user exists or not for security reasons.
-      // The toast message is intentionally the same as on success.
+    } catch (error) {
       console.error('Password reset error:', error);
       toast({
         title: 'Password Reset Email Sent',

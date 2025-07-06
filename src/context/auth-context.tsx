@@ -31,37 +31,40 @@ export const AuthContext = createContext<AuthContextType | undefined>(
 );
 
 // This is a mock user object that can be used for development when Firebase isn't configured.
-// It's designed to satisfy the `User` type from `firebase/auth`.
-const mockAuthUser = {
-  uid: mockUsers.user1.id,
-  email: mockUsers.user1.email,
-  displayName: mockUsers.user1.name,
-  photoURL: mockUsers.user1.avatarUrl,
-  emailVerified: true,
-  isAnonymous: false,
-  metadata: {},
-  providerData: [],
-  providerId: 'password',
-  tenantId: null,
-  refreshToken: 'mock-refresh-token',
-  delete: async () => console.warn('Mock user delete called.'),
-  getIdToken: async () => 'mock-id-token',
-  getIdTokenResult: async () => ({
-    token: 'mock-id-token',
-    claims: {},
-    authTime: new Date().toISOString(),
-    issuedAtTime: new Date().toISOString(),
-    signInProvider: 'password',
-    signInSecondFactor: null,
-    expirationTime: new Date(Date.now() + 3600 * 1000).toISOString(),
-  }),
-  reload: async () => console.warn('Mock user reload called.'),
-  toJSON: () => ({
-    uid: mockUsers.user1.id,
-    email: mockUsers.user1.email,
-    displayName: mockUsers.user1.name,
-  }),
-} as unknown as User;
+// It's wrapped in a function to lazily generate dates and avoid hydration issues.
+const createMockAuthUser = (userKey: keyof typeof mockUsers = 'user1'): User => {
+    const mockUser = mockUsers[userKey];
+    return {
+        uid: mockUser.id,
+        email: mockUser.email,
+        displayName: mockUser.name,
+        photoURL: mockUser.avatarUrl,
+        emailVerified: true,
+        isAnonymous: false,
+        metadata: {},
+        providerData: [],
+        providerId: 'password',
+        tenantId: null,
+        refreshToken: 'mock-refresh-token',
+        delete: async () => console.warn('Mock user delete called.'),
+        getIdToken: async () => 'mock-id-token',
+        getIdTokenResult: async () => ({
+            token: 'mock-id-token',
+            claims: {},
+            authTime: new Date().toISOString(),
+            issuedAtTime: new Date().toISOString(),
+            signInProvider: 'password',
+            signInSecondFactor: null,
+            expirationTime: new Date(Date.now() + 3600 * 1000).toISOString(),
+        }),
+        reload: async () => console.warn('Mock user reload called.'),
+        toJSON: () => ({
+            uid: mockUser.id,
+            email: mockUser.email,
+            displayName: mockUser.name,
+        }),
+    } as unknown as User;
+}
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -118,7 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!isFirebaseConfigured) {
       console.warn("Mock Signup: Simulating user creation.");
       setLoading(true);
-      const newUser = { ...mockAuthUser, uid: `mock_${Date.now()}`, email, displayName };
+      const newUser = { ...createMockAuthUser(), email, displayName };
       localStorage.setItem('mockUserSession', JSON.stringify(newUser));
       setUser(newUser);
       setLoading(false);
@@ -141,6 +144,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!isFirebaseConfigured) {
       console.warn("Mock Login: Simulating login with default user.");
       setLoading(true);
+      const mockAuthUser = createMockAuthUser('user1');
       localStorage.setItem('mockUserSession', JSON.stringify(mockAuthUser));
       setUser(mockAuthUser);
       setFullProfile(mockUsers.user1);
@@ -172,7 +176,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!isFirebaseConfigured) {
         console.warn("Mock Google Login: Simulating login.");
         setLoading(true);
-        const googleMockUserAuth = { ...mockAuthUser, uid: 'user2', email: 'jane@example.com', displayName: 'Jane Smith' };
+        const googleMockUserAuth = createMockAuthUser('user2');
         localStorage.setItem('mockUserSession', JSON.stringify(googleMockUserAuth));
         setUser(googleMockUserAuth);
         setFullProfile(mockUsers.user2);

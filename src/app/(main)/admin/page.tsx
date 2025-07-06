@@ -84,6 +84,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { UserAvatar } from '@/components/user-avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { toggleAdminStatusAction } from '@/lib/actions/admin';
 
 export default function AdminPage() {
   const { fullProfile, loading: authLoading } = useAuth();
@@ -105,6 +106,7 @@ export default function AdminPage() {
   const [updatingTrustScore, setUpdatingTrustScore] = useState<string | null>(
     null
   );
+  const [updatingAdminId, setUpdatingAdminId] = useState<string | null>(null);
   
   const [contentBreakdownData, setContentBreakdownData] = useState<any[]>([]);
   const [userActivityData, setUserActivityData] = useState<any[]>([]);
@@ -327,6 +329,29 @@ export default function AdminPage() {
       });
     } finally {
       setUpdatingTrustScore(null);
+    }
+  };
+
+  const handleToggleAdminStatus = async (userToUpdate: User) => {
+    if (!fullProfile) return;
+    setUpdatingAdminId(userToUpdate.id);
+    try {
+      await toggleAdminStatusAction(userToUpdate.id);
+      toast({
+        title: 'Success',
+        description: `${userToUpdate.name} is ${
+          userToUpdate.isAdmin ? 'no longer' : 'now'
+        } an admin.`,
+      });
+      fetchData(); // Refresh data
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Could not update admin status.',
+        variant: 'destructive',
+      });
+    } finally {
+      setUpdatingAdminId(null);
     }
   };
 
@@ -634,12 +659,13 @@ export default function AdminPage() {
                                 size="icon"
                                 disabled={
                                   updatingUserId === user.id ||
-                                  user.isAdmin ||
-                                  updatingTrustScore === user.id
+                                  updatingTrustScore === user.id ||
+                                  updatingAdminId === user.id
                                 }
                               >
                                 {updatingUserId === user.id ||
-                                updatingTrustScore === user.id ? (
+                                updatingTrustScore === user.id ||
+                                updatingAdminId === user.id ? (
                                   <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
                                   <MoreHorizontal className="h-4 w-4" />
@@ -660,7 +686,7 @@ export default function AdminPage() {
                                 </DropdownMenuItem>
                               )}
 
-                              {user.accountStatus === 'active' && (
+                              {user.accountStatus === 'active' && !user.isAdmin && (
                                 <DropdownMenuItem
                                   onClick={() =>
                                     handleUpdateUserStatus(
@@ -674,7 +700,7 @@ export default function AdminPage() {
                                 </DropdownMenuItem>
                               )}
 
-                              {user.accountStatus !== 'banned' && (
+                              {user.accountStatus !== 'banned' && !user.isAdmin && (
                                 <DropdownMenuItem
                                   className="text-destructive focus:bg-destructive/10 focus:text-destructive"
                                   onClick={() =>
@@ -686,6 +712,13 @@ export default function AdminPage() {
                                 </DropdownMenuItem>
                               )}
                               <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleToggleAdminStatus(user)}
+                                  disabled={fullProfile?.id === user.id}
+                                >
+                                  <UserCog className="mr-2 h-4 w-4" />
+                                  {user.isAdmin ? 'Remove Admin' : 'Make Admin'}
+                                </DropdownMenuItem>
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <DropdownMenuItem

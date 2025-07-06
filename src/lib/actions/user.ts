@@ -10,12 +10,12 @@ import {
   query,
   runTransaction,
   serverTimestamp,
+  collectionGroup,
 } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 import type { User as FirebaseUser } from 'firebase/auth';
 import type { FieldValue } from 'firebase/firestore';
-
 
 export async function createUserProfileAction(
   firebaseUser: FirebaseUser,
@@ -23,19 +23,21 @@ export async function createUserProfileAction(
 ): Promise<void> {
   if (!db) throw new Error('Firestore not initialized');
 
-  const usersCheckQuery = query(collection(db, 'users'), limit(1));
-  const usersCheckSnapshot = await getDocs(usersCheckQuery);
-  const isFirstUser = usersCheckSnapshot.empty;
-
   const userRef = doc(db, 'users', firebaseUser.uid);
   const usernameRef = doc(db, 'usernames', username.toLowerCase());
 
   try {
     await runTransaction(db, async (transaction) => {
+      // Check for existing username inside the transaction
       const usernameDoc = await transaction.get(usernameRef);
       if (usernameDoc.exists()) {
         throw new Error('firestore/username-already-in-use');
       }
+
+      // Check if this is the first user inside the transaction to prevent race conditions
+      const usersQuery = query(collection(db, 'users'), limit(1));
+      const usersSnapshot = await transaction.get(usersQuery);
+      const isFirstUser = usersSnapshot.empty;
 
       const userProfile: Omit<User, 'id' | 'createdAt'> & {
         createdAt: FieldValue;
@@ -46,7 +48,7 @@ export async function createUserProfileAction(
         avatarUrl: firebaseUser.photoURL || 'https://placehold.co/100x100.png',
         trustScore: 50,
         isVerified: false,
-        isAdmin: isFirstUser,
+        isAdmin: isFirstUser, // Correctly determined inside the transaction
         bio: 'New user on Shame.',
         location: '',
         website: '',
@@ -68,8 +70,7 @@ export async function createUserProfileAction(
     console.error('Create user profile transaction failed: ', error);
     throw new Error('Failed to create user profile due to a server error.');
   }
-};
-
+}
 
 export async function updateProfileAction(
   userId: string,

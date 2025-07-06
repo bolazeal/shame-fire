@@ -1,4 +1,3 @@
-
 'use client';
 
 import { LeftSidebar } from '@/components/main-layout/left-sidebar';
@@ -10,6 +9,9 @@ import { ReactNode, useEffect } from 'react';
 import { ModerationProvider } from '@/context/moderation-context';
 import { MobileBottomNav } from '@/components/main-layout/mobile-bottom-nav';
 import { NotificationProvider } from '@/context/notification-context';
+import { isFirebaseConfigured } from '@/lib/firebase';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Terminal } from 'lucide-react';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
@@ -17,11 +19,15 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login');
+      // Only redirect if Firebase is configured. Otherwise, we stay in mock mode.
+      if (isFirebaseConfigured) {
+        router.push('/login');
+      }
     }
   }, [user, loading, router]);
 
-  if (loading || !user) {
+  // Show skeleton if we're loading OR if we're not in mock mode and there's no user yet.
+  if (loading || (!user && isFirebaseConfigured)) {
     return (
       <div className="container mx-auto flex min-h-screen">
         <aside className="sticky top-0 hidden h-screen w-64 flex-col justify-between p-2 lg:flex">
@@ -55,12 +61,24 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     );
   }
 
+  // If we reach here, we're either logged in OR in mock mode.
   return (
     <ModerationProvider>
       <NotificationProvider>
         <div className="container mx-auto flex min-h-screen">
           <LeftSidebar />
-          <main className="flex-1 border-x border-border pb-16 lg:pb-0">{children}</main>
+          <main className="flex-1 border-x border-border pb-16 lg:pb-0">
+            {!isFirebaseConfigured && (
+              <Alert className="m-4">
+                <Terminal className="h-4 w-4" />
+                <AlertTitle>Developer Mode Active</AlertTitle>
+                <AlertDescription>
+                  This app is in mock mode because Firebase environment variables are missing. To enable user sign-up and connect to a live database, please add them to your deployment environment.
+                </AlertDescription>
+              </Alert>
+            )}
+            {children}
+          </main>
           <RightSidebar />
         </div>
         <MobileBottomNav />

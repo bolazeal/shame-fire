@@ -100,19 +100,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       return () => unsubscribe();
     } else {
-      // In mock mode, check localStorage to persist a "logged in" state across reloads.
+      // In mock mode, always set a default mock user so the app is usable.
       console.warn('Firebase is not configured. Using mock authentication.');
-      const mockSession = localStorage.getItem('mockUserSession');
-      if (mockSession) {
-        try {
-            const parsedUser = JSON.parse(mockSession);
-            setUser(parsedUser);
-            const mockProfile = Object.values(mockUsers).find(u => u.id === parsedUser.uid);
-            setFullProfile(mockProfile || null);
-        } catch (e) {
-            localStorage.removeItem('mockUserSession');
-        }
-      }
+      const mockAuthUser = createMockAuthUser('user1');
+      setUser(mockAuthUser);
+      setFullProfile(mockUsers.user1);
       setLoading(false);
     }
   }, [toast]);

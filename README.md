@@ -45,3 +45,33 @@ This project showcases a complete, production-ready application with real-time f
 -   **Backend**: **Firebase** (Firestore, Auth)
 -   **State Management**: React Context & React Hook Form with Zod validation
 -   **Deployment**: Configured for standalone production builds on Firebase App Hosting.
+
+## Deployment & Setup
+
+To deploy this application and connect it to your Firebase project, you must configure your environment variables in Firebase App Hosting. Without these, the app will run in a "mock mode" with placeholder data.
+
+### Step 1: Find Your Firebase Credentials
+
+1.  Go to the [Firebase Console](https://console.firebase.google.com/).
+2.  Select your Firebase project.
+3.  Click the **gear icon** ⚙️ next to "Project Overview" and select **Project settings**.
+4.  In the **General** tab, scroll down to the "Your apps" card and select your web app.
+5.  Under **SDK setup and configuration**, select **Config**.
+6.  You will see your `firebaseConfig` object. Keep this page open to copy the values.
+
+### Step 2: Add Credentials to App Hosting
+
+1.  In the Firebase Console, go to the **Build** > **App Hosting** section from the left-hand menu.
+2.  Click on your backend (e.g., `nextn-backend`) to open its specific dashboard.
+3.  Select the **Settings** tab for your backend.
+4.  In the **Environment variables** section, click **Edit**.
+5.  Add the following variables, copying the corresponding values from your `firebaseConfig` object:
+    *   `NEXT_PUBLIC_FIREBASE_API_KEY`
+    *   `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
+    *   `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+    *   `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
+    *   `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+    *   `NEXT_PUBLIC_FIREBASE_APP_ID`
+6.  Save your changes.
+
+After adding these variables, redeploy your application. It will now connect to your live Firebase backend.

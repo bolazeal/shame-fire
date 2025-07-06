@@ -8,11 +8,11 @@ export interface AuthContextType {
   loading: boolean;
   signup: (
     email: string,
-    password,
+    password: string,
     displayName: string,
     username: string
   ) => Promise<User | undefined>;
-  login: (email, password) => Promise<User | undefined>;
+  login: (email: string, password: string) => Promise<User | undefined>;
   loginWithGoogle: () => Promise<User | undefined>;
   logout: () => Promise<void>;
   sendPasswordResetEmail: (email: string) => Promise<void>;

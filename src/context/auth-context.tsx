@@ -55,11 +55,11 @@ const mockAuthUser = {
   }),
   reload: async () => console.warn('Mock user reload called.'),
   toJSON: () => ({
-      uid: mockUsers.user1.id,
-      email: mockUsers.user1.email,
-      displayName: mockUsers.user1.name,
+    uid: mockUsers.user1.id,
+    email: mockUsers.user1.email,
+    displayName: mockUsers.user1.name,
   }),
-} as User;
+} as unknown as User;
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -112,7 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isFirebaseConfigured, toast]);
 
-  const signup = async (email: string, password, displayName: string, username: string) => {
+  const signup = async (email: string, password: string, displayName: string, username: string) => {
     if (!isFirebaseConfigured) {
       console.warn("Mock Signup: Simulating user creation.");
       setLoading(true);
@@ -135,7 +135,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const login = async (email, password) => {
+  const login = async (email: string, password: string) => {
     if (!isFirebaseConfigured) {
       console.warn("Mock Login: Simulating login with default user.");
       setLoading(true);
@@ -211,7 +211,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         return user;
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 

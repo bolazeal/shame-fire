@@ -9,7 +9,8 @@ import { UserAvatar } from '@/components/user-avatar';
 import { Trophy, Medal, Info, FileText, Loader2, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
-import { getUsersToFollow, toggleFollow, isFollowing, getTrendingTopics } from '@/lib/firestore';
+import { getUsersToFollow, isFollowing, getTrendingTopics } from '@/lib/firestore';
+import { toggleFollowAction } from '@/lib/actions/interaction';
 import type { User } from '@/lib/types';
 
 interface Trend {
@@ -51,15 +52,20 @@ export function RightSidebar() {
                 return;
             }
             setLoadingUsers(true);
-            const users = await getUsersToFollow(authUser.uid);
-            const usersWithFollowStatus = await Promise.all(
-                users.map(async (user) => {
-                    const followingStatus = await isFollowing(authUser.uid, user.id);
-                    return { ...user, isFollowing: followingStatus, isFollowLoading: false };
-                })
-            );
-            setUsersToFollow(usersWithFollowStatus);
-            setLoadingUsers(false);
+            try {
+                const users = await getUsersToFollow(authUser.uid);
+                const usersWithFollowStatus = await Promise.all(
+                    users.map(async (user) => {
+                        const followingStatus = await isFollowing(authUser.uid, user.id);
+                        return { ...user, isFollowing: followingStatus, isFollowLoading: false };
+                    })
+                );
+                setUsersToFollow(usersWithFollowStatus);
+            } catch (error) {
+                console.error("Error fetching users to follow:", error);
+            } finally {
+                setLoadingUsers(false);
+            }
         }
 
         fetchUsers();
@@ -73,19 +79,21 @@ export function RightSidebar() {
                 user.id === userId ? { ...user, isFollowLoading: true } : user
             )
         );
+        
+        const userToUpdate = usersToFollow.find(u => u.id === userId);
+        if (!userToUpdate) return;
 
         try {
-            const userToUpdate = usersToFollow.find(u => u.id === userId);
-            if(userToUpdate) {
-                await toggleFollow(authUser.uid, userId, userToUpdate.isFollowing);
-                setUsersToFollow(prevUsers =>
-                    prevUsers.map(user =>
-                        user.id === userId ? { ...user, isFollowing: !user.isFollowing } : user
-                    )
-                );
-            }
+            await toggleFollowAction(authUser.uid, userId, userToUpdate.isFollowing);
+            // Optimistic update of the follow state after the action
+            setUsersToFollow(prevUsers =>
+                prevUsers.map(user =>
+                    user.id === userId ? { ...user, isFollowing: !user.isFollowing } : user
+                )
+            );
         } catch (error) {
             console.error("Failed to toggle follow:", error);
+            // Optionally revert UI on error, but for now we'll just log it.
         } finally {
             setUsersToFollow(prevUsers =>
                 prevUsers.map(user =>

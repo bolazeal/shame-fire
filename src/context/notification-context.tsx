@@ -19,7 +19,8 @@ import {
   onSnapshot,
   limit,
 } from 'firebase/firestore';
-import { fromFirestore, markAllNotificationsAsRead as markAllReadInDB } from '@/lib/firestore';
+import { fromFirestore } from '@/lib/firestore';
+import { markAllAsReadAction } from '@/lib/actions/notification';
 
 export const NotificationContext = createContext<
   NotificationContextType | undefined
@@ -70,16 +71,19 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     if (!user || unreadCount === 0) return;
 
     // Optimistic update
+    const previousNotifications = [...notifications];
     setUnreadCount(0);
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
 
     try {
-      await markAllReadInDB(user.uid);
+      await markAllAsReadAction(user.uid);
     } catch (error) {
       console.error('Failed to mark notifications as read:', error);
-      // Revert optimistic update on failure - you might fetch again here
+      // Revert optimistic update on failure
+      setNotifications(previousNotifications);
+      setUnreadCount(previousNotifications.filter(n => !n.read).length);
     }
-  }, [user, unreadCount]);
+  }, [user, unreadCount, notifications]);
 
   const value = {
     notifications,

@@ -15,9 +15,10 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { createNotification, getPost, getUserProfile } from '../firestore';
+import { getPost, getUserProfile } from '../firestore';
 import type { Post, Comment, Poll, User } from '@/lib/types';
 import type { FieldValue } from 'firebase/firestore';
+import { createNotification } from './notification';
 
 export async function toggleFollowAction(
   currentUserId: string,

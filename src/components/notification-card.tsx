@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { MessageCircle, ThumbsUp, Repeat, UserPlus, AtSign } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { markNotificationAsRead } from '@/lib/firestore';
+import { markNotificationAsReadAction } from '@/lib/actions/notification';
 
 interface NotificationCardProps {
   notification: Notification;
@@ -72,7 +72,7 @@ export function NotificationCard({ notification }: NotificationCardProps) {
   const handleClick = async () => {
     if (user && !notification.read) {
       try {
-        await markNotificationAsRead(user.uid, notification.id);
+        await markNotificationAsReadAction(user.uid, notification.id);
       } catch (error) {
         console.error("Failed to mark notification as read:", error);
         // Do not show toast for this background action

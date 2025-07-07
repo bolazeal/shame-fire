@@ -7,18 +7,13 @@ import {
   doc,
   serverTimestamp,
   writeBatch,
-  increment,
-  arrayUnion,
   getDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import {
-  addFlaggedItemToQueue,
-  createNotification,
   getUserByEntityName,
   getUserProfile,
-  removeFlaggedItem,
-} from '@/lib/firestore';
+} from '../firestore';
 import { analyzeSentiment } from '@/ai/flows/analyze-sentiment';
 import { detectHarmfulContent } from '@/ai/flows/detect-harmful-content';
 import { generateEndorsementSummary } from '@/ai/flows/generate-endorsement-summary';
@@ -30,6 +25,20 @@ import type {
   FlaggedContent,
 } from '@/lib/types';
 import type { FieldValue } from 'firebase/firestore';
+import { createNotification } from './notification';
+
+// Internal function to add a post to the moderation queue. Not exported.
+async function addFlaggedItemToQueue(
+    item: Omit<FlaggedContent, 'id' | 'flaggedAt'> & { flaggedAt?: FieldValue }
+  ): Promise<void> {
+    if (!db) throw new Error('Firestore not initialized');
+    const flaggedContentRef = collection(db, 'flagged_content');
+    await addDoc(flaggedContentRef, {
+      ...item,
+      flaggedAt: serverTimestamp(),
+    });
+}
+
 
 // Internal function that contains the core logic for creating a post.
 // Not exported, only used by the server actions in this file.
@@ -203,5 +212,6 @@ export async function approvePostAction(item: FlaggedContent): Promise<void> {
   await _createPostInternal(item.postData, authorProfile);
 
   // Remove the item from the flagged queue.
-  await removeFlaggedItem(item.id);
+  const { removeFlaggedItemAction } = await import('./admin');
+  await removeFlaggedItemAction(item.id);
 }

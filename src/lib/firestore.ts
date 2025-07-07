@@ -3,20 +3,16 @@ import {
   doc,
   getDoc,
   getDocs,
-  addDoc,
-  serverTimestamp,
   query,
   where,
   orderBy,
   limit,
   Timestamp,
-  writeBatch,
-  updateDoc,
   onSnapshot,
   type WhereFilterOp,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import type { Post, User, Comment, FlaggedContent, Dispute, Notification, Conversation, Video } from './types';
+import type { Post, User, Comment, FlaggedContent, Dispute, Conversation, Video, Message } from './types';
 
 // Helper to convert Firestore doc to a serializable object
 export function fromFirestore<T>(doc): T {
@@ -67,11 +63,11 @@ export const getUsersToFollow = async (
 ): Promise<User[]> => {
   if (!db) return [];
   const usersRef = collection(db, 'users');
-  const q = query(usersRef, limit(10));
+  // A more sophisticated algorithm would be needed for a real app
+  const q = query(usersRef, where('id', '!=', currentUserId), limit(10));
   const snapshot = await getDocs(q);
   return snapshot.docs
     .map((doc) => fromFirestore<User>(doc))
-    .filter((user) => user.id !== currentUserId)
     .slice(0, 5);
 };
 
@@ -238,55 +234,6 @@ export const getTrendingTopics = async (): Promise<{ category: string; count: nu
       .slice(0, 5);
 
   return sortedTrends;
-};
-
-
-// NOTIFICATION functions
-export const createNotification = async (
-  data: Omit<Notification, 'id' | 'createdAt' | 'read'>
-): Promise<void> => {
-  if (!db) throw new Error('Firestore not initialized');
-  if (data.sender.id === data.recipientId) {
-    return;
-  }
-  const notificationRef = collection(db, `users/${data.recipientId}/notifications`);
-  await addDoc(notificationRef, {
-    ...data,
-    sender: {
-        id: data.sender.id,
-        name: data.sender.name,
-        username: data.sender.username,
-        avatarUrl: data.sender.avatarUrl,
-    },
-    read: false,
-    createdAt: serverTimestamp(),
-  });
-};
-
-export const getNotifications = async (userId: string): Promise<Notification[]> => {
-  if (!db) return [];
-  const ref = collection(db, `users/${userId}/notifications`);
-  const q = query(ref, orderBy('createdAt', 'desc'), limit(50));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => fromFirestore<Notification>(doc));
-};
-
-export const markNotificationAsRead = async (userId: string, notificationId: string): Promise<void> => {
-    if (!db) throw new Error('Firestore not initialized');
-    const notificationRef = doc(db, `users/${userId}/notifications`, notificationId);
-    await updateDoc(notificationRef, { read: true });
-};
-
-export const markAllNotificationsAsRead = async (userId: string): Promise<void> => {
-  if (!db) throw new Error('Firestore not initialized');
-  const batch = writeBatch(db);
-  const ref = collection(db, `users/${userId}/notifications`);
-  const q = query(ref, where('read', '==', false));
-  const snapshot = await getDocs(q);
-  snapshot.docs.forEach(doc => {
-    batch.update(doc.ref, { read: true });
-  });
-  await batch.commit();
 };
 
 
@@ -475,3 +422,26 @@ export const getMessages = (
 
   return unsubscribe;
 };
+
+export async function sendMessage(conversationId: string, senderId: string, text: string): Promise<void> {
+    if (!db) throw new Error('Firestore not initialized');
+
+    const messagesRef = collection(db, `conversations/${conversationId}/messages`);
+    const conversationRef = doc(db, 'conversations', conversationId);
+
+    const batch = getDoc(db).firestore.batch();
+
+    batch.set(doc(messagesRef), {
+        senderId,
+        text,
+        createdAt: serverTimestamp(),
+    });
+
+    batch.update(conversationRef, {
+        lastMessageText: text,
+        lastMessageTimestamp: serverTimestamp(),
+        lastMessageSenderId: senderId,
+    });
+    
+    await batch.commit();
+}

@@ -2,7 +2,7 @@
 'use server';
 
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, updateDoc, deleteDoc, writeBatch, getDocs, query, where } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
 // Helper function to check if the current user is an admin
@@ -36,4 +36,44 @@ export async function toggleAdminStatusAction(userId: string): Promise<void> {
     await updateDoc(userRef, { isAdmin: !currentIsAdmin });
 
     revalidatePath('/admin');
+}
+
+export async function updateUserAccountStatusAction(
+    userId: string,
+    status: 'active' | 'suspended' | 'banned'
+): Promise<void> {
+    await verifyAdmin();
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, { accountStatus: status });
+}
+
+export async function resetUserTrustScoreAction(userId: string): Promise<void> {
+    await verifyAdmin();
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, { trustScore: 50 });
+}
+
+export async function removeFlaggedItemAction(flaggedItemId: string): Promise<void> {
+    await verifyAdmin();
+    const flagRef = doc(db, 'flagged_content', flaggedItemId);
+    await deleteDoc(flagRef);
+}
+
+export async function deletePostAndFlagsAction(postId: string): Promise<void> {
+    await verifyAdmin();
+    const batch = writeBatch(db);
+
+    // Delete the post
+    const postRef = doc(db, 'posts', postId);
+    batch.delete(postRef);
+
+    // Find and delete all flags associated with the post
+    const flagsRef = collection(db, 'flagged_content');
+    const q = query(flagsRef, where('postId', '==', postId));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+    });
+
+    await batch.commit();
 }

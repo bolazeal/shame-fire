@@ -53,12 +53,8 @@ import { ContentBreakdownChart } from '@/components/charts/content-breakdown-cha
 import {
   getCollectionCount,
   getFlaggedContent,
-  removeFlaggedItem,
   getAllDisputes,
   getAllUsers,
-  updateUserAccountStatus,
-  resetUserTrustScore,
-  deletePostAndFlags,
 } from '@/lib/firestore';
 import { approvePostAction } from '@/lib/actions/post';
 import type { Post, Dispute, FlaggedContent, User } from '@/lib/types';
@@ -84,7 +80,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { UserAvatar } from '@/components/user-avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { toggleAdminStatusAction } from '@/lib/actions/admin';
+import { toggleAdminStatusAction, updateUserAccountStatusAction, resetUserTrustScoreAction, removeFlaggedItemAction, deletePostAndFlagsAction } from '@/lib/actions/admin';
 
 export default function AdminPage() {
   const { fullProfile, loading: authLoading } = useAuth();
@@ -170,16 +166,18 @@ export default function AdminPage() {
         }));
 
         users.forEach(user => {
-            const signupDate = new Date(user.createdAt);
-            signupDate.setHours(0,0,0,0);
-            
-            const diffTime = new Date().setHours(0,0,0,0) - signupDate.getTime();
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            
-            if (diffDays >= 0 && diffDays < 7) {
-                const dayIndex = 6 - diffDays;
-                if(dailySignups[dayIndex]) {
-                    dailySignups[dayIndex].signups++;
+            if (user.createdAt) {
+                const signupDate = new Date(user.createdAt);
+                signupDate.setHours(0,0,0,0);
+                
+                const diffTime = new Date().setHours(0,0,0,0) - signupDate.getTime();
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays >= 0 && diffDays < 7) {
+                    const dayIndex = 6 - diffDays;
+                    if(dailySignups[dayIndex]) {
+                        dailySignups[dayIndex].signups++;
+                    }
                 }
             }
         });
@@ -243,7 +241,7 @@ export default function AdminPage() {
     try {
       if (item.postId) {
         // This is a flag on an existing post. "Remove" means delete the original post.
-        await deletePostAndFlags(item.postId);
+        await deletePostAndFlagsAction(item.postId);
         toast({
           title: 'Post Removed',
           description:
@@ -252,7 +250,7 @@ export default function AdminPage() {
         });
       } else {
         // This is a flag on content held before creation. "Remove" means just delete the flag.
-        await removeFlaggedItem(item.id);
+        await removeFlaggedItemAction(item.id);
         toast({
           title: 'Content Removed',
           description: 'The flagged content has been deleted from the queue.',
@@ -271,7 +269,7 @@ export default function AdminPage() {
 
   const handleDismissFlag = async (flaggedItemId: string) => {
     try {
-      await removeFlaggedItem(flaggedItemId);
+      await removeFlaggedItemAction(flaggedItemId);
       toast({
         title: 'Flag Dismissed',
         description: 'The flag has been removed, the original post remains.',
@@ -293,7 +291,7 @@ export default function AdminPage() {
   ) => {
     setUpdatingUserId(userId);
     try {
-      await updateUserAccountStatus(userId, status);
+      await updateUserAccountStatusAction(userId, status);
       toast({
         title: 'User Status Updated',
         description: `User has been set to ${status}.`,
@@ -314,7 +312,7 @@ export default function AdminPage() {
   const handleResetTrustScore = async (userId: string) => {
     setUpdatingTrustScore(userId);
     try {
-      await resetUserTrustScore(userId);
+      await resetUserTrustScoreAction(userId);
       toast({
         title: 'Trust Score Reset',
         description: `User's trust score has been reset to 50.`,

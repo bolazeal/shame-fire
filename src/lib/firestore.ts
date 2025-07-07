@@ -10,12 +10,13 @@ import {
   Timestamp,
   onSnapshot,
   type WhereFilterOp,
+  DocumentSnapshot,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Post, User, Comment, FlaggedContent, Dispute, Conversation, Video, Message } from './types';
 
 // Helper to convert Firestore doc to a serializable object
-export function fromFirestore<T>(doc): T {
+export function fromFirestore<T>(doc: DocumentSnapshot): T {
   const data = doc.data();
   if (!data) return data;
 

@@ -6,11 +6,11 @@ import { useAuth } from '@/hooks/use-auth';
 import {
   getConversations,
   getMessages,
-  sendMessage,
 } from '@/lib/firestore';
 import { ConversationList } from '@/components/messages/conversation-list';
 import { ChatWindow } from '@/components/messages/chat-window';
 import { cn } from '@/lib/utils';
+import { sendMessageAction } from '@/lib/actions/message';
 
 export default function MessagesPage() {
   const { user } = useAuth();
@@ -62,7 +62,7 @@ export default function MessagesPage() {
 
   const handleSendMessage = async (text: string) => {
     if (!selectedConversationId || !user) return;
-    await sendMessage(selectedConversationId, user.uid, text);
+    await sendMessageAction(selectedConversationId, user.uid, text);
   };
 
   const selectedConversation = conversations.find(

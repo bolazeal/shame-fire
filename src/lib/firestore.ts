@@ -422,26 +422,3 @@ export const getMessages = (
 
   return unsubscribe;
 };
-
-export async function sendMessage(conversationId: string, senderId: string, text: string): Promise<void> {
-    if (!db) throw new Error('Firestore not initialized');
-
-    const messagesRef = collection(db, `conversations/${conversationId}/messages`);
-    const conversationRef = doc(db, 'conversations', conversationId);
-
-    const batch = getDoc(db).firestore.batch();
-
-    batch.set(doc(messagesRef), {
-        senderId,
-        text,
-        createdAt: serverTimestamp(),
-    });
-
-    batch.update(conversationRef, {
-        lastMessageText: text,
-        lastMessageTimestamp: serverTimestamp(),
-        lastMessageSenderId: senderId,
-    });
-    
-    await batch.commit();
-}

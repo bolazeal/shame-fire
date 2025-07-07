@@ -1,3 +1,4 @@
+
 'use client';
 
 import { createContext, useEffect, useState, ReactNode } from 'react';
@@ -66,7 +67,7 @@ const createMockAuthUser = (userKey: keyof typeof mockUsers = 'user1'): User => 
     } as unknown as User;
 }
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [fullProfile, setFullProfile] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -178,7 +179,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setLoading(true);
     try {
-      const provider = new GoogleAuthProvider();
+        const provider = new GoogleAuthProvider();
         const result = await signInWithPopup(auth as Auth, provider);
         const user = result.user;
 

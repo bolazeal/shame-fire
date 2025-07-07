@@ -8,7 +8,6 @@ import { ThemeProvider } from '@/components/theme-provider';
 export const metadata: Metadata = {
   title: 'Shame',
   description: 'A platform for transparent feedback and accountability.',
-  icons: {},
 };
 
 export default function RootLayout({

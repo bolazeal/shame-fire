@@ -48,7 +48,7 @@ This project showcases a complete, production-ready application with real-time f
 
 ## Deployment & Setup
 
-To deploy this application and connect it to your Firebase project, you must configure your environment variables in Firebase App Hosting. Without these, the app will run in a "mock mode" with placeholder data.
+To deploy this application and connect it to your Firebase project, you must configure your environment variables in Firebase App Hosting. Without these, the app will run in a "mock mode" with placeholder data and AI features will be disabled.
 
 ### Step 1: Find Your Firebase Credentials
 
@@ -74,4 +74,16 @@ To deploy this application and connect it to your Firebase project, you must con
     *   `NEXT_PUBLIC_FIREBASE_APP_ID`
 6.  Save your changes.
 
-After adding these variables, redeploy your application. It will now connect to your live Firebase backend.
+### Step 3: Add Your Google AI API Key
+
+For AI features like content summarization and moderation to work, you must also provide a Google AI API Key.
+
+1.  If you don't have one, get a key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+2.  Go back to your **App Hosting backend settings** where you added the Firebase variables.
+3.  Click **Edit** in the **Environment variables** section.
+4.  Add the following variable:
+    *   **Variable Name:** `GOOGLE_API_KEY`
+    *   **Value:** *Paste your API key here*
+5.  Save your changes.
+
+After adding all these variables, redeploy your application. It will now connect to your live Firebase backend and enable all AI features.

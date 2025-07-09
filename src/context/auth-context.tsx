@@ -31,41 +31,38 @@ export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
 );
 
-// This is a mock user object that can be used for development when Firebase isn't configured.
-// It's wrapped in a function to lazily generate dates and avoid hydration issues.
-const createMockAuthUser = (userKey: keyof typeof mockUsers = 'user1'): User => {
-    const mockUser = mockUsers[userKey];
-    return {
-        uid: mockUser.id,
-        email: mockUser.email,
-        displayName: mockUser.name,
-        photoURL: mockUser.avatarUrl,
-        emailVerified: true,
-        isAnonymous: false,
-        metadata: {},
-        providerData: [],
-        providerId: 'password',
-        tenantId: null,
-        refreshToken: 'mock-refresh-token',
-        delete: async () => console.warn('Mock user delete called.'),
-        getIdToken: async () => 'mock-id-token',
-        getIdTokenResult: async () => ({
-            token: 'mock-id-token',
-            claims: {},
-            authTime: new Date().toISOString(),
-            issuedAtTime: new Date().toISOString(),
-            signInProvider: 'password',
-            signInSecondFactor: null,
-            expirationTime: new Date(Date.now() + 3600 * 1000).toISOString(),
-        }),
-        reload: async () => console.warn('Mock user reload called.'),
-        toJSON: () => ({
-            uid: mockUser.id,
-            email: mockUser.email,
-            displayName: mockUser.name,
-        }),
-    } as unknown as User;
-}
+// A simplified mock user object for development when Firebase isn't configured.
+const mockAuthUser = {
+    uid: mockUsers.user1.id,
+    email: mockUsers.user1.email,
+    displayName: mockUsers.user1.name,
+    photoURL: mockUsers.user1.avatarUrl,
+    emailVerified: true,
+    isAnonymous: false,
+    metadata: {},
+    providerData: [],
+    providerId: 'password',
+    tenantId: null,
+    refreshToken: 'mock-refresh-token',
+    delete: async () => console.warn('Mock user delete called.'),
+    getIdToken: async () => 'mock-id-token',
+    getIdTokenResult: async () => ({
+        token: 'mock-id-token',
+        claims: {},
+        authTime: new Date().toISOString(),
+        issuedAtTime: new Date().toISOString(),
+        signInProvider: 'password',
+        signInSecondFactor: null,
+        expirationTime: new Date(Date.now() + 3600 * 1000).toISOString(),
+    }),
+    reload: async () => console.warn('Mock user reload called.'),
+    toJSON: () => ({
+        uid: mockUsers.user1.id,
+        email: mockUsers.user1.email,
+        displayName: mockUsers.user1.name,
+    }),
+} as unknown as User;
+
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -103,7 +100,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       // In mock mode, always set a default mock user so the app is usable.
       console.warn('Firebase is not configured. Using mock authentication.');
-      const mockAuthUser = createMockAuthUser('user1');
       setUser(mockAuthUser);
       setFullProfile(mockUsers.user1);
       setLoading(false);
@@ -114,8 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isFirebaseConfigured) {
       console.warn("Mock Signup: Simulating user creation.");
       setLoading(true);
-      const newUser = { ...createMockAuthUser(), email, displayName };
-      localStorage.setItem('mockUserSession', JSON.stringify(newUser));
+      const newUser = { ...mockAuthUser, email, displayName };
       setUser(newUser);
       setLoading(false);
       return newUser;
@@ -137,8 +132,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isFirebaseConfigured) {
       console.warn("Mock Login: Simulating login with default user.");
       setLoading(true);
-      const mockAuthUser = createMockAuthUser('user1');
-      localStorage.setItem('mockUserSession', JSON.stringify(mockAuthUser));
       setUser(mockAuthUser);
       setFullProfile(mockUsers.user1);
       setLoading(false);
@@ -169,8 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isFirebaseConfigured) {
         console.warn("Mock Google Login: Simulating login.");
         setLoading(true);
-        const googleMockUserAuth = createMockAuthUser('user2');
-        localStorage.setItem('mockUserSession', JSON.stringify(googleMockUserAuth));
+        const googleMockUserAuth = {...mockAuthUser, displayName: mockUsers.user2.name, email: mockUsers.user2.email, uid: mockUsers.user2.id};
         setUser(googleMockUserAuth);
         setFullProfile(mockUsers.user2);
         setLoading(false);
@@ -211,7 +203,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isFirebaseConfigured) {
       console.warn("Mock Logout: Clearing simulated user session.");
       setLoading(true);
-      localStorage.removeItem('mockUserSession');
       setUser(null);
       setFullProfile(null);
       setLoading(false);
@@ -257,4 +248,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = { user, fullProfile, loading, signup, login, loginWithGoogle, logout, sendPasswordResetEmail: sendPasswordResetEmailFunc };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+}

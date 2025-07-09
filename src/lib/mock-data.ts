@@ -103,12 +103,131 @@ export const mockUsers = {
     user5: mockCommenter,
 };
 
+// --- Mock Posts ---
+export const mockPosts: Post[] = [
+    {
+        id: 'post1',
+        type: 'endorsement',
+        author: mockUser2,
+        authorId: mockUser2.id,
+        entity: 'The Good Loaf Bakery',
+        category: 'Community Service',
+        text: "The Good Loaf Bakery is a local treasure! Not only is their sourdough the best in town, but they also donate all of their unsold bread to local shelters at the end of each day. It's inspiring to see a business with so much heart. I can't recommend them enough!",
+        mediaUrl: 'https://placehold.co/600x400.png',
+        'data-ai-hint': 'artisan bread',
+        mediaType: 'image',
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+        commentsCount: 2,
+        reposts: 12,
+        repostedBy: [],
+        upvotes: 156,
+        downvotes: 2,
+        bookmarks: 5,
+        bookmarkedBy: [],
+        upvotedBy: [],
+        downvotedBy: [],
+        sentiment: { score: 0.9, biasDetected: false },
+        summary: 'The Good Loaf Bakery is praised for its excellent bread and for donating unsold products to local shelters daily.',
+    },
+    {
+        id: 'post2',
+        type: 'report',
+        author: mockReportingUser,
+        authorId: mockReportingUser.id,
+        entity: 'Speedy Shippers Inc.',
+        category: 'Delivery Service',
+        text: "My package from Speedy Shippers was supposed to arrive last Tuesday, but it's now a week late with no updates. The tracking number shows it's been sitting in a local warehouse for days, and customer service has been completely unhelpful. This is unacceptable.",
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        commentsCount: 2,
+        reposts: 5,
+        repostedBy: [],
+        upvotes: 88,
+        downvotes: 4,
+        bookmarks: 2,
+        bookmarkedBy: [],
+        upvotedBy: [],
+        downvotedBy: [],
+        sentiment: { score: -0.8, biasDetected: false },
+        summary: "A customer reports a significant delay and poor customer service from Speedy Shippers regarding a late package.",
+    },
+    {
+        id: 'post3',
+        type: 'post',
+        author: mockAdminUser,
+        authorId: mockAdminUser.id,
+        text: "Just a reminder to everyone: keep discussions civil and report any content that violates our community guidelines. We're working hard to make this a safe and productive platform for everyone. #Community",
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        commentsCount: 15,
+        reposts: 30,
+        repostedBy: [],
+        upvotes: 250,
+        downvotes: 1,
+        bookmarks: 10,
+        bookmarkedBy: [],
+        upvotedBy: [],
+        downvotedBy: [],
+    },
+    {
+        id: 'post4',
+        type: 'report',
+        author: mockReportingUser,
+        authorId: mockReportingUser.id,
+        postingAs: 'anonymous',
+        entity: 'Downtown Parking Authority',
+        category: 'Public Service',
+        text: "The parking meters on Elm Street are completely broken. I've seen multiple people get tickets despite paying because the machines don't register the payment correctly. This feels like a predatory ticketing practice.",
+        createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+        commentsCount: 32,
+        reposts: 55,
+        repostedBy: [],
+        upvotes: 412,
+        downvotes: 12,
+        bookmarks: 40,
+        bookmarkedBy: [],
+        upvotedBy: [],
+        downvotedBy: [],
+        sentiment: { score: -0.7, biasDetected: false, biasExplanation: 'The language is strong but describes a specific issue.' },
+        summary: 'An anonymous user reports that broken parking meters on Elm Street are leading to unfair ticketing.',
+    }
+];
+
+// --- Mock Comments ---
+export const mockComments: { [key: string]: Comment[] } = {
+  'post1': [
+    {
+        id: 'comment3',
+        author: mockCommenter,
+        text: "I agree! Their morning buns are the best.",
+        createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+        upvotes: 10,
+        downvotes: 0,
+    }
+  ],
+  'post2': [
+    {
+      id: 'comment1',
+      author: mockCommenter, // Emily Carter
+      text: "I had a similar issue with them last month! They lost my package entirely and it took weeks to get a refund.",
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      upvotes: 15,
+      downvotes: 0,
+    },
+    {
+      id: 'comment2',
+      author: mockDisputingUser, // Speedy Shippers Inc.
+      text: "We sincerely apologize for the inconvenience. We are experiencing unprecedented delays. Please contact our support with your tracking number so we can resolve this for you.",
+      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      upvotes: 2,
+      downvotes: 8,
+    }
+  ]
+};
 
 // --- Mock Data for Village Square (Disputes) ---
 export const mockDisputes: Dispute[] = [
   {
     id: 'dispute1',
-    originalPostId: 'post1',
+    originalPostId: 'post2',
     title: 'Dispute over "Speedy Shippers" report accuracy',
     description:
       'The company "Speedy Shippers" is disputing the report made by @samgreen, claiming the delivery was delayed due to weather conditions not mentioned in the report. They have provided shipping logs as evidence.',
@@ -129,7 +248,7 @@ export const mockDisputes: Dispute[] = [
   },
   {
     id: 'dispute2',
-    originalPostId: 'post2',
+    originalPostId: 'post1',
     title: 'Dispute regarding "Cafe Aroma" endorsement',
     description:
         'A user has disputed an endorsement for "Cafe Aroma", claiming it was a paid promotion and not a genuine experience. The original endorser denies this.',
@@ -197,9 +316,6 @@ export const userActivity = [
   { date: 'Sun', signups: 10 },
 ];
 
-export const mockPosts: Post[] = []; // This is needed for ContentBreakdownChart but can be empty.
-
-
 // --- Mock Data for Messages ---
 export const mockConversations: Conversation[] = [
     {
@@ -251,6 +367,7 @@ export const mockConversations: Conversation[] = [
       channel: 'Shame or Shine TV',
       views: '1.2M views',
       uploadedAt: '2 days ago',
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     },
     {
       id: 'video2',
@@ -263,6 +380,7 @@ export const mockConversations: Conversation[] = [
       channel: 'Shame or Shine TV',
       views: '450K views',
       uploadedAt: '5 days ago',
+      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     },
     {
       id: 'video3',
@@ -275,6 +393,7 @@ export const mockConversations: Conversation[] = [
       channel: 'Shame or Shine TV',
       views: '2.5M views',
       uploadedAt: '1 week ago',
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
     },
     {
         id: 'video4',
@@ -287,5 +406,6 @@ export const mockConversations: Conversation[] = [
         channel: 'Shame or Shine TV',
         views: '800K views',
         uploadedAt: '2 weeks ago',
+        createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
     }
 ];

@@ -12,8 +12,18 @@ import {
   type WhereFilterOp,
   DocumentSnapshot,
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, isFirebaseConfigured } from './firebase';
 import type { Post, User, Comment, FlaggedContent, Dispute, Conversation, Video, Message } from './types';
+import {
+    mockComments,
+    mockConversations,
+    mockDisputes,
+    mockFlaggedContent,
+    mockMessages,
+    mockPosts,
+    mockUsers,
+    mockVideos
+  } from './mock-data';
 
 // Helper to convert Firestore doc to a serializable object
 export function fromFirestore<T>(doc: DocumentSnapshot): T {
@@ -34,7 +44,9 @@ export function fromFirestore<T>(doc: DocumentSnapshot): T {
 export const getUserProfile = async (
   userId: string
 ): Promise<User | null> => {
-  if (!db) return null;
+  if (!isFirebaseConfigured) {
+    return Object.values(mockUsers).find(u => u.id === userId) || null;
+  }
   const userRef = doc(db, 'users', userId);
   const userSnap = await getDoc(userRef);
   if (userSnap.exists()) {
@@ -44,7 +56,9 @@ export const getUserProfile = async (
 };
 
 export const getUserByEntityName = async (entityName: string): Promise<User | null> => {
-  if (!db) return null;
+  if (!isFirebaseConfigured) {
+    return Object.values(mockUsers).find(u => u.name === entityName || u.username === entityName) || null;
+  }
   const usersRef = collection(db, 'users');
   const q = query(usersRef, where('name', '==', entityName), limit(1));
   const snapshot = await getDocs(q);
@@ -62,7 +76,9 @@ export const getUserByEntityName = async (entityName: string): Promise<User | nu
 export const getUsersToFollow = async (
   currentUserId: string
 ): Promise<User[]> => {
-  if (!db) return [];
+    if (!isFirebaseConfigured) {
+        return Object.values(mockUsers).filter(u => u.id !== currentUserId).slice(0, 5);
+    }
   const usersRef = collection(db, 'users');
   // A more sophisticated algorithm would be needed for a real app
   const q = query(usersRef, where('id', '!=', currentUserId), limit(10));
@@ -73,7 +89,9 @@ export const getUsersToFollow = async (
 };
 
 export const getAllUsers = async (): Promise<User[]> => {
-  if (!db) return [];
+    if (!isFirebaseConfigured) {
+        return Object.values(mockUsers);
+    }
   const usersRef = collection(db, 'users');
   const q = query(usersRef, orderBy('createdAt', 'desc'));
   const snapshot = await getDocs(q);
@@ -81,7 +99,9 @@ export const getAllUsers = async (): Promise<User[]> => {
 };
 
 export const getHonourRollUsers = async (): Promise<User[]> => {
-  if (!db) return [];
+    if (!isFirebaseConfigured) {
+        return Object.values(mockUsers).sort((a, b) => b.trustScore - a.trustScore).slice(0, 5);
+    }
   const usersRef = collection(db, 'users');
   const q = query(usersRef, orderBy('trustScore', 'desc'), limit(5));
   const snapshot = await getDocs(q);
@@ -92,7 +112,7 @@ export const hasUserNominated = async (
   nominatorId: string,
   nominatedUserId: string
 ): Promise<boolean> => {
-  if (!db) return false;
+    if (!isFirebaseConfigured) return false;
   const nominationRef = doc(db, `users/${nominatedUserId}/nominators`, nominatorId);
   const docSnap = await getDoc(nominationRef);
   return docSnap.exists();
@@ -102,7 +122,7 @@ export const hasUserNominatedForModerator = async (
   nominatorId: string,
   nominatedUserId: string
 ): Promise<boolean> => {
-  if (!db) return false;
+    if (!isFirebaseConfigured) return false;
   const nominationRef = doc(db, `users/${nominatedUserId}/moderatorNominators`, nominatorId);
   const docSnap = await getDoc(nominationRef);
   return docSnap.exists();
@@ -112,7 +132,7 @@ export const isFollowing = async (
   currentUserId: string,
   targetUserId: string
 ): Promise<boolean> => {
-  if (!db) return false;
+    if (!isFirebaseConfigured) return false;
   const followDocRef = doc(
     db,
     `users/${currentUserId}/following/${targetUserId}`
@@ -126,7 +146,16 @@ export const isFollowing = async (
 export const getPosts = async (
   filter: 'foryou' | 'posts' | 'reports' | 'endorsements'
 ): Promise<Post[]> => {
-  if (!db) return [];
+    if (!isFirebaseConfigured) {
+        if (filter === 'foryou') {
+            return mockPosts;
+        }
+        if (filter === 'posts') {
+            return mockPosts.filter(p => p.type === 'post');
+        }
+        const type = filter.slice(0, -1);
+        return mockPosts.filter(p => p.type === type);
+    }
   const postsRef = collection(db, 'posts');
   let q;
   if (filter === 'foryou' || filter === 'posts') {
@@ -148,7 +177,14 @@ export const getUserPosts = async (
   userId: string,
   filter: string
 ): Promise<Post[]> => {
-  if (!db) return [];
+    if (!isFirebaseConfigured) {
+        const userPosts = mockPosts.filter(p => p.authorId === userId);
+        if (filter === 'media') {
+            return userPosts.filter(p => p.mediaUrl);
+        }
+        const type = filter.endsWith('s') ? filter.slice(0, -1) : filter;
+        return userPosts.filter(p => p.type === type);
+    }
   const postsRef = collection(db, 'posts');
   let q;
 
@@ -178,7 +214,9 @@ export const getUserPosts = async (
 };
 
 export const getPost = async (postId: string): Promise<Post | null> => {
-  if (!db) return null;
+    if (!isFirebaseConfigured) {
+        return mockPosts.find(p => p.id === postId) || null;
+    }
   const postRef = doc(db, 'posts', postId);
   const postSnap = await getDoc(postRef);
   if (postSnap.exists()) {
@@ -188,7 +226,10 @@ export const getPost = async (postId: string): Promise<Post | null> => {
 };
 
 export const getBookmarkedPosts = async (userId: string): Promise<Post[]> => {
-  if (!db) return [];
+    if (!isFirebaseConfigured) {
+        // This is a simplification; in a real mock, we'd track bookmarks.
+        return mockPosts.slice(0, 2);
+    }
   const postsRef = collection(db, 'posts');
   const q = query(
     postsRef,
@@ -200,7 +241,9 @@ export const getBookmarkedPosts = async (userId: string): Promise<Post[]> => {
 };
 
 export const getComments = async (postId: string): Promise<Comment[]> => {
-    if (!db) return [];
+    if (!isFirebaseConfigured) {
+        return mockComments[postId] || [];
+    }
     const commentsRef = collection(db, `posts/${postId}/comments`);
     const q = query(commentsRef, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
@@ -209,7 +252,18 @@ export const getComments = async (postId: string): Promise<Comment[]> => {
 
 // TRENDS-related functions
 export const getTrendingTopics = async (): Promise<{ category: string; count: number }[]> => {
-  if (!db) return [];
+    if (!isFirebaseConfigured) {
+        const categoryCounts = new Map<string, number>();
+        for (const post of mockPosts) {
+            if (post.category) {
+                categoryCounts.set(post.category, (categoryCounts.get(post.category) || 0) + 1);
+            }
+        }
+        return Array.from(categoryCounts.entries())
+            .map(([category, count]) => ({ category, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5);
+    }
   const postsRef = collection(db, 'posts');
   const q = query(
       postsRef, 
@@ -245,7 +299,15 @@ export const getCollectionCount = async (
   op?: WhereFilterOp,
   value?: any
 ): Promise<number> => {
-  if (!db) return 0;
+  if (!isFirebaseConfigured) {
+    if (collectionName === 'users') return Object.keys(mockUsers).length;
+    if (collectionName === 'posts') {
+        if (field === 'type' && value === 'report') return mockPosts.filter(p => p.type === 'report').length;
+        if (field === 'type' && value === 'endorsement') return mockPosts.filter(p => p.type === 'endorsement').length;
+        return mockPosts.length;
+    }
+    return 0;
+  }
   let q = query(collection(db, collectionName));
   if (field && op && value) {
     q = query(q, where(field, op, value));
@@ -255,7 +317,9 @@ export const getCollectionCount = async (
 };
 
 export const getFlaggedContent = async (): Promise<FlaggedContent[]> => {
-  if (!db) return [];
+    if (!isFirebaseConfigured) {
+        return mockFlaggedContent;
+    }
   const contentRef = collection(db, 'flagged_content');
   const q = query(contentRef, orderBy('flaggedAt', 'desc'));
   const snapshot = await getDocs(q);
@@ -264,7 +328,9 @@ export const getFlaggedContent = async (): Promise<FlaggedContent[]> => {
 
 // DISPUTE-related functions (READ-ONLY & LISTENERS)
 export const getAllDisputes = async (): Promise<Dispute[]> => {
-    if (!db) return [];
+    if (!isFirebaseConfigured) {
+        return mockDisputes;
+    }
     const disputesRef = collection(db, 'disputes');
     const q = query(disputesRef, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
@@ -272,7 +338,9 @@ export const getAllDisputes = async (): Promise<Dispute[]> => {
 };
 
 export const getDispute = async (disputeId: string): Promise<Dispute | null> => {
-    if (!db) return null;
+    if (!isFirebaseConfigured) {
+        return mockDisputes.find(d => d.id === disputeId) || null;
+    }
     const disputeRef = doc(db, 'disputes', disputeId);
     const disputeSnap = await getDoc(disputeRef);
     if (disputeSnap.exists()) {
@@ -285,7 +353,10 @@ export const listenToDispute = (
     disputeId: string,
     callback: (dispute: Dispute | null) => void
   ): (() => void) => {
-    if (!db) return () => {};
+    if (!isFirebaseConfigured) {
+        callback(mockDisputes.find(d => d.id === disputeId) || null);
+        return () => {}; // No-op unsubscribe for mock
+    }
     const disputeRef = doc(db, 'disputes', disputeId);
   
     const unsubscribe = onSnapshot(disputeRef, (docSnap) => {
@@ -306,7 +377,11 @@ export const listenToDisputeComments = (
     disputeId: string,
     callback: (comments: Comment[]) => void
   ): (() => void) => {
-    if (!db) return () => {};
+    if (!isFirebaseConfigured) {
+        // In mock mode, dispute comments are not available in mockComments, so return empty
+        callback([]);
+        return () => {};
+    }
     const commentsRef = collection(db, `disputes/${disputeId}/comments`);
     const q = query(commentsRef, orderBy('createdAt', 'asc'));
   
@@ -325,7 +400,13 @@ export const listenToDisputeComments = (
 
 // SEARCH-related functions
 export const searchUsers = async (searchText: string): Promise<User[]> => {
-    if (!db) return [];
+    if (!isFirebaseConfigured) {
+        const lowerCaseQuery = searchText.toLowerCase();
+        return Object.values(mockUsers).filter(u => 
+            u.name.toLowerCase().includes(lowerCaseQuery) || 
+            u.username.toLowerCase().includes(lowerCaseQuery)
+        );
+    }
     const usersRef = collection(db, 'users');
     
     const usernameQuery = query(
@@ -361,7 +442,10 @@ export const searchUsers = async (searchText: string): Promise<User[]> => {
 };
 
 export const searchPosts = async (searchText: string): Promise<Post[]> => {
-    if (!db) return [];
+    if (!isFirebaseConfigured) {
+        const lowerCaseQuery = searchText.toLowerCase();
+        return mockPosts.filter(p => p.category?.toLowerCase().includes(lowerCaseQuery));
+    }
     const postsRef = collection(db, 'posts');
     const categoryQuery = query(
         postsRef,
@@ -378,7 +462,9 @@ export const searchPosts = async (searchText: string): Promise<Post[]> => {
 
 // VIDEO-related functions (READ-ONLY)
 export const getVideos = async (): Promise<Video[]> => {
-    if (!db) return [];
+    if (!isFirebaseConfigured) {
+        return mockVideos;
+    }
     const videosRef = collection(db, 'videos');
     const q = query(videosRef, orderBy('createdAt', 'desc'), limit(20));
     const snapshot = await getDocs(q);
@@ -390,7 +476,10 @@ export const getConversations = (
   userId: string,
   callback: (conversations: Conversation[]) => void
 ): (() => void) => {
-  if (!db) return () => {};
+  if (!isFirebaseConfigured) {
+    callback(mockConversations.filter(c => c.participantIds.includes(userId)));
+    return () => {};
+  }
   const conversationsRef = collection(db, 'conversations');
   const q = query(
     conversationsRef,
@@ -412,7 +501,10 @@ export const getMessages = (
   conversationId: string,
   callback: (messages: Message[]) => void
 ): (() => void) => {
-  if (!db) return () => {};
+  if (!isFirebaseConfigured) {
+    callback(mockMessages[conversationId] || []);
+    return () => {};
+  }
   const messagesRef = collection(db, `conversations/${conversationId}/messages`);
   const q = query(messagesRef, orderBy('createdAt', 'asc'));
 

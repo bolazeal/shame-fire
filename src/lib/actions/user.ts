@@ -1,3 +1,4 @@
+
 'use server';
 
 import { auth, db } from '@/lib/firebase';
@@ -45,9 +46,9 @@ export async function createUserProfileAction(
         name: firebaseUser.displayName || 'Anonymous User',
         username: username,
         email: firebaseUser.email || '',
-        avatarUrl: firebaseUser.photoURL || 'https://placehold.co/100x100.png',
+        avatarUrl: firebaseUser.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
         'data-ai-hint': 'person smiling',
-        bannerUrl: 'https://placehold.co/1500x500.png',
+        bannerUrl: 'https://images.unsplash.com/photo-1507608616759-54f48f0af0ee?w=1500&h=500&fit=crop',
         trustScore: 50,
         isVerified: false,
         isAdmin: isFirstUser, // Correctly determined inside the transaction

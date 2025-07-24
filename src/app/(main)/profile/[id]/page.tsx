@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PostCard } from '@/components/post-card';
@@ -222,7 +223,7 @@ export default function ProfilePage() {
     <div>
       <div className="relative h-48 bg-muted">
         <Image
-          src={profileUser.bannerUrl || "https://placehold.co/1500x500.png"}
+          src={profileUser.bannerUrl || "https://images.unsplash.com/photo-1507608616759-54f48f0af0ee?w=1500&h=500&fit=crop"}
           alt="Profile banner"
           fill={true}
           objectFit="cover"

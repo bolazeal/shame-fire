@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -113,7 +114,7 @@ export function EditProfileForm({ user, onSave }: EditProfileFormProps) {
           <FormLabel>Banner Image</FormLabel>
           <div className="relative h-32 w-full overflow-hidden rounded-md bg-muted">
             <Image
-              src={watchedBannerUrl || 'https://placehold.co/1200x400.png'}
+              src={watchedBannerUrl || "https://images.unsplash.com/photo-1507608616759-54f48f0af0ee?w=1500&h=500&fit=crop"}
               alt="Banner preview"
               layout="fill"
               objectFit="cover"

@@ -226,7 +226,7 @@ export default function ProfilePage() {
           alt="Profile banner"
           fill={true}
           objectFit="cover"
-          data-ai-hint="abstract landscape"
+          data-ai-hint="abstract background"
         />
       </div>
       <div className="p-4">

@@ -117,6 +117,7 @@ export function EditProfileForm({ user, onSave }: EditProfileFormProps) {
               alt="Banner preview"
               layout="fill"
               objectFit="cover"
+              data-ai-hint="abstract background"
             />
             <Button
               type="button"

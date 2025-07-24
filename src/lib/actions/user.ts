@@ -46,6 +46,8 @@ export async function createUserProfileAction(
         username: username,
         email: firebaseUser.email || '',
         avatarUrl: firebaseUser.photoURL || 'https://placehold.co/100x100.png',
+        'data-ai-hint': 'person smiling',
+        bannerUrl: 'https://placehold.co/1500x500.png',
         trustScore: 50,
         isVerified: false,
         isAdmin: isFirstUser, // Correctly determined inside the transaction

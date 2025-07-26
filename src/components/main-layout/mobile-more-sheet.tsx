@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -38,7 +39,7 @@ import { useState } from 'react';
 const navItems = [
   { href: '/profile', icon: User, text: 'Profile' },
   { href: '/home', icon: Home, text: 'Home' },
-  { href: '/tv', icon: Tv, text: 'Shame or Shine TV' },
+  { href: '/tv', icon: Tv, text: 'Shame TV' },
   { href: '/notifications', icon: Bell, text: 'Notifications' },
   { href: '/messages', icon: Mail, text: 'Messages' },
   { href: '/bookmarks', icon: Bookmark, text: 'Bookmarks' },

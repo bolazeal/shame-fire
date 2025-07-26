@@ -1,3 +1,4 @@
+
 'use client';
 import { Tv } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -13,7 +14,7 @@ function TVPageSkeleton() {
         <div className="flex h-full flex-col">
             <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/80 p-4 backdrop-blur-sm">
                 <Tv className="h-6 w-6" />
-                <h1 className="text-xl font-bold font-headline">Shame or Shine TV</h1>
+                <h1 className="text-xl font-bold font-headline">Shame TV</h1>
             </header>
             <main className="flex flex-1 flex-col gap-8 p-4 lg:flex-row">
                 <div className="flex-1">
@@ -76,7 +77,7 @@ export default function TVPage() {
     <div className="flex h-full flex-col">
       <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/80 p-4 backdrop-blur-sm">
         <Tv className="h-6 w-6" />
-        <h1 className="text-xl font-bold font-headline">Shame or Shine TV</h1>
+        <h1 className="text-xl font-bold font-headline">Shame TV</h1>
       </header>
       
       {videos.length === 0 || !activeVideo ? (

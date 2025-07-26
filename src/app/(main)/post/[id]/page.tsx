@@ -17,7 +17,7 @@ import { Image as ImageIcon, Loader2, Video as VideoIcon, X } from 'lucide-react
 import { useToast } from '@/hooks/use-toast';
 import { addCommentAction, deleteCommentAction } from '@/lib/actions/interaction';
 import Image from 'next/image';
-import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 function PostPageSkeleton() {
     return (

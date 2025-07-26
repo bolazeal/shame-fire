@@ -115,7 +115,7 @@ export function RightSidebar() {
                 />
             </div>
             
-            <Card className="bg-secondary">
+            <Card>
                 <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline">
                     <TrendingUp className="h-5 w-5 text-primary" />
@@ -149,7 +149,7 @@ export function RightSidebar() {
                 </CardContent>
             </Card>
 
-            <Card className="bg-secondary">
+            <Card>
                 <CardHeader>
                 <CardTitle>Who to follow</CardTitle>
                 </CardHeader>
@@ -175,14 +175,14 @@ export function RightSidebar() {
                         <Button
                             variant={user.isFollowing ? 'secondary' : 'default'}
                             size="sm"
-                            className="rounded-full font-bold bg-white text-black hover:bg-white/80"
+                            className="rounded-full font-bold"
                             onClick={() => handleFollowToggle(user.id)}
                             disabled={user.isFollowLoading}
                         >
                             {user.isFollowLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (user.isFollowing ? 'Following' : 'Follow')}
                         </Button>
                         </div>
-                        {index < usersToFollow.length - 1 && <Separator className="bg-border"/>}
+                        {index < usersToFollow.length - 1 && <Separator className="bg-border" />}
                     </React.Fragment>
                     ))
                 )}

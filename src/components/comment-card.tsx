@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Comment } from '@/lib/types';
@@ -11,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { deleteCommentAction, deleteDisputeCommentAction } from '@/lib/actions/interaction';
+import Image from 'next/image';
 
 interface CommentCardProps {
   comment: Comment;
@@ -66,7 +68,29 @@ export function CommentCard({ comment, isReply = false, onDelete, postId, disput
             <span className="text-muted-foreground">·</span>
             <span className="text-muted-foreground" suppressHydrationWarning>{formatDistanceToNow(commentDate, { addSuffix: true })}</span>
           </div>
-          <p className="mt-2 text-base">{comment.text}</p>
+          {comment.text && <p className="mt-2 text-base">{comment.text}</p>}
+          {comment.mediaUrl && (
+            <div
+              className="relative mt-2 aspect-video w-full max-w-sm overflow-hidden rounded-lg border"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {comment.mediaType === 'image' ? (
+                <Image
+                  src={comment.mediaUrl}
+                  alt="Comment media"
+                  fill={true}
+                  style={{ objectFit: 'cover' }}
+                />
+              ) : (
+                <video
+                  src={comment.mediaUrl}
+                  controls
+                  className="h-full w-full bg-black object-contain"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              )}
+            </div>
+          )}
         </div>
         <div className="mt-2 flex items-center justify-between">
           <div className="flex items-center gap-2 text-muted-foreground">

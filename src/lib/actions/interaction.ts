@@ -1,3 +1,4 @@
+
 'use server';
 
 import {
@@ -201,7 +202,11 @@ export async function toggleVoteOnPostAction(
 export async function addCommentAction(
   postId: string,
   postAuthorId: string,
-  text: string,
+  commentData: {
+    text: string;
+    mediaUrl?: string;
+    mediaType?: 'image' | 'video';
+  },
   author: User
 ): Promise<void> {
   if (!db) throw new Error('Firestore not initialized');
@@ -218,7 +223,9 @@ export async function addCommentAction(
       username: author.username,
       avatarUrl: author.avatarUrl,
     },
-    text,
+    text: commentData.text,
+    mediaUrl: commentData.mediaUrl,
+    mediaType: commentData.mediaType,
     createdAt: serverTimestamp(),
     upvotes: 0,
     downvotes: 0,

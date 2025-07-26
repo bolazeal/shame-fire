@@ -105,6 +105,8 @@ export type Comment = {
     avatarUrl?: string;
   };
   text: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video';
   createdAt: string;
   upvotes: number;
   downvotes: number;
@@ -144,13 +146,13 @@ export type Post = {
   upvotedBy: string[];
   downvotedBy: string[];
   flaggedBy?: string[]; // Array of user IDs who flagged the post
+  isEscalated?: boolean;
   sentiment?: {
     score: number;
     biasDetected: boolean;
     biasExplanation?: string;
   };
   summary?: string;
-  isEscalated?: boolean;
 };
 
 export type Poll = {

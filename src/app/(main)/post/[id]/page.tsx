@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PostCard } from '@/components/post-card';
@@ -7,14 +8,16 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getPost, getComments } from '@/lib/firestore';
 import type { Post, Comment } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2 } from 'lucide-react';
+import { Image as ImageIcon, Loader2, Video as VideoIcon, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { addCommentAction, deleteCommentAction } from '@/lib/actions/interaction';
+import Image from 'next/image';
+import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 function PostPageSkeleton() {
     return (
@@ -47,6 +50,11 @@ export default function PostPage() {
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [mediaPreview, setMediaPreview] = useState<{ url: string; type: 'image' | 'video' } | null>(null);
+  const [mediaDataUrl, setMediaDataUrl] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const postId = params.id as string;
 
@@ -71,14 +79,38 @@ export default function PostPage() {
         fetchPostAndComments();
     }
   }, [postId, fetchPostAndComments]);
+
+  const clearMedia = () => {
+    setMediaPreview(null);
+    setMediaDataUrl(null);
+    if (imageInputRef.current) imageInputRef.current.value = '';
+    if (videoInputRef.current) videoInputRef.current.value = '';
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setMediaPreview({ url: reader.result as string, type });
+        setMediaDataUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
   
   const handleCommentSubmit = async () => {
-      if (!newComment.trim() || !fullProfile || !post) return;
+      if ((!newComment.trim() && !mediaDataUrl) || !fullProfile || !post) return;
 
       setIsSubmitting(true);
       try {
-          await addCommentAction(post.id, post.authorId, newComment, fullProfile);
+          await addCommentAction(post.id, post.authorId, {
+            text: newComment,
+            mediaUrl: mediaDataUrl || undefined,
+            mediaType: mediaPreview?.type,
+          }, fullProfile);
           setNewComment("");
+          clearMedia();
           // Refetch comments to show the new one
           fetchPostAndComments();
       } catch (error) {
@@ -119,6 +151,7 @@ export default function PostPage() {
   }
 
   return (
+    <TooltipProvider>
     <div>
       <PostCard post={post} />
 
@@ -137,11 +170,89 @@ export default function PostPage() {
               onChange={(e) => setNewComment(e.target.value)}
               disabled={!authUser || isSubmitting}
             />
-            <div className="flex justify-end">
-              <Button onClick={handleCommentSubmit} disabled={!authUser || isSubmitting || !newComment.trim()}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Post Reply
-              </Button>
+            {mediaPreview && (
+              <div className="relative mt-2">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute -right-2 -top-2 z-10 h-6 w-6 rounded-full"
+                    onClick={clearMedia}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                  {mediaPreview.type === 'image' ? (
+                    <Image
+                      src={mediaPreview.url}
+                      alt="Preview"
+                      width={500}
+                      height={300}
+                      className="max-h-60 w-full rounded-lg object-cover"
+                    />
+                  ) : (
+                    <video
+                      src={mediaPreview.url}
+                      controls
+                      className="max-h-60 w-full rounded-lg"
+                    />
+                  )}
+              </div>
+            )}
+            <div className="flex justify-between items-center">
+                <div className="flex items-center gap-1">
+                    <input
+                    type="file"
+                    ref={imageInputRef}
+                    onChange={(e) => handleFileSelect(e, 'image')}
+                    accept="image/*"
+                    className="hidden"
+                    />
+                    <input
+                    type="file"
+                    ref={videoInputRef}
+                    onChange={(e) => handleFileSelect(e, 'video')}
+                    accept="video/*"
+                    className="hidden"
+                    />
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => imageInputRef.current?.click()}
+                            disabled={!authUser || isSubmitting}
+                        >
+                            <ImageIcon className="h-5 w-5 text-primary" />
+                        </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                        <p>Add Image</p>
+                        </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => videoInputRef.current?.click()}
+                            disabled={!authUser || isSubmitting}
+                        >
+                            <VideoIcon className="h-5 w-5 text-primary" />
+                        </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                        <p>Add Video</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </div>
+                <Button onClick={handleCommentSubmit} disabled={!authUser || isSubmitting || (!newComment.trim() && !mediaDataUrl)}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Post Reply
+                </Button>
             </div>
           </div>
         </div>
@@ -164,5 +275,6 @@ export default function PostPage() {
         )}
       </div>
     </div>
+    </TooltipProvider>
   );
 }

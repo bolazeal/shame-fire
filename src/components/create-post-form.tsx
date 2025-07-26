@@ -54,15 +54,18 @@ import {
 } from './ui/select';
 
 const categories = [
-  'Customer Service',
-  'Product Quality',
-  'Public Service',
-  'Corporate Responsibility',
-  'Community Impact',
-  'Employee Treatment',
-  'Environmental Impact',
-  'Financial Transparency',
-  'Other',
+    'Artisan', 
+    'Institution', 
+    'Employee', 
+    'Government', 
+    'Vendor', 
+    'Employer', 
+    'Public Figure', 
+    'Person', 
+    'Organization', 
+    'Community', 
+    'Online', 
+    'other'
 ];
 
 export function CreatePostForm({

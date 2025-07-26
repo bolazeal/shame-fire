@@ -1,24 +1,20 @@
 'use client';
 
-import { Home, Search, PenSquare, Bell, User } from 'lucide-react';
+import { Home, Search, PenSquare, Bell, MoreHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { CreatePostDialog } from '../create-post-dialog';
 import { Button } from '../ui/button';
-import { useAuth } from '@/hooks/use-auth';
 import { useNotification } from '@/hooks/use-notification';
 import { Badge } from '../ui/badge';
+import { MobileMoreSheet } from './mobile-more-sheet';
 
 export function MobileBottomNav() {
   const pathname = usePathname();
-  const { user } = useAuth();
   const { unreadCount } = useNotification();
 
   const getLinkClass = (href: string) => {
-    if (href.startsWith('/profile')) {
-      return pathname.startsWith('/profile');
-    }
     return pathname === href;
   };
 
@@ -71,15 +67,13 @@ export function MobileBottomNav() {
                 </Badge>
             )}
           </Link>
-          <Link
-            href={`/profile/${user?.uid || 'user1'}`}
-            className={cn(
-              'flex-1 p-2 text-muted-foreground transition-colors hover:text-primary',
-              getLinkClass(`/profile/${user?.uid || 'user1'}`) && 'text-primary'
-            )}
-          >
-            <User className="mx-auto h-7 w-7" />
-          </Link>
+          <div className="flex-1 p-2 text-center text-muted-foreground transition-colors hover:text-primary">
+            <MobileMoreSheet>
+              <button className="flex w-full justify-center">
+                <MoreHorizontal className="h-7 w-7" />
+              </button>
+            </MobileMoreSheet>
+          </div>
         </nav>
       </div>
     </footer>

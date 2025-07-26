@@ -45,6 +45,25 @@ import {
   CollapsibleTrigger,
 } from './ui/collapsible';
 import { createPostFormSchema } from '@/lib/types';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
+
+const categories = [
+  'Customer Service',
+  'Product Quality',
+  'Public Service',
+  'Corporate Responsibility',
+  'Community Impact',
+  'Employee Treatment',
+  'Environmental Impact',
+  'Financial Transparency',
+  'Other',
+];
 
 export function CreatePostForm({
   onPostCreated,
@@ -357,12 +376,20 @@ export function CreatePostForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., Customer Service, Product Quality"
-                        {...field}
-                      />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

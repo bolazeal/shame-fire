@@ -76,6 +76,7 @@ export type Conversation = {
   id: string;
   participantIds: string[];
   participants: Participant[];
+  createdAt: string;
   lastMessageText?: string;
   lastMessageTimestamp?: string;
   lastMessageSenderId?: string;
@@ -244,3 +245,5 @@ export type Video = {
   uploadedAt: string;
   createdAt: string; // ISO string from Firestore timestamp for sorting
 };
+
+    

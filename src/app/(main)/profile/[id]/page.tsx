@@ -19,13 +19,14 @@ import {
   Users,
   Loader2,
   UserCog,
+  MessageSquare,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import { EditProfileDialog } from '@/components/edit-profile-dialog';
 import { CreatePostDialog } from '@/components/create-post-dialog';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
   getUserProfile,
   getUserPosts,
@@ -50,6 +51,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { findOrCreateConversationAction } from '@/lib/actions/conversation';
 
 function ProfileSkeleton() {
   return (
@@ -81,7 +83,8 @@ function ProfileSkeleton() {
 
 export default function ProfilePage() {
   const params = useParams<{ id: string }>();
-  const { user: authUser, loading: authLoading } = useAuth();
+  const router = useRouter();
+  const { user: authUser, fullProfile, loading: authLoading } = useAuth();
   const { toast } = useToast();
   
   const [profileUser, setProfileUser] = useState<User | null>(null);
@@ -95,6 +98,7 @@ export default function ProfilePage() {
   const [hasNominated, setHasNominated] = useState(false);
   const [isNominatingMod, setIsNominatingMod] = useState(false);
   const [hasNominatedMod, setHasNominatedMod] = useState(false);
+  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
 
 
   const userId = params.id;
@@ -208,6 +212,24 @@ export default function ProfilePage() {
     }
   };
 
+  const handleMessageUser = async () => {
+    if (!fullProfile || !profileUser || isCurrentUserProfile) return;
+    setIsCreatingConversation(true);
+    try {
+      const conversationId = await findOrCreateConversationAction(fullProfile, profileUser);
+      router.push(`/messages?conversationId=${conversationId}`);
+    } catch (error) {
+      console.error("Failed to start conversation:", error);
+      toast({
+        title: 'Error',
+        description: 'Could not start a conversation.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreatingConversation(false);
+    }
+  };
+
 
   if (loadingProfile || authLoading) {
     return <ProfileSkeleton />;
@@ -247,15 +269,30 @@ export default function ProfilePage() {
                 </Button>
               </EditProfileDialog>
             ) : (
-              <Button
-                variant={following ? 'secondary' : 'outline'}
-                className="rounded-full font-bold"
-                onClick={handleFollowToggle}
-                disabled={isFollowLoading}
-              >
-                 {isFollowLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {following ? 'Following' : 'Follow'}
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="rounded-full"
+                  onClick={handleMessageUser}
+                  disabled={isCreatingConversation}
+                >
+                  {isCreatingConversation ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <MessageSquare className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button
+                  variant={following ? 'secondary' : 'default'}
+                  className="rounded-full font-bold"
+                  onClick={handleFollowToggle}
+                  disabled={isFollowLoading}
+                >
+                  {isFollowLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {following ? 'Following' : 'Follow'}
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -472,3 +509,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    

@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Conversation, Message } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
 import {
@@ -11,19 +12,31 @@ import { ConversationList } from '@/components/messages/conversation-list';
 import { ChatWindow } from '@/components/messages/chat-window';
 import { cn } from '@/lib/utils';
 import { sendMessageAction } from '@/lib/actions/message';
+import { useSearchParams } from 'next/navigation';
 
 export default function MessagesPage() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const initialConversationId = searchParams.get('conversationId');
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
-  >(null);
+  >(initialConversationId);
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
 
   // For mobile view
-  const [showChat, setShowChat] = useState(false);
+  const [showChat, setShowChat] = useState(!!initialConversationId);
+  
+  useEffect(() => {
+    // If an initial conversation ID is passed, select it.
+    if(initialConversationId) {
+        setSelectedConversationId(initialConversationId);
+        setShowChat(true);
+    }
+  }, [initialConversationId]);
 
   useEffect(() => {
     if (!user) {
@@ -100,3 +113,5 @@ export default function MessagesPage() {
     </div>
   );
 }
+
+    

@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { UserAvatar } from '@/components/user-avatar';
-import { Trophy, Medal, Info, FileText, Loader2, TrendingUp } from 'lucide-react';
+import { Loader2, TrendingUp, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { getUsersToFollow, isFollowing, getTrendingTopics } from '@/lib/firestore';
 import { toggleFollowAction } from '@/lib/actions/interaction';
 import type { User } from '@/lib/types';
+import { Input } from '../ui/input';
 
 interface Trend {
     category: string;
@@ -106,40 +107,19 @@ export function RightSidebar() {
 
     return (
         <aside className="sticky top-0 hidden h-screen w-80 flex-col gap-4 p-4 lg:flex">
-            <Card>
-                <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-headline">
-                    <Trophy className="h-5 w-5 text-amber-500" />
-                    Hall of Honour
-                </CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-1">
-                <Button asChild variant="ghost" className="justify-start">
-                    <Link href="/hall-of-honour#past-winners">
-                    <Medal className="mr-2 h-4 w-4" />
-                    View Past Winners
-                    </Link>
-                </Button>
-                <Button asChild variant="ghost" className="justify-start">
-                    <Link href="/hall-of-honour">
-                    <FileText className="mr-2 h-4 w-4" />
-                    See Nomination Status
-                    </Link>
-                </Button>
-                <Button asChild variant="ghost" className="justify-start">
-                    <Link href="/hall-of-honour#nomination-criteria">
-                    <Info className="mr-2 h-4 w-4" />
-                    Learn About Medal Criteria
-                    </Link>
-                </Button>
-                </CardContent>
-            </Card>
-
-            <Card>
+             <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                    placeholder="Search"
+                    className="w-full rounded-full bg-muted pl-10"
+                />
+            </div>
+            
+            <Card className="bg-secondary">
                 <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline">
                     <TrendingUp className="h-5 w-5 text-primary" />
-                    What’s happening
+                    Trends for you
                 </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
@@ -151,7 +131,7 @@ export function RightSidebar() {
                             <Link
                                 key={trend.category}
                                 href={`/search?q=${encodeURIComponent(trend.category)}`}
-                                className="border-b px-6 py-4 transition-colors last:border-b-0 hover:bg-accent/50"
+                                className="border-b border-border px-6 py-4 transition-colors last:border-b-0 hover:bg-accent/50"
                             >
                                 <p className="text-sm text-muted-foreground">
                                 Trending in Shame
@@ -168,7 +148,8 @@ export function RightSidebar() {
                 </div>
                 </CardContent>
             </Card>
-            <Card>
+
+            <Card className="bg-secondary">
                 <CardHeader>
                 <CardTitle>Who to follow</CardTitle>
                 </CardHeader>
@@ -192,16 +173,16 @@ export function RightSidebar() {
                             </div>
                         </Link>
                         <Button
-                            variant={user.isFollowing ? 'secondary' : 'outline'}
+                            variant={user.isFollowing ? 'secondary' : 'default'}
                             size="sm"
-                            className="rounded-full font-bold"
+                            className="rounded-full font-bold bg-white text-black hover:bg-white/80"
                             onClick={() => handleFollowToggle(user.id)}
                             disabled={user.isFollowLoading}
                         >
                             {user.isFollowLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (user.isFollowing ? 'Following' : 'Follow')}
                         </Button>
                         </div>
-                        {index < usersToFollow.length - 1 && <Separator />}
+                        {index < usersToFollow.length - 1 && <Separator className="bg-border"/>}
                     </React.Fragment>
                     ))
                 )}

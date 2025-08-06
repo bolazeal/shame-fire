@@ -4,7 +4,7 @@
 import type { Comment } from '@/lib/types';
 import { UserAvatar } from './user-avatar';
 import { Button } from './ui/button';
-import { ThumbsUp, ThumbsDown, MessageSquare, MoreHorizontal, Trash2, Loader2 } from 'lucide-react';
+import { ArrowBigUp, ArrowBigDown, MessageSquare, MoreHorizontal, Trash2, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
 import { useState } from 'react';
@@ -95,11 +95,11 @@ export function CommentCard({ comment, isReply = false, onDelete, postId, disput
         <div className="mt-2 flex items-center justify-between">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Button variant="ghost" size="sm" className="flex items-center gap-1">
-              <ThumbsUp className="h-4 w-4" />
+              <ArrowBigUp className="h-4 w-4" />
               <span>{comment.upvotes}</span>
             </Button>
             <Button variant="ghost" size="sm" className="flex items-center gap-1">
-              <ThumbsDown className="h-4 w-4" />
+              <ArrowBigDown className="h-4 w-4" />
               <span>{comment.downvotes}</span>
             </Button>
             <Button variant="ghost" size="sm" className="flex items-center gap-1">

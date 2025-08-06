@@ -6,12 +6,12 @@ import type { Post } from '@/lib/types';
 import { UserAvatar } from './user-avatar';
 import { Button } from './ui/button';
 import {
-  MessageCircle,
-  Repeat,
-  ThumbsUp,
-  ThumbsDown,
-  Bookmark,
-  Share,
+  MessageSquare,
+  Share2,
+  ArrowBigUp,
+  ArrowBigDown,
+  Star,
+  Send,
   MoreHorizontal,
   ShieldAlert,
   ShieldCheck,
@@ -657,7 +657,7 @@ export function PostCard({ post }: PostCardProps) {
               size="sm"
               className="flex items-center gap-2 rounded-full hover:text-primary"
             >
-              <MessageCircle className="h-5 w-5" />
+              <MessageSquare className="h-5 w-5" />
               <span>{post.commentsCount}</span>
             </Button>
             <Button
@@ -673,7 +673,7 @@ export function PostCard({ post }: PostCardProps) {
               {isRepostLoading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                <Repeat className="h-5 w-5" />
+                <Share2 className="h-5 w-5" />
               )}
               <span>{repostCount}</span>
             </Button>
@@ -690,7 +690,7 @@ export function PostCard({ post }: PostCardProps) {
               {isVoteLoading && voteStatus !== 'down' ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                <ThumbsUp
+                <ArrowBigUp
                   className={cn(
                     'h-5 w-5',
                     voteStatus === 'up' && 'fill-current'
@@ -712,7 +712,7 @@ export function PostCard({ post }: PostCardProps) {
               {isVoteLoading && voteStatus !== 'up' ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                <ThumbsDown
+                <ArrowBigDown
                   className={cn(
                     'h-5 w-5',
                     voteStatus === 'down' && 'fill-current'
@@ -735,7 +735,7 @@ export function PostCard({ post }: PostCardProps) {
                 {isBookmarkLoading ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <Bookmark
+                  <Star
                     className={cn('h-5 w-5', isBookmarked && 'fill-current')}
                   />
                 )}
@@ -747,7 +747,7 @@ export function PostCard({ post }: PostCardProps) {
                 className="rounded-full hover:text-primary"
                 onClick={handleShareClick}
               >
-                <Share className="h-5 w-5" />
+                <Send className="h-5 w-5" />
               </Button>
             </div>
           </div>

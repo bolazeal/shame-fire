@@ -6,7 +6,7 @@ import { UserAvatar } from './user-avatar';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
-import { MessageCircle, ThumbsUp, Repeat, UserPlus, AtSign } from 'lucide-react';
+import { MessageSquare, ArrowBigUp, Share2, UserPlus, AtSign } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { markNotificationAsReadAction } from '@/lib/actions/notification';
 
@@ -16,9 +16,9 @@ interface NotificationCardProps {
 
 const notificationIcons = {
   follow: UserPlus,
-  upvote: ThumbsUp,
-  repost: Repeat,
-  comment: MessageCircle,
+  upvote: ArrowBigUp,
+  repost: Share2,
+  comment: MessageSquare,
   mention: AtSign,
 };
 
@@ -59,7 +59,7 @@ const getNotificationTextAndLink = (notification: Notification) => {
         return {
           text: <>New notification</>,
           href: '#',
-          Icon: MessageCircle,
+          Icon: MessageSquare,
         };
     }
 };

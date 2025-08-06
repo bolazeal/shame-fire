@@ -14,6 +14,7 @@ This project showcases a complete, production-ready application with real-time f
 *   **Real-Time Messaging**: A private, one-on-one direct messaging system with live updates.
 *   **Comprehensive Profiles**: Customizable user profiles with banners, avatars, bios, and follower/following counts.
 *   **User Mentions**: Users can tag others in posts with `@username` to send notifications and foster engagement.
+*   **Content Flagging by Users**: Empower the community by allowing users to flag inappropriate content for moderator review.
 
 ### AI & Content
 *   **Advanced Content Creation**: A single, intuitive dialog for creating general updates, detailed reports, or positive endorsements with media upload support and optional contact info for off-platform entities.
@@ -29,10 +30,9 @@ This project showcases a complete, production-ready application with real-time f
     *   **Hall of Honour**: Recognizes highly-trusted users through a medal and nomination system.
     *   **Moderator Selection**: Community members can nominate trusted users (with high Trust Scores) to be considered for moderator roles.
 *   **Full-Featured Admin Panel**: A protected dashboard for administrators to monitor platform metrics, manage users (suspend/ban/reset trust score), and review AI-flagged and user-flagged content.
-*   **Content Flagging**: Users can flag inappropriate content to send it to the admin moderation queue.
 
 ### Media & Design
-*   **Shame or Shine TV**: A section for long-form video content, including interviews and investigative reports.
+*   **Shame TV**: A section for long-form video content, including interviews and investigative reports.
 *   **Responsive Design**: A modern, three-column layout that adapts seamlessly to mobile devices with a dedicated bottom navigation bar.
 *   **Theme Customization**: User-selectable light, dark, and system themes.
 

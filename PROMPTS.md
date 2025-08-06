@@ -54,7 +54,7 @@ For now, just create the basic structure in `src/app/(main)/layout.tsx` and use 
 
 "Let's populate the sidebars.
 1.  **Left Sidebar (`LeftSidebar.tsx`):**
-    *   Add the app logo and name ('Clarity').
+    *   Add the app logo and name ('Shame').
     *   Add navigation links with icons (`lucide-react`) for: Home, Notifications, Messages, Bookmarks, Village Square, Hall of Honour, and Profile.
     *   Add a prominent 'Post' button.
     *   At the bottom, add a user profile section with the current user's avatar and name, which acts as a dropdown menu with a 'Log out' option.
@@ -110,20 +110,17 @@ For now, just create the basic structure in `src/app/(main)/layout.tsx` and use 
 
 ---
 
-### Prompt 10: Community & Moderation Features
- 
-"Let's build out the community governance features.
-1.  Create the `/village-square` page to list active disputes using a `DisputeCard` component.
-2.  Create the `/dispute/[id]` page for viewing a single dispute, including involved parties, a community poll, and a discussion section.
-3.  Create the `/hall-of-honour` page to display available medals and recent winners.
-4.  Create a protected `/admin` page. It should have a dashboard with key metrics (cards and charts) and a 'Content Moderation' tab.
-5.  The 'Content Moderation' tab should display the queue of content flagged by the AI. Add buttons for moderators to 'Dismiss' or 'Remove' flagged items. Use a `ModerationContext` to manage this state globally."
+### Prompt 10: Real-Time Messaging and User Mentions
+
+"Let's make the app more interactive. I'd like to add two features:
+1. **User Mentions:** When a user types `@username` in a post, the mentioned user should receive a notification.
+2. **Direct Messaging:** Implement the full direct messaging flow. Users should be able to click a 'Message' button on a profile page to start a new conversation or open an existing one, and then be redirected to the chat window."
 
 ---
 
 ### Prompt 11: Final Polish & Deployment Prep
  
 "The app is almost ready! Let's do a final polish.
-1.  Fix any outstanding hydration errors.
-2.  Ensure all interactive elements like links and buttons are using the correct `asChild` composition to avoid console warnings.
-3.  Lastly, update the project's `README.md` to professionally describe the application we've built. Also, configure the `next.config.ts` for a production build by enabling strict TypeScript/ESLint checks and setting the output to 'standalone'."
+1.  Fix any outstanding hydration errors or console warnings.
+2.  Ensure all interactive elements like links and buttons are using the correct `asChild` composition.
+3.  Lastly, update the project's `README.md` to professionally describe the application we've built. Also, configure a `next.config.mjs` file for a production build by enabling strict TypeScript/ESLint checks and setting the output to 'standalone'."

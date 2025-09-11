@@ -249,3 +249,9 @@ export type Video = {
   uploadedAt: string;
   createdAt: string; // ISO string from Firestore timestamp for sorting
 };
+
+export interface PlatformSettings {
+    enableTrustScoreAi: boolean;
+    moderationTrustScoreThreshold: number;
+    defaultStartingTrustScore: number;
+}

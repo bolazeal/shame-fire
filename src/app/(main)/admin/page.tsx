@@ -81,6 +81,7 @@ import {
 import { UserAvatar } from '@/components/user-avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toggleAdminStatusAction, updateUserAccountStatusAction, resetUserTrustScoreAction, removeFlaggedItemAction, deletePostAndFlagsAction } from '@/lib/actions/admin';
+import { SettingsForm } from '@/components/settings-form';
 
 export default function AdminPage() {
   const { fullProfile, loading: authLoading } = useAuth();
@@ -914,11 +915,7 @@ export default function AdminPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex h-40 items-center justify-center rounded-lg border-2 border-dashed">
-                  <p className="text-muted-foreground">
-                    Settings controls are coming soon.
-                  </p>
-                </div>
+                <SettingsForm />
               </CardContent>
             </Card>
           </div>

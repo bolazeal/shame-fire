@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { deleteCommentAction, deleteDisputeCommentAction } from '@/lib/actions/interaction';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface CommentCardProps {
   comment: Comment;
@@ -54,6 +55,8 @@ export function CommentCard({ comment, isReply = false, onDelete, postId, disput
         setIsDeleting(false);
     }
   }
+  
+  const replyHref = postId ? `/post/${postId}/comment/${comment.id}` : '#';
 
   return (
     <div className={`flex gap-4 ${isReply ? 'ml-12' : ''}`}>
@@ -102,9 +105,11 @@ export function CommentCard({ comment, isReply = false, onDelete, postId, disput
               <ArrowBigDown className="h-4 w-4" />
               <span>{comment.downvotes}</span>
             </Button>
-            <Button variant="ghost" size="sm" className="flex items-center gap-1">
-              <MessageSquare className="h-4 w-4" />
-              <span>Reply</span>
+            <Button variant="ghost" size="sm" className="flex items-center gap-1" asChild>
+                <Link href={replyHref}>
+                    <MessageSquare className="h-4 w-4" />
+                    <span>Reply</span>
+                </Link>
             </Button>
           </div>
           
@@ -147,7 +152,6 @@ export function CommentCard({ comment, isReply = false, onDelete, postId, disput
             </AlertDialog>
           )}
         </div>
-        {/* Reply functionality to be implemented */}
       </div>
     </div>
   );

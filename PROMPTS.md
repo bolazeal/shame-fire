@@ -11,9 +11,9 @@ This document outlines the series of conversational prompts that could be used t
 Let's start by setting up a Next.js project with the App Router, TypeScript, Tailwind CSS, and ShadCN UI.
 
 For the visual style, please configure the app with the following theme in `src/app/globals.css`:
--   **Primary color:** Soft blue (`#7EC4CF`)
--   **Background color:** Light gray (`#F5F5F5`)
--   **Accent color:** Light orange (`#FDBA74`)
+-   **Primary color:** Soft blue (`188 48% 63%`)
+-   **Background color:** Light gray (`220 13% 95%`)
+-   **Accent color:** Light orange (`32 96% 74%`)
 -   **Font:** Use 'Inter' for both body and headlines.
 
 Also, please enable dark mode by default in the root layout."

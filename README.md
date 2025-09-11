@@ -11,7 +11,7 @@ This project showcases a complete, production-ready application with real-time f
 ### User & Social
 *   **Complete Authentication**: Secure user sign-up, login (email/password & Google OAuth), and session management with account status checks (active, suspended, banned).
 *   **Dynamic Social Feed**: A central hub for posts, reports, and endorsements with live updates for votes, reposts, and comments.
-*   **Real-Time Messaging**: A private, one-on-one direct messaging system with live updates.
+*   **Real-Time Messaging**: A private, one-on-one direct messaging system with live updates and media attachments.
 *   **Comprehensive Profiles**: Customizable user profiles with banners, avatars, bios, and follower/following counts.
 *   **User Mentions**: Users can tag others in posts with `@username` to send notifications and foster engagement.
 *   **Content Flagging by Users**: Empower the community by allowing users to flag inappropriate content for moderator review.
@@ -29,12 +29,12 @@ This project showcases a complete, production-ready application with real-time f
     *   **Village Square**: A dedicated space for escalating reports into public disputes, featuring real-time community polling and discussion.
     *   **Hall of Honour**: Recognizes highly-trusted users through a medal and nomination system.
     *   **Moderator Selection**: Community members can nominate trusted users (with high Trust Scores) to be considered for moderator roles.
-*   **Full-Featured Admin Panel**: A protected dashboard for administrators to monitor platform metrics, manage users (suspend/ban/reset trust score), and review AI-flagged and user-flagged content.
+*   **Full-Featured Admin Panel**: A protected dashboard for administrators to monitor platform metrics, manage users (suspend/ban/reset trust score), review content, and configure platform-wide settings.
 
 ### Media & Design
 *   **Shame TV**: A section for long-form video content, including interviews and investigative reports.
 *   **Responsive Design**: A modern, three-column layout that adapts seamlessly to mobile devices with a dedicated bottom navigation bar.
-*   **Theme Customization**: User-selectable light, dark, and system themes.
+*   **Theme Customization**: User-selectable light, dark, and system themes with a consistent color palette.
 
 ## Tech Stack
 

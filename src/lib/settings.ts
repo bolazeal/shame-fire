@@ -2,17 +2,30 @@
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './firebase';
 import { fromFirestore } from './firestore';
+import type { PlatformSettings } from './types';
 
-export interface PlatformSettings {
-  enableTrustScoreAi: boolean;
-  moderationTrustScoreThreshold: number;
-  defaultStartingTrustScore: number;
-}
 
 const defaultSettings: PlatformSettings = {
-    enableTrustScoreAi: true,
-    moderationTrustScoreThreshold: 20,
-    defaultStartingTrustScore: 50,
+    platformName: 'Shame',
+    platformDescription: 'A platform for transparent feedback and accountability.',
+    maintenanceMode: false,
+    maintenanceMessage: 'The platform is currently under maintenance. Please check back later.',
+    allowRegistration: true,
+    requireEmailVerification: true,
+    defaultTrustScore: 50,
+    minimumTrustScore: 0,
+    maximumTrustScore: 100,
+    maxPostLength: 2000,
+    allowAnonymousPosts: true,
+    moderateNewUserContent: true,
+    autoFlagThreshold: 5,
+    enableAiModeration: true,
+    aiModerationSensitivity: 'medium',
+    flaggedContentRetentionDays: 30,
+    featureShameTv: true,
+    featureVillageSquare: true,
+    featureHallOfHonour: true,
+    featureDirectMessages: true,
 };
 
 export const getPlatformSettings = async (): Promise<PlatformSettings> => {
@@ -24,7 +37,9 @@ export const getPlatformSettings = async (): Promise<PlatformSettings> => {
   const settingsSnap = await getDoc(settingsRef);
 
   if (settingsSnap.exists()) {
-    return fromFirestore<PlatformSettings>(settingsSnap);
+    // Merge fetched settings with defaults to ensure all keys are present
+    const fetchedSettings = fromFirestore<Partial<PlatformSettings>>(settingsSnap);
+    return { ...defaultSettings, ...fetchedSettings };
   } else {
     // If no settings exist, create them with default values
     await setDoc(settingsRef, { ...defaultSettings, lastUpdated: serverTimestamp() });

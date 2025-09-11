@@ -250,8 +250,26 @@ export type Video = {
   uploadedAt: string;
   createdAt: string; // ISO string from Firestore timestamp for sorting
 };
+
 export type PlatformSettings = {
-    enableTrustScoreAi: boolean;
-    moderationTrustScoreThreshold: number;
-    defaultStartingTrustScore: number;
+  platformName: string;
+  platformDescription: string;
+  maintenanceMode: boolean;
+  maintenanceMessage: string;
+  allowRegistration: boolean;
+  requireEmailVerification: boolean;
+  defaultTrustScore: number;
+  minimumTrustScore: number;
+  maximumTrustScore: number;
+  maxPostLength: number;
+  allowAnonymousPosts: boolean;
+  moderateNewUserContent: boolean;
+  autoFlagThreshold: number;
+  enableAiModeration: boolean;
+  aiModerationSensitivity: 'low' | 'medium' | 'high';
+  flaggedContentRetentionDays: number;
+  featureShameTv: boolean;
+  featureVillageSquare: boolean;
+  featureHallOfHonour: boolean;
+  featureDirectMessages: boolean;
 };

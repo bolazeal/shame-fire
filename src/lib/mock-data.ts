@@ -96,12 +96,51 @@ const mockCommenter: User = {
     accountStatus: 'active',
 };
 
+const mockBakeryOwner: User = {
+    id: 'user6',
+    name: 'The Good Loaf Bakery',
+    username: 'goodloafbakery',
+    email: 'hello@goodloaf.com',
+    avatarUrl: 'https://images.unsplash.com/photo-1598373182133-52452f7691ef?w=100&h=100&fit=crop',
+    'data-ai-hint': 'bakery owner',
+    trustScore: 92,
+    isVerified: true,
+    bio: 'Proudly serving the best bread in town since 2015. Community-focused, locally-sourced.',
+    nominations: 15,
+    publicVotes: 3200,
+    followersCount: 1800,
+    followingCount: 5,
+    createdAt: new Date('2023-04-01T11:00:00Z').toISOString(),
+    accountStatus: 'active',
+};
+
+const mockCommunityMember: User = {
+    id: 'user7',
+    name: 'Maria Garcia',
+    username: 'mariag',
+    email: 'maria@example.com',
+    avatarUrl: 'https://images.unsplash.com/photo-1554151228-14d9def656e4?w=100&h=100&fit=crop',
+    'data-ai-hint': 'woman portrait',
+    trustScore: 75,
+    isVerified: false,
+    bio: 'Local resident and food enthusiast.',
+    nominations: 0,
+    publicVotes: 150,
+    followersCount: 45,
+    followingCount: 80,
+    createdAt: new Date('2023-06-22T14:00:00Z').toISOString(),
+    accountStatus: 'active',
+};
+
+
 export const mockUsers = {
     user1: mockAdminUser,
     user2: mockUser2,
     user3: mockReportingUser,
     user4: mockDisputingUser,
     user5: mockCommenter,
+    user6: mockBakeryOwner,
+    user7: mockCommunityMember,
 };
 
 // --- Mock Posts ---
@@ -118,7 +157,7 @@ export const mockPosts: Post[] = [
         'data-ai-hint': 'artisan bread',
         mediaType: 'image',
         createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        commentsCount: 2,
+        commentsCount: 4,
         reposts: 12,
         repostedBy: [],
         upvotes: 156,
@@ -199,10 +238,34 @@ export const mockComments: { [key: string]: Comment[] } = {
         id: 'comment3',
         author: mockCommenter,
         text: "I agree! Their morning buns are the best.",
-        createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+        createdAt: new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString(),
         upvotes: 10,
         downvotes: 0,
-    }
+    },
+    {
+        id: 'comment4',
+        author: mockBakeryOwner,
+        text: "Thank you so much for the kind words, Jane! It means the world to our team. We're so glad to be a part of this community.",
+        createdAt: new Date(Date.now() - 22 * 60 * 60 * 1000).toISOString(),
+        upvotes: 25,
+        downvotes: 0,
+    },
+    {
+        id: 'comment5',
+        author: mockCommunityMember,
+        text: "This is great to hear. Do you have gluten-free options?",
+        createdAt: new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString(),
+        upvotes: 5,
+        downvotes: 0,
+    },
+    {
+        id: 'comment6',
+        author: mockBakeryOwner,
+        text: "Hi Maria! We do. We bake a gluten-free sourdough every morning, but it tends to sell out fast. You can call ahead to reserve a loaf!",
+        createdAt: new Date(Date.now() - 19 * 60 * 60 * 1000).toISOString(),
+        upvotes: 8,
+        downvotes: 0,
+    },
   ],
   'post2': [
     {

@@ -1,4 +1,3 @@
-
 import {
   collection,
   doc,
@@ -505,7 +504,7 @@ export const getVideos = async (): Promise<Video[]> => {
 };
 
 // MESSAGE-related functions (LISTENERS)
-export const getConversations = (
+export const listenToConversations = (
   userId: string,
   callback: (conversations: Conversation[]) => void
 ): (() => void) => {
@@ -530,7 +529,7 @@ export const getConversations = (
   return unsubscribe;
 };
 
-export const getMessages = (
+export const listenToMessages = (
   conversationId: string,
   callback: (messages: Message[]) => void
 ): (() => void) => {

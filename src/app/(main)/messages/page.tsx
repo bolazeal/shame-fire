@@ -1,10 +1,9 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Conversation, Message } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
-import { getConversations, getMessages } from '@/lib/firestore';
+import { listenToConversations, listenToMessages } from '@/lib/firestore';
 import { ConversationList } from '@/components/messages/conversation-list';
 import { ChatWindow } from '@/components/messages/chat-window';
 import { cn } from '@/lib/utils';
@@ -42,7 +41,7 @@ export default function MessagesPage() {
     }
 
     setLoadingConversations(true);
-    const unsubscribe = getConversations(user.uid, (convos) => {
+    const unsubscribe = listenToConversations(user.uid, (convos) => {
       setConversations(convos);
       setLoadingConversations(false);
     });
@@ -57,7 +56,7 @@ export default function MessagesPage() {
     }
 
     setLoadingMessages(true);
-    const unsubscribe = getMessages(selectedConversationId, (msgs) => {
+    const unsubscribe = listenToMessages(selectedConversationId, (msgs) => {
       setMessages(msgs);
       setLoadingMessages(false);
     });

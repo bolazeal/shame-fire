@@ -1,4 +1,3 @@
-
 'use server';
 
 import {
@@ -25,23 +24,21 @@ export async function findOrCreateConversationAction(
   }
 
   const conversationsRef = collection(db, 'conversations');
+  // Firestore requires a composite index for this query: (participantIds, lastMessageTimestamp DESC)
   const q = query(
     conversationsRef,
-    where('participantIds', 'array-contains', currentUser.id),
-    limit(100) // Adjust limit as needed, Firestore requires array-contains with another clause
+    where('participantIds', '==', [currentUser.id, targetUser.id].sort())
   );
 
   const querySnapshot = await getDocs(q);
-  const existingConversation = querySnapshot.docs.find(doc =>
-    doc.data().participantIds.includes(targetUser.id)
-  );
-
-  if (existingConversation) {
-    return existingConversation.id;
+  
+  if (!querySnapshot.empty) {
+    // Conversation already exists
+    return querySnapshot.docs[0].id;
   } else {
     // Create a new conversation
     const newConversation: Omit<Conversation, 'id'> & { createdAt: FieldValue } = {
-      participantIds: [currentUser.id, targetUser.id],
+      participantIds: [currentUser.id, targetUser.id].sort(),
       participants: [
         {
           id: currentUser.id,
@@ -64,5 +61,3 @@ export async function findOrCreateConversationAction(
     return docRef.id;
   }
 }
-
-    

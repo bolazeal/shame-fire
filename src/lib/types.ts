@@ -1,4 +1,3 @@
-
 import type { ElementType } from 'react';
 import { z } from 'zod';
 
@@ -146,7 +145,7 @@ export type Post = {
   bookmarks: number;
   bookmarkedBy: string[]; // Array of user IDs who bookmarked
   upvotedBy: string[];
-  downvotedBy: string[];
+  downvotedBy: [],
   flaggedBy?: string[]; // Array of user IDs who flagged the post
   isEscalated?: boolean;
   sentiment?: {

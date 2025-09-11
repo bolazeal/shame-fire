@@ -33,9 +33,14 @@ import {
   isFollowing,
   hasUserNominated,
   hasUserNominatedForModerator,
+  getFollowers,
+  getFollowing,
 } from '@/lib/firestore';
 import { toggleFollowAction } from '@/lib/actions/interaction';
-import { nominateUserForMedalAction, nominateUserForModeratorAction } from '@/lib/actions/nomination';
+import {
+  nominateUserForMedalAction,
+  nominateUserForModeratorAction,
+} from '@/lib/actions/nomination';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
@@ -52,6 +57,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { findOrCreateConversationAction } from '@/lib/actions/conversation';
+import { FollowListDialog } from '@/components/follow-list-dialog';
 
 function ProfileSkeleton() {
   return (
@@ -72,21 +78,20 @@ function ProfileSkeleton() {
           <Skeleton className="h-24 w-full" />
         </div>
         <div className="mt-4 space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-2/3" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
         </div>
       </div>
     </div>
   );
 }
 
-
 export default function ProfilePage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { user: authUser, fullProfile, loading: authLoading } = useAuth();
   const { toast } = useToast();
-  
+
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [activeTab, setActiveTab] = useState('posts');
@@ -100,7 +105,6 @@ export default function ProfilePage() {
   const [hasNominatedMod, setHasNominatedMod] = useState(false);
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
 
-
   const userId = params.id;
   const isCurrentUserProfile = authUser?.uid === userId;
 
@@ -108,22 +112,23 @@ export default function ProfilePage() {
     if (!userId) return;
     setLoadingProfile(true);
     try {
-        const userProfile = await getUserProfile(userId as string);
-        setProfileUser(userProfile);
-        if (authUser && authUser.uid !== userId) {
-          const [isUserFollowing, userHasNominated, userHasNominatedForMod] = await Promise.all([
+      const userProfile = await getUserProfile(userId as string);
+      setProfileUser(userProfile);
+      if (authUser && authUser.uid !== userId) {
+        const [isUserFollowing, userHasNominated, userHasNominatedForMod] =
+          await Promise.all([
             isFollowing(authUser.uid, userId as string),
             hasUserNominated(authUser.uid, userId as string),
             hasUserNominatedForModerator(authUser.uid, userId as string),
           ]);
-          setFollowing(isUserFollowing);
-          setHasNominated(userHasNominated);
-          setHasNominatedMod(userHasNominatedForMod);
-        }
+        setFollowing(isUserFollowing);
+        setHasNominated(userHasNominated);
+        setHasNominatedMod(userHasNominatedForMod);
+      }
     } catch (error) {
-        console.error("Failed to fetch profile", error);
+      console.error('Failed to fetch profile', error);
     } finally {
-        setLoadingProfile(false);
+      setLoadingProfile(false);
     }
   }, [userId, authUser]);
 
@@ -143,19 +148,23 @@ export default function ProfilePage() {
   const handleProfileUpdate = (updatedUser: Partial<User>) => {
     setProfileUser((prev) => (prev ? { ...prev, ...updatedUser } : null));
   };
-  
+
   const handleFollowToggle = async () => {
-      if (!authUser || !profileUser || isCurrentUserProfile) return;
-      setIsFollowLoading(true);
-      try {
-          await toggleFollowAction(authUser.uid, profileUser.id, following);
-          setFollowing(!following);
-          setProfileUser(prev => prev ? { ...prev, followersCount: prev.followersCount + (following ? -1 : 1) } : null);
-      } catch (error) {
-          console.error("Failed to toggle follow", error);
-      } finally {
-          setIsFollowLoading(false);
-      }
+    if (!authUser || !profileUser || isCurrentUserProfile) return;
+    setIsFollowLoading(true);
+    try {
+      await toggleFollowAction(authUser.uid, profileUser.id, following);
+      setFollowing(!following);
+      setProfileUser((prev) =>
+        prev
+          ? { ...prev, followersCount: prev.followersCount + (following ? -1 : 1) }
+          : null
+      );
+    } catch (error) {
+      console.error('Failed to toggle follow', error);
+    } finally {
+      setIsFollowLoading(false);
+    }
   };
 
   const handleNominate = async () => {
@@ -216,10 +225,13 @@ export default function ProfilePage() {
     if (!fullProfile || !profileUser || isCurrentUserProfile) return;
     setIsCreatingConversation(true);
     try {
-      const conversationId = await findOrCreateConversationAction(fullProfile, profileUser);
+      const conversationId = await findOrCreateConversationAction(
+        fullProfile,
+        profileUser
+      );
       router.push(`/messages?conversationId=${conversationId}`);
     } catch (error) {
-      console.error("Failed to start conversation:", error);
+      console.error('Failed to start conversation:', error);
       toast({
         title: 'Error',
         description: 'Could not start a conversation.',
@@ -230,7 +242,6 @@ export default function ProfilePage() {
     }
   };
 
-
   if (loadingProfile || authLoading) {
     return <ProfileSkeleton />;
   }
@@ -238,14 +249,19 @@ export default function ProfilePage() {
   if (!profileUser) {
     return <div className="p-4 text-center">User not found.</div>;
   }
-  
-  const joinedDate = profileUser.createdAt ? new Date(profileUser.createdAt) : new Date();
+
+  const joinedDate = profileUser.createdAt
+    ? new Date(profileUser.createdAt)
+    : new Date();
 
   return (
     <div>
       <div className="relative h-48 bg-muted">
         <Image
-          src={profileUser.bannerUrl || "https://images.unsplash.com/photo-1507608616759-54f48f0af0ee?w=1500&h=500&fit=crop"}
+          src={
+            profileUser.bannerUrl ||
+            'https://images.unsplash.com/photo-1507608616759-54f48f0af0ee?w=1500&h=500&fit=crop'
+          }
           alt="Profile banner"
           fill={true}
           objectFit="cover"
@@ -289,7 +305,9 @@ export default function ProfilePage() {
                   onClick={handleFollowToggle}
                   disabled={isFollowLoading}
                 >
-                  {isFollowLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isFollowLoading && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   {following ? 'Following' : 'Follow'}
                 </Button>
               </>
@@ -337,155 +355,182 @@ export default function ProfilePage() {
           </Card>
           {!isCurrentUserProfile && (
             <div className="flex shrink-0 flex-col justify-center gap-2">
-                <CreatePostDialog
-                  dialogTitle={`Endorse ${profileUser.name}`}
-                  initialValues={{
-                    type: 'endorsement',
-                    entity: profileUser.name,
-                  }}
-                  trigger={
-                    <Button variant="outline" className="w-full font-bold">
-                      <ThumbsUp className="mr-2 h-4 w-4" /> Endorse
+              <CreatePostDialog
+                dialogTitle={`Endorse ${profileUser.name}`}
+                initialValues={{
+                  type: 'endorsement',
+                  entity: profileUser.name,
+                }}
+                trigger={
+                  <Button variant="outline" className="w-full font-bold">
+                    <ThumbsUp className="mr-2 h-4 w-4" /> Endorse
+                  </Button>
+                }
+              />
+              <CreatePostDialog
+                dialogTitle={`Report ${profileUser.name}`}
+                initialValues={{ type: 'report', entity: profileUser.name }}
+                trigger={
+                  <Button variant="destructive" className="w-full font-bold">
+                    <Flag className="mr-2 h-4 w-4" /> Report
+                  </Button>
+                }
+              />
+              {profileUser.trustScore > 80 && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full font-bold"
+                      disabled={isNominating || hasNominated}
+                    >
+                      {isNominating ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trophy className="mr-2 h-4 w-4 text-amber-500" />
+                      )}
+                      {hasNominated ? 'Nominated' : 'Nominate for Medal'}
                     </Button>
-                  }
-                />
-                <CreatePostDialog
-                  dialogTitle={`Report ${profileUser.name}`}
-                  initialValues={{ type: 'report', entity: profileUser.name }}
-                  trigger={
-                    <Button variant="destructive" className="w-full font-bold">
-                      <Flag className="mr-2 h-4 w-4" /> Report
-                    </Button>
-                  }
-                />
-                {profileUser.trustScore > 80 && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full font-bold"
-                        disabled={isNominating || hasNominated}
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Nominate {profileUser.name}?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will formally nominate {profileUser.name} for a
+                        Medal of Honour, recognizing their positive impact. This
+                        action is public and cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleNominate}
+                        disabled={isNominating}
                       >
-                        {isNominating ? (
-                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                           <Trophy className="mr-2 h-4 w-4 text-amber-500" />
-                        )}
-                        {hasNominated ? 'Nominated' : 'Nominate for Medal'}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>
-                          Nominate {profileUser.name}?
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will formally nominate {profileUser.name} for a
-                          Medal of Honour, recognizing their positive impact.
-                          This action is public and cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleNominate}
-                          disabled={isNominating}
-                        >
-                          {isNominating && (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          )}
-                          Confirm Nomination
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
-                 {profileUser.trustScore > 75 && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full font-bold"
-                        disabled={isNominatingMod || hasNominatedMod}
-                      >
-                        {isNominatingMod ? (
+                        {isNominating && (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <UserCog className="mr-2 h-4 w-4" />
                         )}
-                        {hasNominatedMod ? 'Nominated' : 'Nominate for Moderator'}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>
-                          Nominate {profileUser.name} for Moderator?
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will submit {profileUser.name}'s profile to the
-                          administrators for moderator consideration. This action is
-                          confidential.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleNominateForModerator}
-                          disabled={isNominatingMod}
-                        >
-                          {isNominatingMod && (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          )}
-                          Confirm Nomination
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
+                        Confirm Nomination
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+              {profileUser.trustScore > 75 && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full font-bold"
+                      disabled={isNominatingMod || hasNominatedMod}
+                    >
+                      {isNominatingMod ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <UserCog className="mr-2 h-4 w-4" />
+                      )}
+                      {hasNominatedMod
+                        ? 'Nominated'
+                        : 'Nominate for Moderator'}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Nominate {profileUser.name} for Moderator?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will submit {profileUser.name}'s profile to the
+                        administrators for moderator consideration. This action
+                        is confidential.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleNominateForModerator}
+                        disabled={isNominatingMod}
+                      >
+                        {isNominatingMod && (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        )}
+                        Confirm Nomination
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </div>
           )}
         </div>
-        
+
         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-muted-foreground">
           {profileUser.location && (
             <div className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                <span>{profileUser.location}</span>
+              <MapPin className="h-4 w-4" />
+              <span>{profileUser.location}</span>
             </div>
           )}
           {profileUser.website && (
             <div className="flex items-center gap-1">
-                <LinkIcon className="h-4 w-4" />
-                <a href={profileUser.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                    {profileUser.website.replace(/^(https?:\/\/)?(www\.)?/, '')}
-                </a>
+              <LinkIcon className="h-4 w-4" />
+              <a
+                href={profileUser.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                {profileUser.website.replace(/^(https?:\/\/)?(www\.)?/, '')}
+              </a>
             </div>
-           )}
+          )}
           <div className="flex items-center gap-1">
             <Calendar className="h-4 w-4" />
-            <span suppressHydrationWarning>Joined {formatDistanceToNow(joinedDate, { addSuffix: true })}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Users className="h-4 w-4" />
-            <span>
-              <span className="font-bold text-foreground">
-                {profileUser.followersCount.toLocaleString() || 0}
-              </span>{' '}
-              Followers
+            <span suppressHydrationWarning>
+              Joined {formatDistanceToNow(joinedDate, { addSuffix: true })}
             </span>
           </div>
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4" />
-            <span>
-              <span className="font-bold text-foreground">
-                {profileUser.followingCount.toLocaleString() || 0}
-              </span>{' '}
-              Following
-            </span>
+            <FollowListDialog
+              title="Followers"
+              userId={profileUser.id}
+              fetchUsers={() => getFollowers(profileUser.id)}
+              trigger={
+                <span className="cursor-pointer hover:underline">
+                  <span className="font-bold text-foreground">
+                    {profileUser.followersCount.toLocaleString() || 0}
+                  </span>{' '}
+                  Followers
+                </span>
+              }
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <Users className="h-4 w-4" />
+            <FollowListDialog
+              title="Following"
+              userId={profileUser.id}
+              fetchUsers={() => getFollowing(profileUser.id)}
+              trigger={
+                <span className="cursor-pointer hover:underline">
+                  <span className="font-bold text-foreground">
+                    {profileUser.followingCount.toLocaleString() || 0}
+                  </span>{' '}
+                  Following
+                </span>
+              }
+            />
           </div>
         </div>
       </div>
-      <Tabs defaultValue="posts" onValueChange={setActiveTab} className="w-full">
+      <Tabs
+        defaultValue="posts"
+        onValueChange={setActiveTab}
+        className="w-full"
+      >
         <TabsList className="grid w-full grid-cols-4 rounded-none border-b border-border bg-transparent">
           <TabsTrigger value="posts">Posts</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
@@ -494,11 +539,11 @@ export default function ProfilePage() {
         </TabsList>
         <TabsContent value={activeTab}>
           {loadingPosts ? (
-             <div className="p-4"><Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" /></div>
+            <div className="p-4">
+              <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+            </div>
           ) : posts.length > 0 ? (
-            posts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))
+            posts.map((post) => <PostCard key={post.id} post={post} />)
           ) : (
             <p className="p-4 text-center text-muted-foreground">
               No {activeTab} yet.
@@ -509,5 +554,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

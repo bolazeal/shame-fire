@@ -1,3 +1,4 @@
+
 import {
   collection,
   doc,
@@ -140,6 +141,38 @@ export const isFollowing = async (
   const docSnap = await getDoc(followDocRef);
   return docSnap.exists();
 };
+
+
+export async function getFollowers(userId: string): Promise<User[]> {
+  if (!isFirebaseConfigured) {
+    // Mock implementation: return a slice of mock users who aren't the user.
+    return Object.values(mockUsers).filter(u => u.id !== userId).slice(0, 2);
+  }
+  const followersRef = collection(db, `users/${userId}/followers`);
+  const snapshot = await getDocs(followersRef);
+  const followerIds = snapshot.docs.map(doc => doc.id);
+  
+  if (followerIds.length === 0) return [];
+
+  const userPromises = followerIds.map(id => getUserProfile(id));
+  const users = await Promise.all(userPromises);
+  return users.filter((user): user is User => user !== null);
+}
+
+export async function getFollowing(userId: string): Promise<User[]> {
+  if (!isFirebaseConfigured) {
+    return Object.values(mockUsers).filter(u => u.id !== userId).slice(2, 4);
+  }
+  const followingRef = collection(db, `users/${userId}/following`);
+  const snapshot = await getDocs(followingRef);
+  const followingIds = snapshot.docs.map(doc => doc.id);
+
+  if (followingIds.length === 0) return [];
+  
+  const userPromises = followingIds.map(id => getUserProfile(id));
+  const users = await Promise.all(userPromises);
+  return users.filter((user): user is User => user !== null);
+}
 
 
 // POST-related functions (READ-ONLY)

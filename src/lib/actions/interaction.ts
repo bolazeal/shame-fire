@@ -16,7 +16,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { getPost, getUserProfile } from '../firestore';
+import { getPost, getUserProfile } from '@/lib/firestore';
 import type { Post, Comment, Poll, User } from '@/lib/types';
 import type { FieldValue } from 'firebase/firestore';
 import { createNotification } from './notification';
@@ -384,3 +384,5 @@ export async function addDisputeCommentAction(
     await batch.commit();
   }
   
+
+    

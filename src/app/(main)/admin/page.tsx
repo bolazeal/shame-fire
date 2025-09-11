@@ -385,7 +385,7 @@ export default function AdminPage() {
       </header>
 
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="m-4 grid h-auto w-full grid-cols-2 md:grid-cols-5">
+        <TabsList className="m-4 grid h-auto w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="moderation">Content Moderation</TabsTrigger>
           <TabsTrigger value="users">User Management</TabsTrigger>
@@ -928,3 +928,5 @@ export default function AdminPage() {
     </TooltipProvider>
   );
 }
+
+    

@@ -83,7 +83,7 @@ export default function MessagesPage() {
   );
 
   return (
-    <div className="h-[calc(100vh-65px)] overflow-hidden lg:h-full">
+    <div className="h-screen overflow-hidden">
       <main className="grid h-full grid-cols-1 md:grid-cols-3 xl:grid-cols-4">
         <div
           className={cn('col-span-1 h-full', showChat && 'hidden md:block')}
@@ -113,5 +113,3 @@ export default function MessagesPage() {
     </div>
   );
 }
-
-    

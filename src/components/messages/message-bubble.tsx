@@ -1,3 +1,4 @@
+
 'use client';
 
 import { cn } from '@/lib/utils';
@@ -12,16 +13,16 @@ export function MessageBubble({ message, isOwnMessage }: MessageBubbleProps) {
   return (
     <div
       className={cn(
-        'flex w-full items-end gap-2',
-        isOwnMessage ? 'flex-row-reverse' : 'flex-row'
+        'flex w-full max-w-lg items-end gap-2',
+        isOwnMessage ? 'ml-auto flex-row-reverse' : 'mr-auto flex-row'
       )}
     >
       <div
         className={cn(
-          'max-w-xs rounded-lg px-3 py-2 lg:max-w-md',
+          'rounded-2xl px-4 py-2',
           isOwnMessage
-            ? 'rounded-br-none bg-primary text-primary-foreground'
-            : 'rounded-bl-none bg-muted'
+            ? 'rounded-br-lg bg-primary text-primary-foreground'
+            : 'rounded-bl-lg bg-background'
         )}
       >
         <p className="text-base">{message.text}</p>

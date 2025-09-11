@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -6,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { UserAvatar } from '@/components/user-avatar';
 import { useAuth } from '@/hooks/use-auth';
 import type { Conversation, Message } from '@/lib/types';
-import { ArrowLeft, Loader2, Send } from 'lucide-react';
+import { ArrowLeft, Loader2, Send, MessageCircle } from 'lucide-react';
 import { MessageBubble } from './message-bubble';
 import { Skeleton } from '../ui/skeleton';
 
@@ -50,9 +51,9 @@ export function ChatWindow({
 
   if (!conversation) {
     return (
-      <div className="hidden h-full flex-col items-center justify-center p-4 text-center md:flex">
-        <Send className="h-16 w-16 text-muted-foreground" />
-        <h2 className="mt-4 text-2xl font-bold">Your Messages</h2>
+      <div className="hidden h-full flex-col items-center justify-center bg-muted/30 p-4 text-center md:flex">
+        <MessageCircle className="h-16 w-16 text-muted-foreground" />
+        <h2 className="mt-4 text-2xl font-bold font-headline">Your Messages</h2>
         <p className="text-muted-foreground">
           Select a conversation to start chatting.
         </p>
@@ -61,8 +62,8 @@ export function ChatWindow({
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <header className="flex items-center gap-4 border-b p-4">
+    <div className="flex h-full flex-col bg-muted/30">
+      <header className="flex items-center gap-4 border-b border-border bg-background p-4 shadow-sm">
         <Button
           variant="ghost"
           size="icon"
@@ -103,7 +104,7 @@ export function ChatWindow({
           <div ref={messagesEndRef} />
         </div>
       </div>
-      <div className="border-t p-4">
+      <div className="border-t border-border bg-background p-4">
         <form onSubmit={handleSendMessage} className="flex items-center gap-2">
           <Input
             value={newMessage}
@@ -111,8 +112,9 @@ export function ChatWindow({
             placeholder="Type a message..."
             autoComplete="off"
             disabled={isSending}
+            className="flex-1 rounded-full bg-muted/50 focus-visible:ring-1 focus-visible:ring-ring"
           />
-          <Button type="submit" size="icon" disabled={!newMessage.trim() || isSending}>
+          <Button type="submit" size="icon" disabled={!newMessage.trim() || isSending} className="rounded-full">
             {isSending ? (
               <Loader2 className="animate-spin" />
             ) : (

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserAvatar } from '@/components/user-avatar';
 import { getHonourRollUsers } from '@/lib/firestore';
 import { medals } from '@/lib/medals';
-import { Crown, Info, Trophy } from 'lucide-react';
+import { Crown, Info, Trophy, UserCog } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function HallOfHonourPage() {
@@ -91,12 +91,12 @@ export default async function HallOfHonourPage() {
             <CardContent className="space-y-4 text-muted-foreground">
               <div>
                 <h3 className="font-semibold text-foreground">
-                  Public Nominations
+                  Medal Nominations
                 </h3>
                 <p>
-                  Any user can nominate another user or entity directly from
-                  their profile page or from a qualifying post (e.g., a highly-rated
-                  endorsement).
+                  Any user can nominate another user or entity for a medal
+                  directly from their profile page or from a qualifying post
+                  (e.g., a highly-rated endorsement).
                 </p>
               </div>
               <div>
@@ -106,26 +106,28 @@ export default async function HallOfHonourPage() {
                 <p>
                   Our platform uses trust data, sentiment analysis, and the
                   number of positive interactions to create a shortlist of
-                  nominees for each category.
+                  nominees for each medal category.
                 </p>
               </div>
               <div>
                 <h3 className="font-semibold text-foreground">
-                  Final Voting
+                  Moderator Selection
                 </h3>
                 <p>
-                  The final winners are chosen through a community-wide vote.
-                  Only verified users are eligible to cast a vote to ensure
-                  fairness.
+                  In addition to medals, community members can nominate trusted
+                  users (with high Trust Scores) to be considered for
+                  moderator roles. These nominations are reviewed by platform
+                  administrators.
                 </p>
               </div>
               <div>
                 <h3 className="font-semibold text-foreground">
-                  Moderation
+                  Final Voting & Review
                 </h3>
                 <p>
-                  The entire process is overseen by platform administrators to
-                  maintain the integrity of the awards.
+                  The final winners for medals are chosen through a
+                  community-wide vote. The entire process is overseen by
+                  platform administrators to maintain fairness and integrity.
                 </p>
               </div>
             </CardContent>

@@ -35,7 +35,7 @@ For now, just create the basic structure in `src/app/(main)/layout.tsx` and use 
  
 "Let's set up user authentication. I'll need:
 1.  A mock Firebase Auth setup using `Context` for local development. Create an `AuthContext` that provides a default logged-in user (`Alex Doe`).
-2.  Create Login (`/login`) and Signup (`/signup`) pages. Use ShadCN's `Card`, `Form`, and `Input` components. Use `zod` and `react-hook-form` for validation.
+2.  Create Login (`/login`), Signup (`/signup`), and Forgot Password (`/forgot-password`) pages. Use ShadCN's `Card`, `Form`, and `Input` components. Use `zod` and `react-hook-form` for validation.
 3.  Create an `AuthLayout` that wraps these pages.
 4.  Protect the main app layout (`/(main)`) so that it redirects to `/login` if the user is not authenticated."
 
@@ -45,7 +45,7 @@ For now, just create the basic structure in `src/app/(main)/layout.tsx` and use 
  
 "The desktop layout is a good start. Now, let's make it mobile-friendly.
 1.  On small screens, the sidebars should be hidden.
-2.  Add a `MobileBottomNav` component that is fixed to the bottom of the screen on mobile. It should contain icon-only links for: Home, Search, Post (a main action button), Notifications, and Profile.
+2.  Add a `MobileBottomNav` component that is fixed to the bottom of the screen on mobile. It should contain icon-only links for: Home, Search, Post (a main action button), Notifications, and a 'More' menu.
 3.  Create a placeholder page for `/search` that the mobile nav can link to."
 
 ---
@@ -55,9 +55,9 @@ For now, just create the basic structure in `src/app/(main)/layout.tsx` and use 
 "Let's populate the sidebars.
 1.  **Left Sidebar (`LeftSidebar.tsx`):**
     *   Add the app logo and name ('Shame').
-    *   Add navigation links with icons (`lucide-react`) for: Home, Notifications, Messages, Bookmarks, Village Square, Hall of Honour, and Profile.
+    *   Add navigation links with icons (`lucide-react`) for: Home, Shame TV, Notifications, Messages, Bookmarks, Village Square, Hall of Honour, and Profile.
     *   Add a prominent 'Post' button.
-    *   At the bottom, add a user profile section with the current user's avatar and name, which acts as a dropdown menu with a 'Log out' option.
+    *   At the bottom, add a user profile section with the current user's avatar and name, which acts as a dropdown menu with a 'Log out' option and theme toggles.
 2.  **Right Sidebar (`RightSidebar.tsx`):**
     *   Add a 'What’s happening' card with mock trending topics.
     *   Add a 'Who to follow' card with a list of mock users and a 'Follow' button for each. Make the follow button toggle its state between 'Follow' and 'Following'."
@@ -118,9 +118,17 @@ For now, just create the basic structure in `src/app/(main)/layout.tsx` and use 
 
 ---
 
-### Prompt 11: Final Polish & Deployment Prep
+### Prompt 11: Dispute Escalation & Admin Panel
+
+"Now for governance. I need two major features:
+1.  **Dispute Escalation**: On a `report` post, give the user being reported a button to 'Escalate to Village Square'. This should create a new `Dispute` document in Firestore and mark the original post as escalated.
+2.  **Refactor the Admin Panel**: Rebuild the Admin panel at `/admin` with a clean, tab-based layout for Dashboard, Moderation, User Management, and Disputes. Add charts to visualize user activity and content types. Enhance the User Management table with actions to suspend, ban, or reset the trust score of users."
+
+---
+
+### Prompt 12: Final Polish & Deployment Prep
  
 "The app is almost ready! Let's do a final polish.
-1.  Fix any outstanding hydration errors or console warnings.
+1.  Fix any outstanding errors or console warnings.
 2.  Ensure all interactive elements like links and buttons are using the correct `asChild` composition.
 3.  Lastly, update the project's `README.md` to professionally describe the application we've built. Also, configure a `next.config.mjs` file for a production build by enabling strict TypeScript/ESLint checks and setting the output to 'standalone'."

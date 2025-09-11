@@ -1,3 +1,4 @@
+
 'use server';
 
 import {
@@ -13,6 +14,7 @@ import {
   collection,
   addDoc,
   serverTimestamp,
+  setDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getPost, getUserProfile } from '@/lib/firestore';
@@ -383,5 +385,35 @@ export async function addDisputeCommentAction(
     await batch.commit();
   }
   
+  export async function trackSuggestionFollowAction(userId: string, followedUserId: string, suggestionSource: string) {
+    if (!db) return;
+    const suggestionFeedbackRef = doc(collection(db, `users/${userId}/suggestion_feedback`));
+    await setDoc(suggestionFeedbackRef, {
+      followedUserId,
+      suggestionSource,
+      action: 'follow',
+      timestamp: serverTimestamp(),
+    });
+  }
 
+  export async function dismissSuggestionAction(userId: string, dismissedUserId: string, suggestionSource: string) {
+    if (!db) return;
     
+    const batch = writeBatch(db);
+
+    const suggestionFeedbackRef = doc(collection(db, `users/${userId}/suggestion_feedback`));
+    batch.set(suggestionFeedbackRef, {
+      dismissedUserId,
+      suggestionSource,
+      action: 'dismiss',
+      timestamp: serverTimestamp(),
+    });
+    
+    // Add to a list to prevent suggesting again for a while
+    const dismissedRef = doc(db, `users/${userId}/dismissed_suggestions`, dismissedUserId);
+    batch.set(dismissedRef, {
+      dismissedAt: serverTimestamp(),
+    });
+
+    await batch.commit();
+  }

@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { UserAvatar } from '@/components/user-avatar';
-import { Loader2, TrendingUp, Search } from 'lucide-react';
+import { Loader2, TrendingUp, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
-import { getUsersToFollow, isFollowing, getTrendingTopics } from '@/lib/firestore';
-import { toggleFollowAction } from '@/lib/actions/interaction';
+import { getUsersToFollow, getTrendingTopics } from '@/lib/firestore';
+import { toggleFollowAction, trackSuggestionFollowAction, dismissSuggestionAction } from '@/lib/actions/interaction';
 import type { User } from '@/lib/types';
 import { Input } from '../ui/input';
 
@@ -46,33 +46,28 @@ export function RightSidebar() {
         fetchTrends();
     }, []);
 
-    useEffect(() => {
-        async function fetchUsers() {
-            if (!authUser) {
-                setLoadingUsers(false);
-                return;
-            }
-            setLoadingUsers(true);
-            try {
-                const users = await getUsersToFollow(authUser.uid);
-                const usersWithFollowStatus = await Promise.all(
-                    users.map(async (user) => {
-                        const followingStatus = await isFollowing(authUser.uid, user.id);
-                        return { ...user, isFollowing: followingStatus, isFollowLoading: false };
-                    })
-                );
-                setUsersToFollow(usersWithFollowStatus);
-            } catch (error) {
-                console.error("Error fetching users to follow:", error);
-            } finally {
-                setLoadingUsers(false);
-            }
+    const fetchUsers = async () => {
+        if (!authUser) {
+            setLoadingUsers(false);
+            return;
         }
+        setLoadingUsers(true);
+        try {
+            const users = await getUsersToFollow(authUser.uid);
+            const usersWithFollowStatus = users.map(user => ({ ...user, isFollowing: false, isFollowLoading: false }));
+            setUsersToFollow(usersWithFollowStatus);
+        } catch (error) {
+            console.error("Error fetching users to follow:", error);
+        } finally {
+            setLoadingUsers(false);
+        }
+    };
 
+    useEffect(() => {
         fetchUsers();
     }, [authUser]);
 
-    const handleFollowToggle = async (userId: string) => {
+    const handleFollowToggle = async (userId: string, suggestionSource: string) => {
         if (!authUser) return;
 
         setUsersToFollow(prevUsers =>
@@ -86,22 +81,25 @@ export function RightSidebar() {
 
         try {
             await toggleFollowAction(authUser.uid, userId, userToUpdate.isFollowing);
-            // Optimistic update of the follow state after the action
-            setUsersToFollow(prevUsers =>
-                prevUsers.map(user =>
-                    user.id === userId ? { ...user, isFollowing: !user.isFollowing } : user
-                )
-            );
+            
+            if (!userToUpdate.isFollowing) {
+              await trackSuggestionFollowAction(authUser.uid, userId, suggestionSource);
+            }
+            
+            // Remove user from list after following
+            setUsersToFollow(prevUsers => prevUsers.filter(user => user.id !== userId));
+
         } catch (error) {
             console.error("Failed to toggle follow:", error);
-            // Optionally revert UI on error, but for now we'll just log it.
-        } finally {
-            setUsersToFollow(prevUsers =>
-                prevUsers.map(user =>
-                    user.id === userId ? { ...user, isFollowLoading: false } : user
-                )
-            );
         }
+    };
+    
+    const handleDismiss = async (userId: string, suggestionSource: string) => {
+        if (!authUser) return;
+    
+        await dismissSuggestionAction(authUser.uid, userId, suggestionSource);
+        
+        setUsersToFollow(prevUsers => prevUsers.filter(user => user.id !== userId));
     };
 
 
@@ -159,7 +157,10 @@ export function RightSidebar() {
                 ) : (
                     usersToFollow.map((user, index) => (
                     <React.Fragment key={user.id}>
-                        <div className="flex items-center justify-between py-4">
+                        <div className="group relative flex items-center justify-between py-4">
+                        <Button variant="ghost" size="icon" className="absolute -right-2 top-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100" onClick={() => handleDismiss(user.id, user.suggestionSource || 'unknown')}>
+                            <X className="h-4 w-4"/>
+                        </Button>
                         <Link
                             href={`/profile/${user.id}`}
                             className="flex items-center gap-2"
@@ -173,13 +174,13 @@ export function RightSidebar() {
                             </div>
                         </Link>
                         <Button
-                            variant={user.isFollowing ? 'secondary' : 'default'}
+                            variant={'default'}
                             size="sm"
                             className="rounded-full font-bold"
-                            onClick={() => handleFollowToggle(user.id)}
+                            onClick={() => handleFollowToggle(user.id, user.suggestionSource || 'unknown')}
                             disabled={user.isFollowLoading}
                         >
-                            {user.isFollowLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (user.isFollowing ? 'Following' : 'Follow')}
+                            {user.isFollowLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Follow'}
                         </Button>
                         </div>
                         {index < usersToFollow.length - 1 && <Separator className="bg-border" />}

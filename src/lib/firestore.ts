@@ -24,6 +24,7 @@ import {
     mockUsers,
     mockVideos
   } from './mock-data';
+import { getUserSuggestions } from './suggestions';
 
 // Helper to convert Firestore doc to a serializable object
 export function fromFirestore<T>(doc: DocumentSnapshot): T {
@@ -74,18 +75,14 @@ export const getUserByEntityName = async (entityName: string): Promise<User | nu
 };
 
 export const getUsersToFollow = async (
-  currentUserId: string
+  currentUserId: string,
+  count: number = 5
 ): Promise<User[]> => {
     if (!isFirebaseConfigured) {
-        return Object.values(mockUsers).filter(u => u.id !== currentUserId).slice(0, 5);
+        return Object.values(mockUsers).filter(u => u.id !== currentUserId).slice(0, count);
     }
-  const usersRef = collection(db, 'users');
-  // A more sophisticated algorithm would be needed for a real app
-  const q = query(usersRef, where('id', '!=', currentUserId), limit(10));
-  const snapshot = await getDocs(q);
-  return snapshot.docs
-    .map((doc) => fromFirestore<User>(doc))
-    .slice(0, 5);
+    // This now uses the advanced suggestion system
+    return await getUserSuggestions(currentUserId, count);
 };
 
 export const getAllUsers = async (): Promise<User[]> => {
@@ -281,6 +278,22 @@ export const getComments = async (postId: string): Promise<Comment[]> => {
     const snapshot = await getDocs(q);
     return snapshot.docs.map((doc) => fromFirestore<Comment>(doc));
 };
+
+export async function getUserActivity(userId: string, activityType: 'upvotedBy' | 'repostedBy', count: number = 20): Promise<Post[]> {
+  if (!isFirebaseConfigured) return [];
+
+  const postsRef = collection(db, 'posts');
+  const q = query(
+    postsRef,
+    where(activityType, 'array-contains', userId),
+    orderBy('createdAt', 'desc'),
+    limit(count)
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => fromFirestore<Post>(doc));
+}
+
 
 // TRENDS-related functions
 export const getTrendingTopics = async (): Promise<{ category: string; count: number }[]> => {

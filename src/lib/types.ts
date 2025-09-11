@@ -63,6 +63,7 @@ export type User = {
   followingCount: number;
   createdAt: string;
   accountStatus: 'active' | 'suspended' | 'banned';
+  suggestionSource?: string; // Used for tracking suggestion origins
 };
 
 export type Participant = {
@@ -251,7 +252,7 @@ export type Video = {
 };
 
 export interface PlatformSettings {
-    enableTrustScoreAi: boolean;
-    moderationTrustScoreThreshold: number;
-    defaultStartingTrustScore: number;
+  enableTrustScoreAi: boolean;
+  moderationTrustScoreThreshold: number;
+  defaultStartingTrustScore: number;
 }

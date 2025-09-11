@@ -85,6 +85,8 @@ export async function updateProfileAction(
     throw new Error('You must be logged in to update a profile.');
   }
   if (currentUser.uid !== userId) {
+    // Admins could be allowed to edit profiles in the future,
+    // but for now, only self-edits are allowed.
     throw new Error('You are not authorized to edit this profile.');
   }
 

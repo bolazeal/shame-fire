@@ -214,7 +214,7 @@ export interface ModerationContextType {
 
 export type Notification = {
   id: string;
-  type: 'follow' | 'upvote' | 'repost' | 'comment' | 'mention' | 'dispute';
+  type: 'follow' | 'upvote' | 'repost' | 'comment' | 'mention';
   sender: {
     id: string;
     name: string;
@@ -255,5 +255,3 @@ export interface PlatformSettings {
     moderationTrustScoreThreshold: number;
     defaultStartingTrustScore: number;
 }
-
-    

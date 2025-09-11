@@ -82,6 +82,7 @@ import { UserAvatar } from '@/components/user-avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toggleAdminStatusAction, updateUserAccountStatusAction, resetUserTrustScoreAction, removeFlaggedItemAction, deletePostAndFlagsAction } from '@/lib/actions/admin';
 import { SettingsForm } from '@/components/settings-form';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 export default function AdminPage() {
   const { fullProfile, loading: authLoading } = useAuth();
@@ -386,13 +387,19 @@ export default function AdminPage() {
       </header>
 
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="m-4 mb-8 grid h-auto w-auto grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="moderation">Content Moderation</TabsTrigger>
-          <TabsTrigger value="users">User Management</TabsTrigger>
-          <TabsTrigger value="disputes">Dispute Management</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
+        <div className="mx-4 mb-8">
+            <ScrollArea className="w-full whitespace-nowrap rounded-lg">
+                <TabsList className="w-max">
+                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                <TabsTrigger value="moderation">Content Moderation</TabsTrigger>
+                <TabsTrigger value="users">User Management</TabsTrigger>
+                <TabsTrigger value="disputes">Dispute Management</TabsTrigger>
+                <TabsTrigger value="settings">Settings</TabsTrigger>
+                </TabsList>
+                <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+        </div>
+
 
         <TabsContent value="dashboard" className="m-0 border-t">
           <div className="space-y-8 p-4">
@@ -925,5 +932,7 @@ export default function AdminPage() {
     </TooltipProvider>
   );
 }
+
+    
 
     

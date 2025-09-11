@@ -27,6 +27,7 @@ import {
 } from '@/lib/firestore';
 import { addDisputeCommentAction, castVoteAction, deleteDisputeCommentAction } from '@/lib/actions/interaction';
 import { ModeratorVerdictForm } from '@/components/moderator-verdict-form';
+import Link from 'next/link';
 
 function DisputePageSkeleton() {
     return (
@@ -199,7 +200,11 @@ export default function DisputePage() {
               </h3>
               <div className="mt-4 flex flex-wrap items-center gap-x-8 gap-y-4">
                 {dispute.involvedParties.map((user) => (
-                  <div key={user.id} className="flex items-center gap-2">
+                  <Link
+                    key={user.id}
+                    href={`/profile/${user.id}`}
+                    className="flex items-center gap-2"
+                  >
                     <UserAvatar user={user} className="h-12 w-12" />
                     <div>
                       <p className="font-bold">{user.name}</p>
@@ -207,7 +212,7 @@ export default function DisputePage() {
                         @{user.username}
                       </p>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>

@@ -12,10 +12,12 @@ import { db } from '@/lib/firebase';
 export async function sendMessageAction(
   conversationId: string,
   senderId: string,
-  text: string
+  text: string,
+  mediaUrl?: string,
+  mediaType?: 'image' | 'video'
 ): Promise<void> {
   if (!db) throw new Error('Firestore not initialized');
-  if (!text.trim()) {
+  if (!text.trim() && !mediaUrl) {
     // Do not send empty messages
     return;
   }
@@ -25,18 +27,28 @@ export async function sendMessageAction(
   const messagesRef = collection(db, `conversations/${conversationId}/messages`);
   const conversationRef = doc(db, 'conversations', conversationId);
   
-  // Create a new document reference in the messages subcollection
   const newMessageRef = doc(messagesRef);
 
-  batch.set(newMessageRef, {
+  const messagePayload: any = {
     senderId,
     text,
     createdAt: serverTimestamp(),
-  });
+  };
+
+  if (mediaUrl && mediaType) {
+    messagePayload.mediaUrl = mediaUrl;
+    messagePayload.mediaType = mediaType;
+  }
+
+  batch.set(newMessageRef, messagePayload);
   
-  // Update the parent conversation document
+  let lastMessageText = text;
+  if (!text && mediaType) {
+    lastMessageText = `Sent an ${mediaType}`;
+  }
+
   batch.update(conversationRef, {
-      lastMessageText: text,
+      lastMessageText: lastMessageText,
       lastMessageTimestamp: serverTimestamp(),
       lastMessageSenderId: senderId,
   });

@@ -64,9 +64,9 @@ export default function MessagesPage() {
     setSelectedConversationId(id);
   };
 
-  const handleSendMessage = async (text: string) => {
+  const handleSendMessage = async (text: string, mediaUrl?: string, mediaType?: 'image' | 'video') => {
     if (!selectedConversationId || !user) return;
-    await sendMessageAction(selectedConversationId, user.uid, text);
+    await sendMessageAction(selectedConversationId, user.uid, text, mediaUrl, mediaType);
   };
 
   const selectedConversation = conversations.find(

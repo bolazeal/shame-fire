@@ -413,6 +413,14 @@ export const mockConversations: Conversation[] = [
           { id: 'msg3', senderId: 'user1', text: "I'm about to push an update for it.", createdAt: new Date(Date.now() - 7 * 60 * 1000).toISOString() },
           { id: 'msg4', senderId: 'user2', text: "Perfect, let me know when it's up.", createdAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() },
           { id: 'msg5', senderId: 'user1', text: "Sounds good, I'll review the PR now.", createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString() },
+          {
+            id: 'msg_img_1',
+            senderId: 'user2',
+            text: 'Check out this design mockup!',
+            mediaUrl: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=600&h=400&fit=crop',
+            mediaType: 'image',
+            createdAt: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
+          },
       ],
       'convo2': [
           { id: 'msg6', senderId: 'user3', text: "Can you check on that report for Speedy Shippers?", createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },

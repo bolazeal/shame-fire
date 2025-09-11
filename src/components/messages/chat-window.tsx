@@ -11,15 +11,20 @@ import {
   Loader2,
   Send,
   MessageCircle,
+  Image as ImageIcon,
+  Video as VideoIcon,
+  X,
 } from 'lucide-react';
 import { MessageBubble } from './message-bubble';
 import { Skeleton } from '../ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import Image from 'next/image';
 
 interface ChatWindowProps {
   conversation: Conversation | null;
   messages: Message[];
   isLoadingMessages: boolean;
-  onSendMessage: (text: string) => Promise<void>;
+  onSendMessage: (text: string, mediaUrl?: string, mediaType?: 'image' | 'video') => Promise<void>;
   onBack: () => void; // For mobile view
 }
 
@@ -31,8 +36,13 @@ export function ChatWindow({
   onBack,
 }: ChatWindowProps) {
   const { user: currentUser } = useAuth();
+  const { toast } = useToast();
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [mediaPreview, setMediaPreview] = useState<{ url: string; type: 'image' | 'video' } | null>(null);
+  const [mediaDataUrl, setMediaDataUrl] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const otherParticipant = conversation?.participants.find(
@@ -43,13 +53,41 @@ export function ChatWindow({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const clearMedia = () => {
+    setMediaPreview(null);
+    setMediaDataUrl(null);
+    if (imageInputRef.current) imageInputRef.current.value = '';
+    if (videoInputRef.current) videoInputRef.current.value = '';
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: 'File too large',
+          description: 'Please select a file smaller than 5MB.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setMediaPreview({ url: reader.result as string, type });
+        setMediaDataUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !conversation) return;
+    if ((!newMessage.trim() && !mediaDataUrl) || !conversation) return;
     
     setIsSending(true);
-    await onSendMessage(newMessage);
+    await onSendMessage(newMessage, mediaDataUrl || undefined, mediaPreview?.type);
     setNewMessage('');
+    clearMedia();
     setIsSending(false);
   };
   
@@ -109,8 +147,44 @@ export function ChatWindow({
           <div ref={messagesEndRef} />
         </div>
       </div>
-      <div className="flex-shrink-0 border-t border-border bg-background p-4">
+      <div className="flex-shrink-0 border-t border-border bg-background p-2">
+        {mediaPreview && (
+          <div className="relative mx-2 mb-2 w-32">
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                className="absolute -right-2 -top-2 z-10 h-6 w-6 rounded-full"
+                onClick={clearMedia}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              {mediaPreview.type === 'image' ? (
+                <Image
+                  src={mediaPreview.url}
+                  alt="Preview"
+                  width={128}
+                  height={128}
+                  className="h-32 w-32 rounded-lg object-cover"
+                />
+              ) : (
+                <video
+                  src={mediaPreview.url}
+                  controls
+                  className="h-32 w-32 rounded-lg"
+                />
+              )}
+          </div>
+        )}
         <form onSubmit={handleSendMessage} className="flex items-end gap-2">
+          <input type="file" ref={imageInputRef} onChange={(e) => handleFileSelect(e, 'image')} accept="image/*" className="hidden"/>
+          <input type="file" ref={videoInputRef} onChange={(e) => handleFileSelect(e, 'video')} accept="video/*" className="hidden"/>
+          <Button type="button" variant="ghost" size="icon" onClick={() => imageInputRef.current?.click()} disabled={isSending}>
+            <ImageIcon className="text-muted-foreground" />
+          </Button>
+          <Button type="button" variant="ghost" size="icon" onClick={() => videoInputRef.current?.click()} disabled={isSending}>
+            <VideoIcon className="text-muted-foreground" />
+          </Button>
           <TextareaAutosize
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
@@ -122,7 +196,7 @@ export function ChatWindow({
             maxRows={6}
             className="flex-1 resize-none self-center rounded-2xl border border-input bg-background px-4 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
-          <Button type="submit" size="icon" disabled={!newMessage.trim() || isSending} className="h-10 w-10 shrink-0 rounded-full">
+          <Button type="submit" size="icon" disabled={!newMessage.trim() && !mediaDataUrl || isSending} className="h-10 w-10 shrink-0 rounded-full">
             {isSending ? <Loader2 className="animate-spin" /> : <Send />}
           </Button>
         </form>

@@ -118,7 +118,7 @@ export function ChatWindow({
 
   if (!conversation) {
     return (
-      <div className="hidden h-full flex-col items-center justify-center bg-muted/30 p-4 text-center md:flex">
+      <div className="hidden h-full flex-col items-center justify-center bg-muted/30 p-4 text-center lg:flex">
         <MessageCircle className="h-16 w-16 text-muted-foreground" />
         <h2 className="mt-4 text-2xl font-bold font-headline">Your Messages</h2>
         <p className="text-muted-foreground">
@@ -131,11 +131,11 @@ export function ChatWindow({
   return (
     <TooltipProvider>
       <div className="flex h-full flex-col bg-muted/30">
-        <header className="flex items-center gap-4 border-b border-border bg-background p-4 shadow-sm">
+        <header className="flex h-14 flex-shrink-0 items-center gap-4 border-b border-border bg-background px-4 shadow-sm">
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="lg:hidden"
             onClick={onBack}
           >
             <ArrowLeft />
@@ -172,7 +172,7 @@ export function ChatWindow({
             <div ref={messagesEndRef} />
           </div>
         </div>
-        <div className="border-t border-border bg-background p-4">
+        <div className="flex-shrink-0 border-t border-border bg-background p-4">
           <form onSubmit={handleSendMessage} className="space-y-2">
             {mediaPreview && (
               <div className="relative w-fit">
@@ -202,7 +202,7 @@ export function ChatWindow({
                 )}
               </div>
             )}
-            <div className="flex items-start gap-2">
+            <div className="flex items-end gap-2">
               <input
                 type="file"
                 ref={imageInputRef}
@@ -223,11 +223,11 @@ export function ChatWindow({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-12 w-12 shrink-0 rounded-full"
+                    className="h-10 w-10 shrink-0 rounded-full"
                     onClick={() => imageInputRef.current?.click()}
                     disabled={isSending}
                   >
-                    <ImageIcon className="h-6 w-6" />
+                    <ImageIcon className="h-5 w-5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -240,11 +240,11 @@ export function ChatWindow({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-12 w-12 shrink-0 rounded-full"
+                    className="h-10 w-10 shrink-0 rounded-full"
                     onClick={() => videoInputRef.current?.click()}
                     disabled={isSending}
                   >
-                    <VideoIcon className="h-6 w-6" />
+                    <VideoIcon className="h-5 w-5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -260,13 +260,13 @@ export function ChatWindow({
                 disabled={isSending}
                 minRows={1}
                 maxRows={6}
-                className="flex-1 resize-none rounded-2xl border border-input bg-muted/50 p-3 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex-1 resize-none self-center rounded-2xl border border-input bg-muted/50 px-4 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
               <Button
                 type="submit"
                 size="icon"
                 disabled={(!newMessage.trim() && !mediaDataUrl) || isSending}
-                className="h-12 w-12 shrink-0 rounded-full"
+                className="h-10 w-10 shrink-0 rounded-full"
               >
                 {isSending ? <Loader2 className="animate-spin" /> : <Send />}
               </Button>

@@ -84,12 +84,15 @@ export default function MessagesPage() {
   );
 
   return (
-    <div className="h-screen overflow-hidden">
-      <main className="flex h-full">
+    <div className="flex h-full flex-col">
+       <header className="flex h-14 items-center border-b px-4 lg:hidden">
+        <h1 className="text-xl font-bold font-headline">Messages</h1>
+      </header>
+      <main className="flex flex-1 overflow-hidden">
         <div
           className={cn(
-            'h-full w-full flex-shrink-0 border-r md:w-80 lg:w-96',
-            selectedConversationId && 'hidden md:flex md:flex-col'
+            'h-full w-full flex-shrink-0 border-r lg:w-80 xl:w-96',
+            selectedConversationId && 'hidden lg:flex lg:flex-col'
           )}
         >
           <ConversationList
@@ -102,7 +105,7 @@ export default function MessagesPage() {
         <div
           className={cn(
             'h-full flex-1',
-            !selectedConversationId && 'hidden md:flex'
+            !selectedConversationId && 'hidden lg:flex'
           )}
         >
           <ChatWindow

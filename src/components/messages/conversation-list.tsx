@@ -37,11 +37,11 @@ export function ConversationList({
 
   return (
     <div className="flex h-full flex-col bg-background">
-      <header className="border-b p-4">
+      <header className="hidden h-14 flex-shrink-0 items-center border-b px-4 lg:flex">
         <h2 className="text-xl font-bold font-headline">Messages</h2>
         {/* Search input can go here later */}
       </header>
-      <ScrollArea className="h-[calc(100%-65px)]">
+      <ScrollArea className="flex-1">
         <div className="flex flex-col">
           {isLoading ? (
               <>

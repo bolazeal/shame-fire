@@ -61,7 +61,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     <NotificationProvider>
       <div className="container mx-auto flex min-h-screen">
         <LeftSidebar />
-        <main className="flex-1 border-x border-border pb-16 lg:pb-0">
+        <main className="flex-1 border-x border-border pb-16 lg:pb-0 h-screen flex flex-col">
           {children}
         </main>
         <RightSidebar />

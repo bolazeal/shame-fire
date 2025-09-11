@@ -75,7 +75,7 @@ export default function MessagesPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex h-14 items-center border-b px-4 lg:hidden">
+      <header className="flex h-14 shrink-0 items-center border-b px-4 lg:hidden">
         <h1 className="text-xl font-bold font-headline">Messages</h1>
       </header>
       <main className="flex flex-1 overflow-hidden">
@@ -94,8 +94,8 @@ export default function MessagesPage() {
         </div>
         <div
           className={cn(
-            'h-full flex-1',
-            !selectedConversationId && 'hidden lg:flex'
+            'h-full flex-1 flex-col',
+            !selectedConversationId ? 'hidden lg:flex' : 'flex'
           )}
         >
           <ChatWindow

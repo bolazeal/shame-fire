@@ -139,12 +139,15 @@ async function _createPostInternal(
 
   batch.set(postRef, newPost);
 
+  // Handle Mentions
   const mentionRegex = /@([a-zA-Z0-9_]+)/g;
-  const mentionedUsernames = [
-    ...new Set(Array.from(postData.text.matchAll(mentionRegex), (m) => m[1])),
-  ];
+  let match;
+  const mentionedUsernames = new Set<string>();
+  while ((match = mentionRegex.exec(postData.text)) !== null) {
+    mentionedUsernames.add(match[1]);
+  }
 
-  if (mentionedUsernames.length > 0) {
+  if (mentionedUsernames.size > 0) {
     for (const username of mentionedUsernames) {
       try {
         const usernameRef = doc(db, 'usernames', username.toLowerCase());
@@ -152,6 +155,7 @@ async function _createPostInternal(
 
         if (usernameSnap.exists()) {
           const recipientId = usernameSnap.data().userId;
+          // Ensure not to notify the author of their own mention
           if (recipientId && recipientId !== author.id) {
             await createNotification({
               type: 'mention',

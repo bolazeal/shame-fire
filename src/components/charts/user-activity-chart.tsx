@@ -48,3 +48,5 @@ export function UserActivityChart({ data }: UserActivityChartProps) {
     </div>
   );
 }
+
+    

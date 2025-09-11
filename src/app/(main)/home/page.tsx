@@ -1,11 +1,15 @@
+
 'use client';
 
 import { PostCard } from '@/components/post-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Post } from '@/lib/types';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getPosts } from '@/lib/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/hooks/use-auth';
+import { Loader2 } from 'lucide-react';
+import type { DocumentSnapshot } from 'firebase/firestore';
 
 function PostSkeleton() {
     return (
@@ -22,26 +26,78 @@ function PostSkeleton() {
 }
 
 export default function HomePage() {
+  const { user } = useAuth();
   const [filter, setFilter] = useState<'foryou' | 'posts' | 'reports' | 'endorsements'>('foryou');
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
-  const fetchPosts = useCallback(async () => {
+  const observer = useRef<IntersectionObserver>();
+  const lastPostElementRef = useCallback((node: HTMLDivElement) => {
+    if (loading || loadingMore) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        loadMorePosts();
+      }
+    });
+    if (node) observer.current.observe(node);
+  }, [loading, loadingMore, hasMore]);
+
+
+  const fetchInitialPosts = useCallback(async () => {
     setLoading(true);
+    setPosts([]);
+    setLastDoc(null);
+    setHasMore(true);
     try {
-      const fetchedPosts = await getPosts(filter);
+      const { posts: fetchedPosts, lastVisible } = await getPosts({
+        filter,
+        userId: filter === 'foryou' ? user?.uid : undefined,
+      });
       setPosts(fetchedPosts);
+      setLastDoc(lastVisible);
+      if (fetchedPosts.length < 10) {
+        setHasMore(false);
+      }
     } catch (error) {
       console.error("Failed to fetch posts:", error);
-      // Optionally, show a toast message to the user
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [filter, user?.uid]);
+
+  const loadMorePosts = useCallback(async () => {
+    if (loadingMore || !hasMore || !lastDoc) return;
+    setLoadingMore(true);
+    try {
+      const { posts: newPosts, lastVisible } = await getPosts({
+        filter,
+        userId: filter === 'foryou' ? user?.uid : undefined,
+        startAfter: lastDoc,
+      });
+      setPosts(prev => [...prev, ...newPosts]);
+      setLastDoc(lastVisible);
+      if (newPosts.length < 10) {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error("Failed to load more posts:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMore, lastDoc, filter, user?.uid]);
 
   useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
+    fetchInitialPosts();
+  }, [fetchInitialPosts]);
+  
+  const handleFilterChange = (newFilter: string) => {
+    setFilter(newFilter as any);
+  };
+
 
   return (
     <div>
@@ -49,7 +105,7 @@ export default function HomePage() {
         <h1 className="text-xl font-bold font-headline">Home</h1>
       </header>
 
-      <Tabs defaultValue="foryou" onValueChange={(val) => setFilter(val as any)} className="w-full">
+      <Tabs defaultValue="foryou" onValueChange={handleFilterChange} className="w-full">
         <TabsList className="grid h-auto w-full grid-cols-4 rounded-none border-b bg-transparent p-0">
           <TabsTrigger
             value="foryou"
@@ -85,14 +141,24 @@ export default function HomePage() {
                         <PostSkeleton />
                     </>
                 ) : posts.length > 0 ? (
-                    posts.map((post) => (
-                        <PostCard key={post.id} post={post} />
-                    ))
+                    posts.map((post, index) => {
+                      if (posts.length === index + 1) {
+                        return <div ref={lastPostElementRef} key={post.id}><PostCard post={post} /></div>
+                      } else {
+                        return <PostCard key={post.id} post={post} />
+                      }
+                    })
                 ) : (
                     <p className="p-4 text-center text-muted-foreground">
-                        No {filter} yet.
+                        {filter === 'foryou' ? 'Follow people to see their posts here.' : `No ${filter} yet.`}
                     </p>
                 )}
+                 {loadingMore && <div className="flex justify-center p-4"><Loader2 className="h-6 w-6 animate-spin" /></div>}
+                 {!loading && posts.length > 0 && !hasMore && (
+                    <p className="p-4 text-center text-sm text-muted-foreground">
+                        You've reached the end.
+                    </p>
+                 )}
             </section>
         </TabsContent>
       </Tabs>

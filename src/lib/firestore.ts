@@ -1,3 +1,4 @@
+
 import {
   collection,
   doc,
@@ -11,6 +12,7 @@ import {
   onSnapshot,
   type WhereFilterOp,
   DocumentSnapshot,
+  startAfter,
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './firebase';
 import type { Post, User, Comment, FlaggedContent, Dispute, Conversation, Video, Message } from './types';
@@ -173,34 +175,69 @@ export async function getFollowing(userId: string): Promise<User[]> {
 
 // POST-related functions (READ-ONLY)
 export const getPosts = async (
-  filter: 'foryou' | 'posts' | 'reports' | 'endorsements'
-): Promise<Post[]> => {
-    if (!isFirebaseConfigured) {
-        if (filter === 'foryou') {
-            return mockPosts;
-        }
-        if (filter === 'posts') {
-            return mockPosts.filter(p => p.type === 'post');
-        }
-        const type = filter.slice(0, -1);
-        return mockPosts.filter(p => p.type === type);
-    }
-  const postsRef = collection(db, 'posts');
-  let q;
-  if (filter === 'foryou' || filter === 'posts') {
-    q = query(postsRef, orderBy('createdAt', 'desc'), limit(20));
-  } else {
-    const type = filter.slice(0, -1);
-    q = query(
-      postsRef,
-      where('type', '==', type),
-      orderBy('createdAt', 'desc'),
-      limit(20)
-    );
+  options: {
+    filter: 'foryou' | 'posts' | 'reports' | 'endorsements';
+    userId?: string;
+    startAfter?: DocumentSnapshot;
+    pageSize?: number;
   }
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => fromFirestore<Post>(doc));
-};
+): Promise<{ posts: Post[]; lastVisible: DocumentSnapshot | null }> => {
+    const { filter, userId, startAfter: startAfterDoc, pageSize = 10 } = options;
+
+    if (!isFirebaseConfigured) {
+        let mockData = mockPosts;
+        if (filter === 'foryou' && userId) {
+            // Mock following logic
+            const followingIds = ['user2', 'user3'];
+            mockData = mockPosts.filter(p => followingIds.includes(p.authorId));
+        } else if (filter !== 'foryou' && filter !== 'posts') {
+            const type = filter.slice(0, -1);
+            mockData = mockPosts.filter(p => p.type === type);
+        }
+        return { posts: mockData.slice(0, pageSize), lastVisible: null };
+    }
+  
+    const postsRef = collection(db, 'posts');
+    let queryConstraints = [];
+  
+    // Base ordering
+    queryConstraints.push(orderBy('createdAt', 'desc'));
+  
+    // Filtering
+    if (filter === 'foryou' && userId) {
+        const following = await getFollowing(userId);
+        const followingIds = following.map(u => u.id);
+        
+        if (followingIds.length > 0) {
+            // Firestore 'in' queries are limited to 30 items in a disjunction.
+            // For larger lists, you'd need a more complex data model (e.g., a feed subcollection).
+            // For this app, we'll assume a user follows a reasonable number of people.
+            queryConstraints.push(where('authorId', 'in', followingIds.slice(0, 30)));
+        } else {
+            // If user follows no one, return an empty feed
+            return { posts: [], lastVisible: null };
+        }
+    } else if (filter !== 'foryou' && filter !== 'posts') {
+      const type = filter.slice(0, -1);
+      queryConstraints.push(where('type', '==', type));
+    }
+  
+    // Pagination
+    if (startAfterDoc) {
+      queryConstraints.push(startAfter(startAfterDoc));
+    }
+  
+    // Limit
+    queryConstraints.push(limit(pageSize));
+  
+    const q = query(postsRef, ...queryConstraints);
+    const snapshot = await getDocs(q);
+  
+    const posts = snapshot.docs.map((doc) => fromFirestore<Post>(doc));
+    const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
+  
+    return { posts, lastVisible };
+  };
 
 export const getUserPosts = async (
   userId: string,

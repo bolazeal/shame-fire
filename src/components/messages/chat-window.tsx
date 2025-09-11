@@ -2,8 +2,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import TextareaAutosize from 'react-textarea-autosize';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { UserAvatar } from '@/components/user-avatar';
 import { useAuth } from '@/hooks/use-auth';
 import type { Conversation, Message } from '@/lib/types';
@@ -48,6 +48,14 @@ export function ChatWindow({
     setNewMessage('');
     setIsSending(false);
   };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(e as any);
+    }
+  };
+
 
   if (!conversation) {
     return (
@@ -105,16 +113,19 @@ export function ChatWindow({
         </div>
       </div>
       <div className="border-t border-border bg-background p-4">
-        <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-          <Input
+        <form onSubmit={handleSendMessage} className="flex items-start gap-2">
+          <TextareaAutosize
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             autoComplete="off"
             disabled={isSending}
-            className="flex-1 rounded-full bg-muted/50 focus-visible:ring-1 focus-visible:ring-ring"
+            minRows={1}
+            maxRows={6}
+            className="flex-1 resize-none rounded-2xl border border-input bg-muted/50 p-3 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
-          <Button type="submit" size="icon" disabled={!newMessage.trim() || isSending} className="rounded-full">
+          <Button type="submit" size="icon" disabled={!newMessage.trim() || isSending} className="h-12 w-12 shrink-0 rounded-full">
             {isSending ? (
               <Loader2 className="animate-spin" />
             ) : (

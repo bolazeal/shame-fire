@@ -134,6 +134,7 @@ export type Post = {
     socialMedia?: string;
   };
   text: string;
+  keywords?: string[];
   mediaUrl?: string;
   mediaType?: 'image' | 'video';
   'data-ai-hint'?: string;

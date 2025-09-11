@@ -526,19 +526,22 @@ export const searchUsers = async (searchText: string): Promise<User[]> => {
 export const searchPosts = async (searchText: string): Promise<Post[]> => {
     if (!isFirebaseConfigured) {
         const lowerCaseQuery = searchText.toLowerCase();
-        return mockPosts.filter(p => p.category?.toLowerCase().includes(lowerCaseQuery));
+        return mockPosts.filter(p => p.text.toLowerCase().includes(lowerCaseQuery) || p.category?.toLowerCase().includes(lowerCaseQuery));
     }
-    const postsRef = collection(db, 'posts');
-    const categoryQuery = query(
-        postsRef,
-        where('category', '>=', searchText),
-        where('category', '<=', searchText + '\uf8ff'),
-        orderBy('category'),
-        orderBy('createdAt', 'desc'),
-        limit(10)
-    );
     
-    const snapshot = await getDocs(categoryQuery);
+    const postsRef = collection(db, 'posts');
+    const q = query(
+        postsRef,
+        where('keywords', 'array-contains', searchText.toLowerCase()),
+        orderBy('createdAt', 'desc'),
+        limit(20)
+    );
+    const snapshot = await getDocs(q);
+
+    // This search is basic. A real app would use a dedicated search service
+    // like Algolia or Elasticsearch for full-text search.
+    // For now, we are just showing results based on an exact keyword match.
+    // We could expand this to search categories or other fields if needed.
     return snapshot.docs.map(doc => fromFirestore<Post>(doc));
 };
 

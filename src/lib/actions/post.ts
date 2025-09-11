@@ -39,6 +39,16 @@ async function addFlaggedItemToQueue(
     });
 }
 
+function generateKeywords(text: string, category?: string): string[] {
+    const fromText = text.toLowerCase().match(/\b(\w+)\b/g) || [];
+    const keywords = new Set(fromText);
+
+    if(category) {
+        keywords.add(category.toLowerCase());
+    }
+    
+    return Array.from(keywords);
+}
 
 // Internal function that contains the core logic for creating a post.
 // Not exported, only used by the server actions in this file.
@@ -51,7 +61,7 @@ async function _createPostInternal(
   const batch = writeBatch(db);
   const postRef = doc(collection(db, 'posts'));
 
-  const newPost: Omit<Post, 'id' | 'createdAt'> & { createdAt: FieldValue } = {
+  const newPost: Omit<Post, 'id' | 'createdAt'> & { createdAt: FieldValue, keywords: string[] } = {
     type: postData.type,
     author: {
       id: author.id,
@@ -77,6 +87,7 @@ async function _createPostInternal(
     postingAs: postData.postingAs,
     entity: postData.entity,
     text: postData.text,
+    keywords: generateKeywords(postData.text, postData.category),
     mediaUrl: postData.mediaUrl,
     mediaType: postData.mediaType,
     category: postData.category,

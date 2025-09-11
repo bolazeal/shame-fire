@@ -13,6 +13,7 @@ import { getUsersToFollow, getTrendingTopics } from '@/lib/firestore';
 import { toggleFollowAction, trackSuggestionFollowAction, dismissSuggestionAction } from '@/lib/actions/interaction';
 import type { User } from '@/lib/types';
 import { Input } from '../ui/input';
+import { useRouter } from 'next/navigation';
 
 interface Trend {
     category: string;
@@ -25,11 +26,13 @@ interface UserToFollow extends User {
 
 export function RightSidebar() {
     const { user: authUser } = useAuth();
+    const router = useRouter();
     const [usersToFollow, setUsersToFollow] = useState<UserToFollow[]>([]);
     const [loadingUsers, setLoadingUsers] = useState(true);
 
     const [trends, setTrends] = useState<Trend[]>([]);
     const [loadingTrends, setLoadingTrends] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         async function fetchTrends() {
@@ -102,16 +105,27 @@ export function RightSidebar() {
         setUsersToFollow(prevUsers => prevUsers.filter(user => user.id !== userId));
     };
 
+    const handleSearchSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (searchQuery.trim()) {
+            router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+        }
+    }
+
 
     return (
         <aside className="sticky top-0 hidden h-screen w-80 flex-col gap-4 p-4 lg:flex">
-             <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                    placeholder="Search"
-                    className="w-full rounded-full bg-muted pl-10"
-                />
-            </div>
+             <form onSubmit={handleSearchSubmit}>
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                        placeholder="Search"
+                        className="w-full rounded-full bg-muted pl-10"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
+            </form>
             
             <Card>
                 <CardHeader>

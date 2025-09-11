@@ -9,6 +9,7 @@ import { ReactNode, useEffect } from 'react';
 import { MobileBottomNav } from '@/components/main-layout/mobile-bottom-nav';
 import { NotificationProvider } from '@/context/notification-context';
 import { isFirebaseConfigured } from '@/lib/firebase';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
@@ -61,8 +62,10 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     <NotificationProvider>
       <div className="container mx-auto flex min-h-screen">
         <LeftSidebar />
-        <main className="flex-1 border-x border-border pb-16 lg:pb-0 h-screen flex flex-col">
-          {children}
+        <main className="flex-1 border-x border-border pb-16 lg:pb-0">
+          <ScrollArea className="h-screen">
+            {children}
+          </ScrollArea>
         </main>
         <RightSidebar />
       </div>

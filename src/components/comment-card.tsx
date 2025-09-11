@@ -105,7 +105,7 @@ export function CommentCard({ comment, isReply = false, onDelete, postId, disput
               <ArrowBigDown className="h-4 w-4" />
               <span>{comment.downvotes}</span>
             </Button>
-            <Button variant="ghost" size="sm" className="flex items-center gap-1" asChild>
+            <Button variant="ghost" size="sm" asChild className="flex items-center gap-1">
                 <Link href={replyHref}>
                     <MessageSquare className="h-4 w-4" />
                     <span>Reply</span>

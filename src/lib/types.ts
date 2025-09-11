@@ -148,7 +148,7 @@ export type Post = {
   bookmarks: number;
   bookmarkedBy: string[]; // Array of user IDs who bookmarked
   upvotedBy: string[];
-  downvotedBy: [],
+  downvotedBy: string[];
   flaggedBy?: string[]; // Array of user IDs who flagged the post
   isEscalated?: boolean;
   sentiment?: {

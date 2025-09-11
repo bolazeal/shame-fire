@@ -756,7 +756,3 @@ export function PostCard({ post }: PostCardProps) {
     </article>
   );
 }
-
-    
-
-    

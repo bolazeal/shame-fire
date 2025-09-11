@@ -874,9 +874,12 @@ export default function AdminPage() {
                                 <div className="flex items-center gap-2">
                                   <UserAvatar
                                     user={dispute.verdict.moderator as any}
-                                    className="h-6 w-6"
+                                    className="h-8 w-8"
                                   />
-                                  <span>{dispute.verdict.moderator.name}</span>
+                                  <div>
+                                    <p className="font-bold">{dispute.verdict.moderator.name}</p>
+                                    <p className="text-xs text-muted-foreground">Moderator</p>
+                                  </div>
                                 </div>
                               ) : (
                                 'N/A'

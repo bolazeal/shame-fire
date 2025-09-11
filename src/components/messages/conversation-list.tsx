@@ -36,7 +36,7 @@ export function ConversationList({
   const { user: currentUser } = useAuth();
 
   return (
-    <div className="h-full border-r bg-background">
+    <div className="flex h-full flex-col bg-background">
       <header className="border-b p-4">
         <h2 className="text-xl font-bold font-headline">Messages</h2>
         {/* Search input can go here later */}

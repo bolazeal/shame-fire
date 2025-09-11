@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import type { Conversation, Message } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
 import { listenToConversations, listenToMessages } from '@/lib/firestore';
@@ -19,18 +19,14 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
-  >(initialConversationId);
+  >(null);
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
 
-  // For mobile view
-  const [showChat, setShowChat] = useState(!!initialConversationId);
-
+  // Set initial state based on query param for both mobile and desktop
   useEffect(() => {
-    // If an initial conversation ID is passed, select it.
     if (initialConversationId) {
       setSelectedConversationId(initialConversationId);
-      setShowChat(true);
     }
   }, [initialConversationId]);
 
@@ -66,7 +62,6 @@ export default function MessagesPage() {
 
   const handleSelectConversation = (id: string) => {
     setSelectedConversationId(id);
-    setShowChat(true); // Switch to chat view on mobile
   };
 
   const handleSendMessage = async (
@@ -90,9 +85,12 @@ export default function MessagesPage() {
 
   return (
     <div className="h-screen overflow-hidden">
-      <main className="grid h-full grid-cols-1 md:grid-cols-3 xl:grid-cols-4">
+      <main className="flex h-full">
         <div
-          className={cn('col-span-1 h-full', showChat && 'hidden md:block')}
+          className={cn(
+            'h-full w-full flex-shrink-0 border-r md:w-80 lg:w-96',
+            selectedConversationId && 'hidden md:flex md:flex-col'
+          )}
         >
           <ConversationList
             conversations={conversations}
@@ -103,8 +101,8 @@ export default function MessagesPage() {
         </div>
         <div
           className={cn(
-            'col-span-1 h-full md:col-span-2 xl:col-span-3',
-            !showChat && 'hidden md:block'
+            'h-full flex-1',
+            !selectedConversationId && 'hidden md:flex'
           )}
         >
           <ChatWindow
@@ -112,7 +110,7 @@ export default function MessagesPage() {
             messages={messages}
             isLoadingMessages={loadingMessages}
             onSendMessage={handleSendMessage}
-            onBack={() => setShowChat(false)}
+            onBack={() => setSelectedConversationId(null)}
           />
         </div>
       </main>

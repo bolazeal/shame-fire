@@ -87,6 +87,8 @@ export type Message = {
   senderId: string;
   text: string;
   createdAt: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video';
 };
 
 export type MedalInfo = {

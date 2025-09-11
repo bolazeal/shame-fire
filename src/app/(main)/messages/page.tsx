@@ -4,10 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Conversation, Message } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
-import {
-  getConversations,
-  getMessages,
-} from '@/lib/firestore';
+import { getConversations, getMessages } from '@/lib/firestore';
 import { ConversationList } from '@/components/messages/conversation-list';
 import { ChatWindow } from '@/components/messages/chat-window';
 import { cn } from '@/lib/utils';
@@ -29,12 +26,12 @@ export default function MessagesPage() {
 
   // For mobile view
   const [showChat, setShowChat] = useState(!!initialConversationId);
-  
+
   useEffect(() => {
     // If an initial conversation ID is passed, select it.
-    if(initialConversationId) {
-        setSelectedConversationId(initialConversationId);
-        setShowChat(true);
+    if (initialConversationId) {
+      setSelectedConversationId(initialConversationId);
+      setShowChat(true);
     }
   }, [initialConversationId]);
 
@@ -73,9 +70,19 @@ export default function MessagesPage() {
     setShowChat(true); // Switch to chat view on mobile
   };
 
-  const handleSendMessage = async (text: string) => {
+  const handleSendMessage = async (
+    text: string,
+    mediaUrl?: string,
+    mediaType?: 'image' | 'video'
+  ) => {
     if (!selectedConversationId || !user) return;
-    await sendMessageAction(selectedConversationId, user.uid, text);
+    await sendMessageAction(
+      selectedConversationId,
+      user.uid,
+      text,
+      mediaUrl,
+      mediaType
+    );
   };
 
   const selectedConversation = conversations.find(

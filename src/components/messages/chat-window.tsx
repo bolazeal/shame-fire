@@ -7,15 +7,34 @@ import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
 import { useAuth } from '@/hooks/use-auth';
 import type { Conversation, Message } from '@/lib/types';
-import { ArrowLeft, Loader2, Send, MessageCircle } from 'lucide-react';
+import {
+  ArrowLeft,
+  Loader2,
+  Send,
+  MessageCircle,
+  Image as ImageIcon,
+  Video as VideoIcon,
+  X,
+} from 'lucide-react';
 import { MessageBubble } from './message-bubble';
 import { Skeleton } from '../ui/skeleton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../ui/tooltip';
+import Image from 'next/image';
 
 interface ChatWindowProps {
   conversation: Conversation | null;
   messages: Message[];
   isLoadingMessages: boolean;
-  onSendMessage: (text: string) => Promise<void>;
+  onSendMessage: (
+    text: string,
+    mediaUrl?: string,
+    mediaType?: 'image' | 'video'
+  ) => Promise<void>;
   onBack: () => void; // For mobile view
 }
 
@@ -31,6 +50,14 @@ export function ChatWindow({
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const [mediaPreview, setMediaPreview] = useState<{
+    url: string;
+    type: 'image' | 'video';
+  } | null>(null);
+  const [mediaDataUrl, setMediaDataUrl] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
   const otherParticipant = conversation?.participants.find(
     (p) => p.id !== currentUser?.uid
   );
@@ -38,14 +65,48 @@ export function ChatWindow({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+  
+  // Reset state when conversation changes
+  useEffect(() => {
+    clearMedia();
+    setNewMessage('');
+  }, [conversation?.id]);
+
+
+  const clearMedia = () => {
+    setMediaPreview(null);
+    setMediaDataUrl(null);
+    if (imageInputRef.current) imageInputRef.current.value = '';
+    if (videoInputRef.current) videoInputRef.current.value = '';
+  };
+
+  const handleFileSelect = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    type: 'image' | 'video'
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setMediaPreview({ url: reader.result as string, type });
+        setMediaDataUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !conversation) return;
+    if ((!newMessage.trim() && !mediaDataUrl) || !conversation) return;
 
     setIsSending(true);
-    await onSendMessage(newMessage);
+    await onSendMessage(
+      newMessage,
+      mediaDataUrl || undefined,
+      mediaPreview?.type
+    );
     setNewMessage('');
+    clearMedia();
     setIsSending(false);
   };
 
@@ -55,7 +116,6 @@ export function ChatWindow({
       handleSendMessage(e as any);
     }
   };
-
 
   if (!conversation) {
     return (
@@ -70,70 +130,151 @@ export function ChatWindow({
   }
 
   return (
-    <div className="flex h-full flex-col bg-muted/30">
-      <header className="flex items-center gap-4 border-b border-border bg-background p-4 shadow-sm">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden"
-          onClick={onBack}
-        >
-          <ArrowLeft />
-        </Button>
-        {otherParticipant && (
-          <>
-            <UserAvatar user={otherParticipant} className="h-10 w-10" />
-            <div>
-              <p className="font-bold">{otherParticipant.name}</p>
-              <p className="text-sm text-muted-foreground">
-                @{otherParticipant.username}
-              </p>
-            </div>
-          </>
-        )}
-      </header>
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="flex flex-col gap-4">
-          {isLoadingMessages ? (
+    <TooltipProvider>
+      <div className="flex h-full flex-col bg-muted/30">
+        <header className="flex items-center gap-4 border-b border-border bg-background p-4 shadow-sm">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={onBack}
+          >
+            <ArrowLeft />
+          </Button>
+          {otherParticipant && (
             <>
+              <UserAvatar user={otherParticipant} className="h-10 w-10" />
+              <div>
+                <p className="font-bold">{otherParticipant.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  @{otherParticipant.username}
+                </p>
+              </div>
+            </>
+          )}
+        </header>
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex flex-col gap-4">
+            {isLoadingMessages ? (
+              <>
                 <Skeleton className="h-12 w-2/3 self-start rounded-lg" />
                 <Skeleton className="h-16 w-1/2 self-end rounded-lg" />
                 <Skeleton className="h-8 w-1/3 self-start rounded-lg" />
-            </>
-          ) : (
-            messages.map((message) => (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                isOwnMessage={message.senderId === currentUser?.uid}
+              </>
+            ) : (
+              messages.map((message) => (
+                <MessageBubble
+                  key={message.id}
+                  message={message}
+                  isOwnMessage={message.senderId === currentUser?.uid}
+                />
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+        <div className="border-t border-border bg-background p-4">
+          <form onSubmit={handleSendMessage} className="space-y-2">
+            {mediaPreview && (
+              <div className="relative w-fit">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute -right-2 -top-2 z-10 h-6 w-6 rounded-full"
+                  onClick={clearMedia}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+                {mediaPreview.type === 'image' ? (
+                  <Image
+                    src={mediaPreview.url}
+                    alt="Preview"
+                    width={200}
+                    height={200}
+                    className="max-h-40 w-auto rounded-lg object-cover"
+                  />
+                ) : (
+                  <video
+                    src={mediaPreview.url}
+                    controls
+                    className="max-h-40 w-auto rounded-lg"
+                  />
+                )}
+              </div>
+            )}
+            <div className="flex items-start gap-2">
+              <input
+                type="file"
+                ref={imageInputRef}
+                onChange={(e) => handleFileSelect(e, 'image')}
+                accept="image/*"
+                className="hidden"
               />
-            ))
-          )}
-          <div ref={messagesEndRef} />
+              <input
+                type="file"
+                ref={videoInputRef}
+                onChange={(e) => handleFileSelect(e, 'video')}
+                accept="video/*"
+                className="hidden"
+              />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-12 w-12 shrink-0 rounded-full"
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={isSending}
+                  >
+                    <ImageIcon className="h-6 w-6" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Add Image</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-12 w-12 shrink-0 rounded-full"
+                    onClick={() => videoInputRef.current?.click()}
+                    disabled={isSending}
+                  >
+                    <VideoIcon className="h-6 w-6" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Add Video</p>
+                </TooltipContent>
+              </Tooltip>
+              <TextareaAutosize
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Type a message..."
+                autoComplete="off"
+                disabled={isSending}
+                minRows={1}
+                maxRows={6}
+                className="flex-1 resize-none rounded-2xl border border-input bg-muted/50 p-3 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <Button
+                type="submit"
+                size="icon"
+                disabled={(!newMessage.trim() && !mediaDataUrl) || isSending}
+                className="h-12 w-12 shrink-0 rounded-full"
+              >
+                {isSending ? <Loader2 className="animate-spin" /> : <Send />}
+              </Button>
+            </div>
+          </form>
         </div>
       </div>
-      <div className="border-t border-border bg-background p-4">
-        <form onSubmit={handleSendMessage} className="flex items-start gap-2">
-          <TextareaAutosize
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
-            autoComplete="off"
-            disabled={isSending}
-            minRows={1}
-            maxRows={6}
-            className="flex-1 resize-none rounded-2xl border border-input bg-muted/50 p-3 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          />
-          <Button type="submit" size="icon" disabled={!newMessage.trim() || isSending} className="h-12 w-12 shrink-0 rounded-full">
-            {isSending ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <Send />
-            )}
-          </Button>
-        </form>
-      </div>
-    </div>
+    </TooltipProvider>
   );
 }

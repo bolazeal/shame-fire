@@ -3,6 +3,7 @@
 
 import { cn } from '@/lib/utils';
 import type { Message } from '@/lib/types';
+import Image from 'next/image';
 
 interface MessageBubbleProps {
   message: Message;
@@ -25,7 +26,29 @@ export function MessageBubble({ message, isOwnMessage }: MessageBubbleProps) {
             : 'rounded-bl-lg bg-background'
         )}
       >
-        <p className="text-base">{message.text}</p>
+        {message.mediaUrl && (
+          <div
+            className="relative mb-2 aspect-video w-full max-w-sm overflow-hidden rounded-lg border"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {message.mediaType === 'image' ? (
+              <Image
+                src={message.mediaUrl}
+                alt="Message media"
+                fill={true}
+                style={{ objectFit: 'cover' }}
+              />
+            ) : (
+              <video
+                src={message.mediaUrl}
+                controls
+                className="h-full w-full bg-black object-contain"
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
+          </div>
+        )}
+        {message.text && <p className="text-base">{message.text}</p>}
       </div>
     </div>
   );

@@ -57,7 +57,7 @@ export type User = {
   location?: string;
   website?: string;
   nominations: number;
-  moderatorNominationsCount: number;
+  moderatorNominationsCount?: number;
   publicVotes: number;
   followersCount: number;
   followingCount: number;

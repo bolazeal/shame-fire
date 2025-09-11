@@ -13,6 +13,7 @@ import {
   type WhereFilterOp,
   DocumentSnapshot,
   startAfter,
+  collectionGroup,
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './firebase';
 import type { Post, User, Comment, FlaggedContent, Dispute, Conversation, Video, Message } from './types';
@@ -37,6 +38,13 @@ export function fromFirestore<T>(doc: DocumentSnapshot): T {
   Object.keys(data).forEach((key) => {
     if (data[key] instanceof Timestamp) {
       data[key] = data[key].toDate().toISOString();
+    } else if (data[key] && typeof data[key] === 'object' && !Array.isArray(data[key])) {
+        // Recursively check for nested Timestamps
+        Object.keys(data[key]).forEach(subKey => {
+            if (data[key][subKey] instanceof Timestamp) {
+                data[key][subKey] = data[key][subKey].toDate().toISOString();
+            }
+        });
     }
   });
 
@@ -63,17 +71,22 @@ export const getUserByEntityName = async (entityName: string): Promise<User | nu
     return Object.values(mockUsers).find(u => u.name === entityName || u.username === entityName) || null;
   }
   const usersRef = collection(db, 'users');
-  const q = query(usersRef, where('name', '==', entityName), limit(1));
-  const snapshot = await getDocs(q);
-  if (snapshot.empty) {
-    const usernameQuery = query(usersRef, where('username', '==', entityName), limit(1));
-    const usernameSnapshot = await getDocs(usernameQuery);
-    if(usernameSnapshot.empty) {
-        return null;
-    }
+  
+  // First, try to match by exact username (which is unique)
+  const usernameQuery = query(usersRef, where('username', '==', entityName), limit(1));
+  const usernameSnapshot = await getDocs(usernameQuery);
+  if (!usernameSnapshot.empty) {
     return fromFirestore<User>(usernameSnapshot.docs[0]);
   }
-  return fromFirestore<User>(snapshot.docs[0]);
+  
+  // If no username match, try by name (less reliable)
+  const nameQuery = query(usersRef, where('name', '==', entityName), limit(1));
+  const nameSnapshot = await getDocs(nameQuery);
+  if(!nameSnapshot.empty) {
+    return fromFirestore<User>(nameSnapshot.docs[0]);
+  }
+
+  return null;
 };
 
 export const getUsersToFollow = async (
@@ -198,7 +211,7 @@ export const getPosts = async (
     }
   
     const postsRef = collection(db, 'posts');
-    let queryConstraints = [];
+    let queryConstraints: any[] = [];
   
     // Base ordering
     queryConstraints.push(orderBy('createdAt', 'desc'));
@@ -249,6 +262,9 @@ export const getUserPosts = async (
             return userPosts.filter(p => p.mediaUrl);
         }
         const type = filter.endsWith('s') ? filter.slice(0, -1) : filter;
+        if (type === 'post') {
+            return userPosts.filter(p => p.type === 'post' || !p.type); // Handle old mock data
+        }
         return userPosts.filter(p => p.type === type);
     }
   const postsRef = collection(db, 'posts');
@@ -258,9 +274,8 @@ export const getUserPosts = async (
     q = query(
       postsRef,
       where('authorId', '==', userId),
-      where('mediaUrl', '!=', undefined),
-      where('mediaUrl', '!=', ''),
-      orderBy('mediaUrl'),
+      where('mediaUrl', '!=', null),
+      orderBy('mediaUrl'), // Firestore requires an order by on the inequality field
       orderBy('createdAt', 'desc'),
       limit(20)
     );
@@ -346,31 +361,33 @@ export const getTrendingTopics = async (): Promise<{ category: string; count: nu
             .sort((a, b) => b.count - a.count)
             .slice(0, 5);
     }
-  const postsRef = collection(db, 'posts');
-  const q = query(
-      postsRef, 
-      where('category', '!=', null),
-      orderBy('category'),
-      orderBy('createdAt', 'desc'), 
-      limit(100)
-  );
+    
+    // In a real app, this would be done with a more scalable solution like a
+    // separate aggregation service or Cloud Functions, as this query is inefficient.
+    const postsRef = collection(db, 'posts');
+    // Get posts from the last 7 days to calculate trends
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const q = query(
+        postsRef,
+        where('createdAt', '>=', Timestamp.fromDate(sevenDaysAgo)),
+        limit(500) // Limit reads for performance
+    );
   
-  const snapshot = await getDocs(q);
-  if (snapshot.empty) return [];
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return [];
 
-  const posts = snapshot.docs.map(doc => fromFirestore<Post>(doc));
-  const categoryCounts = new Map<string, number>();
-  for (const post of posts) {
-      if (post.category) {
-          categoryCounts.set(post.category, (categoryCounts.get(post.category) || 0) + 1);
-      }
-  }
-  const sortedTrends = Array.from(categoryCounts.entries())
-      .map(([category, count]) => ({ category, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-
-  return sortedTrends;
+    const categoryCounts = new Map<string, number>();
+    for (const doc of snapshot.docs) {
+        const post = fromFirestore<Post>(doc);
+        if (post.category) {
+            categoryCounts.set(post.category, (categoryCounts.get(post.category) || 0) + 1);
+        }
+    }
+    
+    return Array.from(categoryCounts.entries())
+        .map(([category, count]) => ({ category, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
 };
 
 
@@ -386,12 +403,13 @@ export const getCollectionCount = async (
     if (collectionName === 'posts') {
         if (field === 'type' && value === 'report') return mockPosts.filter(p => p.type === 'report').length;
         if (field === 'type' && value === 'endorsement') return mockPosts.filter(p => p.type === 'endorsement').length;
+        if (field === 'type' && value === 'post') return mockPosts.filter(p => p.type === 'post').length;
         return mockPosts.length;
     }
     return 0;
   }
   let q = query(collection(db, collectionName));
-  if (field && op && value) {
+  if (field && op && value !== undefined) {
     q = query(q, where(field, op, value));
   }
   const snapshot = await getDocs(q);
@@ -491,36 +509,18 @@ export const searchUsers = async (searchText: string): Promise<User[]> => {
     }
     const usersRef = collection(db, 'users');
     
-    const usernameQuery = query(
+    // Firestore does not support case-insensitive search natively.
+    // A common workaround is to store a lowercase version of the field.
+    // For this app, we'll perform a basic prefix search.
+    const q = query(
         usersRef,
         where('username', '>=', searchText),
         where('username', '<=', searchText + '\uf8ff'),
         limit(5)
     );
-    
-    const nameQuery = query(
-        usersRef,
-        where('name', '>=', searchText),
-        where('name', '<=', searchText + '\uf8ff'),
-        limit(5)
-    );
 
-    const [usernameSnapshot, nameSnapshot] = await Promise.all([
-        getDocs(usernameQuery),
-        getDocs(nameQuery),
-    ]);
-
-    const usersMap = new Map<string, User>();
-    usernameSnapshot.docs.forEach(doc => {
-        const user = fromFirestore<User>(doc);
-        usersMap.set(user.id, user);
-    });
-    nameSnapshot.docs.forEach(doc => {
-        const user = fromFirestore<User>(doc);
-        usersMap.set(user.id, user);
-    });
-    
-    return Array.from(usersMap.values());
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => fromFirestore<User>(doc));
 };
 
 export const searchPosts = async (searchText: string): Promise<Post[]> => {
@@ -577,6 +577,9 @@ export const listenToConversations = (
       fromFirestore<Conversation>(doc)
     );
     callback(conversations);
+  }, (error) => {
+    console.error('Failed to listen for conversations:', error);
+    callback([]);
   });
 
   return unsubscribe;
@@ -596,6 +599,9 @@ export const listenToMessages = (
   const unsubscribe = onSnapshot(q, (snapshot) => {
     const messages = snapshot.docs.map((doc) => fromFirestore<Message>(doc));
     callback(messages);
+  }, (error) => {
+    console.error(`Failed to listen to messages for conversation ${conversationId}:`, error);
+    callback([]);
   });
 
   return unsubscribe;

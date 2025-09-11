@@ -1,4 +1,3 @@
-
 'use server';
 
 import {
@@ -28,7 +27,8 @@ export async function findOrCreateConversationAction(
   // Firestore requires a composite index for this query: (participantIds, lastMessageTimestamp DESC)
   const q = query(
     conversationsRef,
-    where('participantIds', '==', [currentUser.id, targetUser.id].sort())
+    where('participantIds', '==', [currentUser.id, targetUser.id].sort()),
+    limit(1)
   );
 
   const querySnapshot = await getDocs(q);

@@ -90,6 +90,14 @@ export default function PostPage() {
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
     const file = event.target.files?.[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: 'File too large',
+          description: 'Please select a file smaller than 5MB.',
+          variant: 'destructive',
+        });
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setMediaPreview({ url: reader.result as string, type });

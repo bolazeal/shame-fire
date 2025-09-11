@@ -264,7 +264,7 @@ export default function ProfilePage() {
           }
           alt="Profile banner"
           fill={true}
-          objectFit="cover"
+          style={{objectFit: "cover"}}
           data-ai-hint="abstract background"
         />
       </div>

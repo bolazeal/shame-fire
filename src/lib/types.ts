@@ -88,8 +88,6 @@ export type Message = {
   senderId: string;
   text: string;
   createdAt: string;
-  mediaUrl?: string;
-  mediaType?: 'image' | 'video';
 };
 
 export type MedalInfo = {
@@ -250,9 +248,8 @@ export type Video = {
   uploadedAt: string;
   createdAt: string; // ISO string from Firestore timestamp for sorting
 };
-
 export interface PlatformSettings {
-  enableTrustScoreAi: boolean;
-  moderationTrustScoreThreshold: number;
-  defaultStartingTrustScore: number;
+    enableTrustScoreAi: boolean;
+    moderationTrustScoreThreshold: number;
+    defaultStartingTrustScore: number;
 }

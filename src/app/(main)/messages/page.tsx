@@ -64,19 +64,9 @@ export default function MessagesPage() {
     setSelectedConversationId(id);
   };
 
-  const handleSendMessage = async (
-    text: string,
-    mediaUrl?: string,
-    mediaType?: 'image' | 'video'
-  ) => {
+  const handleSendMessage = async (text: string) => {
     if (!selectedConversationId || !user) return;
-    await sendMessageAction(
-      selectedConversationId,
-      user.uid,
-      text,
-      mediaUrl,
-      mediaType
-    );
+    await sendMessageAction(selectedConversationId, user.uid, text);
   };
 
   const selectedConversation = conversations.find(
@@ -85,7 +75,7 @@ export default function MessagesPage() {
 
   return (
     <div className="flex h-full flex-col">
-       <header className="flex h-14 items-center border-b px-4 lg:hidden">
+      <header className="flex h-14 items-center border-b px-4 lg:hidden">
         <h1 className="text-xl font-bold font-headline">Messages</h1>
       </header>
       <main className="flex flex-1 overflow-hidden">

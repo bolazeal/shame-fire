@@ -56,7 +56,6 @@ export type User = {
   location?: string;
   website?: string;
   nominations: number;
-  medalNominations?: { [key: string]: boolean };
   moderatorNominationsCount?: number;
   publicVotes: number;
   followersCount: number;
@@ -280,5 +279,3 @@ export type PlatformSettings = {
   featureHallOfHonour: boolean;
   featureDirectMessages: boolean;
 };
-
-    

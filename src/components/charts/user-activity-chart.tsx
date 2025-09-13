@@ -24,7 +24,7 @@ interface UserActivityChartProps {
 
 export function UserActivityChart({ data }: UserActivityChartProps) {
   return (
-    <div className="h-64 w-full">
+    <div className="h-64 w-full lg:h-80">
       <ChartContainer config={chartConfig}>
         <BarChart accessibilityLayer data={data}>
           <CartesianGrid vertical={false} />
@@ -47,5 +47,3 @@ export function UserActivityChart({ data }: UserActivityChartProps) {
     </div>
   );
 }
-
-    

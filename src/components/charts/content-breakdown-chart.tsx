@@ -40,7 +40,7 @@ export function ContentBreakdownChart({ data }: ContentBreakdownChartProps) {
   }));
 
   return (
-    <div className="h-64 w-full">
+    <div className="h-64 w-full lg:h-80">
       <ChartContainer
         config={chartConfig}
         className="mx-auto aspect-square h-full"
@@ -115,5 +115,3 @@ export function ContentBreakdownChart({ data }: ContentBreakdownChartProps) {
     </div>
   );
 }
-
-    

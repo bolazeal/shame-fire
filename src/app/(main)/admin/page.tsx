@@ -75,7 +75,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { UserAvatar } from '@/components/user-avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -451,7 +450,7 @@ export default function AdminPage() {
                 </CardContent>
               </Card>
             </section>
-            <section className="grid grid-cols-1 gap-4 lg:grid-cols-1">
+            <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <Card>
                 <CardHeader>
                   <CardTitle>Recent User Activity</CardTitle>
@@ -486,7 +485,7 @@ export default function AdminPage() {
                   Content Review Queue ({flaggedContent.length})
                 </CardTitle>
                 <CardDescription>
-                  Review content flagged by AI for policy violations. Approve to
+                  Review content flagged by AI for policy violations or by users. Approve to
                   post, or remove.
                 </CardDescription>
               </CardHeader>
@@ -932,5 +931,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

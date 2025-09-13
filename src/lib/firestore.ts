@@ -56,12 +56,38 @@ export const getUserProfile = async (
   userId: string
 ): Promise<User | null> => {
   if (!isFirebaseConfigured) {
-    return Object.values(mockUsers).find(u => u.id === userId) || null;
+    const user = Object.values(mockUsers).find(u => u.id === userId || u.username === userId) || null;
+    return user;
   }
-  const userRef = doc(db, 'users', userId);
-  const userSnap = await getDoc(userRef);
+  
+  // In a real app, you might have separate lookups for ID vs username.
+  // For this app, we'll try both.
+  let userSnap = await getDoc(doc(db, 'users', userId));
+  
   if (userSnap.exists()) {
     return fromFirestore<User>(userSnap);
+  }
+
+  // If not found by ID, try by username
+  const usersRef = collection(db, 'users');
+  const q = query(usersRef, where('username', '==', userId), limit(1));
+  const snapshot = await getDocs(q);
+  if (!snapshot.empty) {
+    return fromFirestore<User>(snapshot.docs[0]);
+  }
+
+  return null;
+};
+
+export const getUserByUsername = async (username: string): Promise<User | null> => {
+  if (!isFirebaseConfigured) {
+    return Object.values(mockUsers).find(u => u.username === username) || null;
+  }
+  const usernamesRef = doc(db, 'usernames', username.toLowerCase());
+  const usernameSnap = await getDoc(usernamesRef);
+  if (usernameSnap.exists()) {
+    const { userId } = usernameSnap.data();
+    return getUserProfile(userId);
   }
   return null;
 };
@@ -70,16 +96,13 @@ export const getUserByEntityName = async (entityName: string): Promise<User | nu
   if (!isFirebaseConfigured) {
     return Object.values(mockUsers).find(u => u.name === entityName || u.username === entityName) || null;
   }
-  const usersRef = collection(db, 'users');
   
-  // First, try to match by exact username (which is unique)
-  const usernameQuery = query(usersRef, where('username', '==', entityName), limit(1));
-  const usernameSnapshot = await getDocs(usernameQuery);
-  if (!usernameSnapshot.empty) {
-    return fromFirestore<User>(usernameSnapshot.docs[0]);
+  const userByUsername = await getUserByUsername(entityName);
+  if (userByUsername) {
+    return userByUsername;
   }
   
-  // If no username match, try by name (less reliable)
+  const usersRef = collection(db, 'users');
   const nameQuery = query(usersRef, where('name', '==', entityName), limit(1));
   const nameSnapshot = await getDocs(nameQuery);
   if(!nameSnapshot.empty) {

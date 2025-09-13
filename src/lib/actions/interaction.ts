@@ -232,22 +232,45 @@ export async function addCommentAction(
     downvotes: 0,
   };
 
-  await addDoc(commentRef, newComment);
+  const commentDocRef = await addDoc(commentRef, newComment);
   await updateDoc(postRef, {
     commentsCount: increment(1),
   });
 
-  if (author.id !== postAuthorId) {
-    const post = await getPost(postId);
-    if (post) {
-      await createNotification({
-        type: 'comment',
-        recipientId: postAuthorId,
-        sender: author,
-        postId,
-        postText: post.text,
-      });
+  // Handle Mentions in comment
+  const mentionRegex = /@(\w+)/g;
+  const mentions = commentData.text.match(mentionRegex);
+  const mentionedUserIds = new Set<string>();
+
+  if (mentions) {
+    const { getUserByUsername } = await import('@/lib/firestore');
+    for (const mention of mentions) {
+      const username = mention.substring(1);
+      const mentionedUser = await getUserByUsername(username);
+      if (mentionedUser && mentionedUser.id !== author.id) {
+        mentionedUserIds.add(mentionedUser.id);
+      }
     }
+  }
+
+  // Add post author to notification list (if not mentioned)
+  if (author.id !== postAuthorId) {
+      mentionedUserIds.add(postAuthorId);
+  }
+  
+  // Send notifications
+  const post = await getPost(postId);
+  if (post) {
+      for (const recipientId of mentionedUserIds) {
+          const notificationType = recipientId === postAuthorId ? 'comment' : 'mention';
+          await createNotification({
+              type: notificationType,
+              recipientId,
+              sender: author,
+              postId,
+              postText: post.text,
+          });
+      }
   }
 }
 

@@ -71,6 +71,26 @@ interface PostCardProps {
   post: Post;
 }
 
+const renderTextWithMentions = (text: string) => {
+    const parts = text.split(/(@\w+)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith('@')) {
+        const username = part.substring(1);
+        return (
+          <Link
+            key={index}
+            href={`/profile/${username}`} // Note: This assumes username is unique and can be used as an ID. In a real app, you'd use a user ID.
+            className="text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </Link>
+        );
+      }
+      return part;
+    });
+  };
+
 export function PostCard({ post }: PostCardProps) {
   const router = useRouter();
   const { user: authUser, fullProfile } = useAuth();
@@ -368,7 +388,7 @@ export function PostCard({ post }: PostCardProps) {
   const canEscalate =
     post.type === 'report' &&
     fullProfile &&
-    (post.entity === fullProfile.name || post.entity === fullProfile.username) &&
+    (post.entity === fullProfile.name || (fullProfile.username && post.entity === fullProfile.username)) &&
     !post.isEscalated;
 
   const postDate = post.createdAt ? new Date(post.createdAt) : new Date();
@@ -396,7 +416,7 @@ export function PostCard({ post }: PostCardProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm">
               <Link
-                href={`/profile/${post.author.id}`}
+                href={`/profile/${post.author.username}`}
                 onClick={(e) => e.stopPropagation()}
                 className="font-bold hover:underline"
               >
@@ -576,7 +596,7 @@ export function PostCard({ post }: PostCardProps) {
             </div>
           )}
 
-          <p className="mt-1 whitespace-pre-wrap text-base">{post.text}</p>
+          <p className="mt-1 whitespace-pre-wrap text-base">{renderTextWithMentions(post.text)}</p>
 
           {post.summary && post.type !== 'post' && (
             <p className="mt-2 rounded-lg bg-muted/50 p-2 text-sm italic text-muted-foreground">

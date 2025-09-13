@@ -106,7 +106,7 @@ export default function ProfilePage() {
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
 
   const userId = params.id;
-  const isCurrentUserProfile = authUser?.uid === userId;
+  const isCurrentUserProfile = authUser?.uid === profileUser?.id;
 
   const fetchProfile = useCallback(async () => {
     if (!userId) return;
@@ -114,12 +114,12 @@ export default function ProfilePage() {
     try {
       const userProfile = await getUserProfile(userId as string);
       setProfileUser(userProfile);
-      if (authUser && authUser.uid !== userId) {
+      if (authUser && userProfile && authUser.uid !== userProfile.id) {
         const [isUserFollowing, userHasNominated, userHasNominatedForMod] =
           await Promise.all([
-            isFollowing(authUser.uid, userId as string),
-            hasUserNominated(authUser.uid, userId as string),
-            hasUserNominatedForModerator(authUser.uid, userId as string),
+            isFollowing(authUser.uid, userProfile.id as string),
+            hasUserNominated(authUser.uid, userProfile.id as string),
+            hasUserNominatedForModerator(authUser.uid, userProfile.id as string),
           ]);
         setFollowing(isUserFollowing);
         setHasNominated(userHasNominated);
@@ -133,17 +133,23 @@ export default function ProfilePage() {
   }, [userId, authUser]);
 
   const fetchPosts = useCallback(async () => {
-    if (!userId) return;
+    if (!profileUser?.id) return;
     setLoadingPosts(true);
-    const userPosts = await getUserPosts(userId as string, activeTab);
+    const userPosts = await getUserPosts(profileUser.id as string, activeTab);
     setPosts(userPosts);
     setLoadingPosts(false);
-  }, [userId, activeTab]);
+  }, [profileUser?.id, activeTab]);
 
   useEffect(() => {
     fetchProfile();
-    fetchPosts();
-  }, [fetchProfile, fetchPosts]);
+  }, [fetchProfile]);
+
+  useEffect(() => {
+    if (profileUser) {
+        fetchPosts();
+    }
+  }, [profileUser, fetchPosts]);
+
 
   const handleProfileUpdate = (updatedUser: Partial<User>) => {
     setProfileUser((prev) => (prev ? { ...prev, ...updatedUser } : null));

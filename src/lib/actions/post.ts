@@ -13,6 +13,7 @@ import { db } from '@/lib/firebase';
 import {
   getUserByEntityName,
   getUserProfile,
+  getUserByUsername,
 } from '../firestore';
 import { analyzeSentiment } from '@/ai/flows/analyze-sentiment';
 import { detectHarmfulContent } from '@/ai/flows/detect-harmful-content';
@@ -151,6 +152,28 @@ async function _createPostInternal(
   batch.set(postRef, newPost);
 
   await batch.commit();
+
+  // Handle mentions after post is created
+  const mentionRegex = /@(\w+)/g;
+  const mentions = postData.text.match(mentionRegex);
+  if (mentions) {
+    // Use a Set to avoid duplicate notifications for the same user
+    const mentionedUsernames = new Set(mentions.map(m => m.substring(1)));
+
+    for (const username of mentionedUsernames) {
+      const mentionedUser = await getUserByUsername(username);
+      if (mentionedUser && mentionedUser.id !== author.id) {
+        await createNotification({
+          type: 'mention',
+          recipientId: mentionedUser.id,
+          sender: author,
+          postId: postRef.id,
+          postText: postData.text,
+        });
+      }
+    }
+  }
+
 
   return postRef.id;
 }

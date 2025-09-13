@@ -24,34 +24,36 @@ const notificationIcons = {
 
 const getNotificationTextAndLink = (notification: Notification) => {
     const sender = <span className="font-bold">{notification.sender.name}</span>;
+    const postText = notification.postText ? <span className="italic">"{notification.postText}"</span> : 'your post';
+
     switch (notification.type) {
       case 'follow':
         return {
           text: <>{sender} followed you.</>,
-          href: `/profile/${notification.sender.id}`,
+          href: `/profile/${notification.sender.username}`,
           Icon: notificationIcons.follow,
         };
       case 'upvote':
         return {
-          text: <>{sender} liked your post: <span className="italic">"{notification.postText}"</span></>,
+          text: <>{sender} liked {postText}</>,
           href: `/post/${notification.postId}`,
           Icon: notificationIcons.upvote,
         };
       case 'repost':
         return {
-          text: <>{sender} reposted your post: <span className="italic">"{notification.postText}"</span></>,
+          text: <>{sender} reposted {postText}</>,
           href: `/post/${notification.postId}`,
           Icon: notificationIcons.repost,
         };
       case 'comment':
         return {
-          text: <>{sender} commented on your post: <span className="italic">"{notification.postText}"</span></>,
+          text: <>{sender} commented on {postText}</>,
           href: `/post/${notification.postId}`,
           Icon: notificationIcons.comment,
         };
       case 'mention':
         return {
-            text: <>{sender} mentioned you in a post: <span className="italic">"{notification.postText}"</span></>,
+            text: <>{sender} mentioned you in a post: {postText}</>,
             href: `/post/${notification.postId}`,
             Icon: notificationIcons.mention,
         };

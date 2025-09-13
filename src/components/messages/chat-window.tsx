@@ -197,7 +197,7 @@ export function ChatWindow({
             maxRows={6}
             className="flex-1 resize-none self-center rounded-2xl border border-input bg-background px-4 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
-          <Button type="submit" size="icon" disabled={!newMessage.trim() && !mediaDataUrl || isSending} className="h-10 w-10 shrink-0 rounded-full">
+          <Button type="submit" size="icon" disabled={(!newMessage.trim() && !mediaDataUrl) || isSending} className="h-10 w-10 shrink-0 rounded-full">
             {isSending ? <Loader2 className="animate-spin" /> : <Send />}
           </Button>
         </form>

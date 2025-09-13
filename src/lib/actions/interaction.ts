@@ -17,7 +17,7 @@ import {
   setDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { getPost, getUserProfile } from '@/lib/firestore';
+import { getPost, getUserProfile, getUserByUsername } from '@/lib/firestore';
 import type { Post, Comment, Poll, User } from '@/lib/types';
 import type { FieldValue } from 'firebase/firestore';
 import { createNotification } from './notification';
@@ -243,7 +243,6 @@ export async function addCommentAction(
   const mentionedUserIds = new Set<string>();
 
   if (mentions) {
-    const { getUserByUsername } = await import('@/lib/firestore');
     for (const mention of mentions) {
       const username = mention.substring(1);
       const mentionedUser = await getUserByUsername(username);

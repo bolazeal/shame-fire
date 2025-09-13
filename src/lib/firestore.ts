@@ -32,7 +32,7 @@ import { getUserSuggestions } from './suggestions';
 // Helper to convert Firestore doc to a serializable object
 export function fromFirestore<T>(doc: DocumentSnapshot): T {
   const data = doc.data();
-  if (!data) return data;
+  if (!data) return data as T;
 
   // Convert all Timestamps to ISO strings
   Object.keys(data).forEach((key) => {
@@ -588,6 +588,7 @@ export const listenToConversations = (
     callback(mockConversations.filter(c => c.participantIds.includes(userId)));
     return () => {};
   }
+  if (!db) return () => {};
   const conversationsRef = collection(db, 'conversations');
   const q = query(
     conversationsRef,
@@ -616,6 +617,7 @@ export const listenToMessages = (
     callback(mockMessages[conversationId] || []);
     return () => {};
   }
+  if (!db) return () => {};
   const messagesRef = collection(db, `conversations/${conversationId}/messages`);
   const q = query(messagesRef, orderBy('createdAt', 'asc'));
 

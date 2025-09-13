@@ -508,49 +508,25 @@ export function PostCard({ post: initialPost }: PostCardProps) {
                   align="end"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <DropdownMenuItem
-                    onClick={(e) => e.stopPropagation()}
-                    asChild
-                  >
+                  {post.entity && (
                     <CreatePostDialog
-                      dialogTitle="Endorse this entity"
-                      initialValues={{
-                        type: 'endorsement',
-                        entity: post.entity,
-                      }}
-                      trigger={
-                        <div
-                          className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-                          onSelect={(e) => e.preventDefault()}
-                        >
-                          <Award className="mr-2 h-4 w-4" />
-                          <span>Endorse {post.entity}</span>
-                        </div>
-                      }
-                    />
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={(e) => e.stopPropagation()}
-                    asChild
-                  >
-                     <CreatePostDialog
-                      dialogTitle="Report this entity"
-                      initialValues={{
-                        type: 'report',
-                        entity: post.entity,
-                      }}
-                      trigger={
-                        <div
-                          className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-                          onSelect={(e) => e.preventDefault()}
-                        >
-                          <Flag className="mr-2 h-4 w-4" />
-                          <span>Report {post.entity}</span>
-                        </div>
-                      }
-                    />
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                        dialogTitle={`Endorse ${post.entity}`}
+                        initialValues={{
+                            type: 'endorsement',
+                            entity: post.entity,
+                        }}
+                        trigger={
+                            <div
+                            className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                            onSelect={(e) => e.preventDefault()}
+                            >
+                            <Award className="mr-2 h-4 w-4" />
+                            <span>Endorse {post.entity}</span>
+                            </div>
+                        }
+                        />
+                  )}
+                  {post.entity && <DropdownMenuSeparator />}
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <DropdownMenuItem
@@ -563,7 +539,7 @@ export function PostCard({ post: initialPost }: PostCardProps) {
                         ) : (
                           <Flag className="mr-2 h-4 w-4" />
                         )}
-                        <span>{hasFlagged ? 'Flagged' : 'Flag Post'}</span>
+                        <span>{hasFlagged ? 'Post Flagged' : 'Flag Post'}</span>
                       </DropdownMenuItem>
                     </AlertDialogTrigger>
                     <AlertDialogContent onClick={(e) => e.stopPropagation()}>

@@ -246,8 +246,10 @@ export async function addCommentAction(
     batch.update(parentCommentRef, { replyCount: increment(1) });
   }
 
+  await batch.commit();
 
-  // Handle Mentions in comment
+
+  // Handle Mentions in comment after the batch has committed
   const mentionRegex = /@(\w+)/g;
   const mentions = commentData.text.match(mentionRegex);
   const mentionedUserIds = new Set<string>();
@@ -255,9 +257,11 @@ export async function addCommentAction(
   if (mentions) {
     for (const mention of mentions) {
       const username = mention.substring(1);
-      const mentionedUser = await getUserByUsername(username);
-      if (mentionedUser && mentionedUser.id !== author.id) {
-        mentionedUserIds.add(mentionedUser.id);
+      if (username !== author.username) {
+        const mentionedUser = await getUserByUsername(username);
+        if (mentionedUser) {
+          mentionedUserIds.add(mentionedUser.id);
+        }
       }
     }
   }
@@ -283,8 +287,6 @@ export async function addCommentAction(
           });
       }
   }
-
-  await batch.commit();
 }
 
 export async function deleteCommentAction(

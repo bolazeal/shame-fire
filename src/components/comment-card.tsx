@@ -24,6 +24,26 @@ interface CommentCardProps {
   postAuthorId: string;
 }
 
+const renderTextWithMentions = (text: string) => {
+    const parts = text.split(/(@\w+)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith('@')) {
+        const username = part.substring(1);
+        return (
+          <Link
+            key={index}
+            href={`/profile/${username}`}
+            className="text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </Link>
+        );
+      }
+      return part;
+    });
+};
+
 export function CommentCard({ comment, onDelete, onReplySuccess, postId, postAuthorId }: CommentCardProps) {
   const commentDate = comment.createdAt ? new Date(comment.createdAt) : new Date();
   const { user: authUser } = useAuth();
@@ -69,7 +89,7 @@ export function CommentCard({ comment, onDelete, onReplySuccess, postId, postAut
             <span className="text-muted-foreground">·</span>
             <span className="text-muted-foreground" suppressHydrationWarning>{formatDistanceToNow(commentDate, { addSuffix: true })}</span>
           </div>
-          {comment.text && <p className="mt-2 text-base">{comment.text}</p>}
+          {comment.text && <p className="mt-2 text-base">{renderTextWithMentions(comment.text)}</p>}
           {comment.mediaUrl && (
             <div
               className="relative mt-2 aspect-video w-full max-w-sm overflow-hidden rounded-lg border"

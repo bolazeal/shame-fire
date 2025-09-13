@@ -168,7 +168,7 @@ export function RightSidebar() {
                 <CardContent className="flex flex-col px-6">
                 {loadingUsers ? (
                     <div className="py-4 text-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-                ) : (
+                ) : usersToFollow.length > 0 ? (
                     usersToFollow.map((user, index) => (
                     <React.Fragment key={user.id}>
                         <div className="group relative flex items-center justify-between py-4">
@@ -200,6 +200,8 @@ export function RightSidebar() {
                         {index < usersToFollow.length - 1 && <Separator className="bg-border" />}
                     </React.Fragment>
                     ))
+                ) : (
+                    <p className="py-4 text-center text-muted-foreground">No new suggestions right now.</p>
                 )}
                 </CardContent>
             </Card>

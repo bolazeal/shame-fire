@@ -45,7 +45,7 @@ async function getMutualConnectionSuggestions(userId: string, followingIds: Set<
     if (sortedSuggestions.length === 0) return [];
 
     const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('id', 'in', sortedSuggestions));
+    const q = query(usersRef, where('__name__', 'in', sortedSuggestions));
     const snapshot = await getDocs(q);
 
     return snapshot.docs.map(doc => ({ ...fromFirestore<User>(doc), suggestionSource: 'mutuals' }));
@@ -91,7 +91,7 @@ async function getInterestBasedSuggestions(userId: string, followingIds: Set<str
     if (suggestedUserIds.length === 0) return [];
 
     const usersRef = collection(db, 'users');
-    const usersQuery = query(usersRef, where('id', 'in', suggestedUserIds));
+    const usersQuery = query(usersRef, where('__name__', 'in', suggestedUserIds));
     const usersSnapshot = await getDocs(usersQuery);
 
     return usersSnapshot.docs.map(doc => ({ ...fromFirestore<User>(doc), suggestionSource: 'interest' }));
@@ -110,7 +110,7 @@ export async function getUserSuggestions(userId: string, totalCount: number): Pr
     const dismissedIds = new Set(dismissedSnap.docs.map(doc => doc.id));
 
     // Combine all users user already follows or has dismissed
-    const exclusionIds = new Set([...followingIds, ...dismissedIds]);
+    const exclusionIds = new Set([...followingIds, ...dismissedIds, userId]);
 
 
     const mutualsPromise = getMutualConnectionSuggestions(userId, followingIds, totalCount);

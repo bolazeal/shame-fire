@@ -145,7 +145,7 @@ const mockTechCompany: User = {
     bio: 'Innovative tech solutions for a modern world. 24/7 customer support.',
     nominations: 3,
     publicVotes: 1800,
-    followersCount: 3500,
+    followersCount: 4500,
     followingCount: 10,
     createdAt: new Date('2022-11-15T10:00:00Z').toISOString(),
     accountStatus: 'active',
@@ -330,6 +330,27 @@ export const mockPosts: Post[] = [
         upvotedBy: [],
         downvotedBy: [],
     },
+    {
+        id: 'post9',
+        type: 'report',
+        author: mockUser3, // Samuel Green
+        authorId: mockUser3.id,
+        entity: 'TechSolutions LLC',
+        category: 'Product Quality',
+        text: 'The new software update from @techsolutions bricked my device. The support documents are out of date and their support line just keeps disconnecting. This is the second time this has happened with one of their updates.',
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        commentsCount: 22,
+        reposts: 18,
+        repostedBy: [],
+        upvotes: 230,
+        downvotes: 8,
+        bookmarks: 14,
+        bookmarkedBy: [],
+        upvotedBy: [],
+        downvotedBy: [],
+        sentiment: { score: -0.9, biasDetected: false },
+        summary: 'A user reports that a software update from TechSolutions LLC rendered their device unusable and that customer support is unresponsive.',
+    }
 ];
 
 // --- Mock Comments ---
@@ -395,6 +416,33 @@ export const mockComments: { [key: string]: Comment[] } = {
       upvotes: 5,
       downvotes: 2,
     },
+  ],
+  'dispute1': [
+      {
+        id: 'd1_comm1',
+        author: mockDisputingUser, // Speedy Shippers Inc.
+        text: "As we stated, our logs show a regional weather delay which is outside of our control. The package is now out for delivery.",
+        createdAt: new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString(),
+        upvotes: 12,
+        downvotes: 5,
+      },
+      {
+        id: 'd1_comm2',
+        author: mockCommenter,
+        text: "Weather delay or not, a week with no updates is poor communication.",
+        createdAt: new Date(Date.now() - 22 * 60 * 60 * 1000).toISOString(),
+        upvotes: 28,
+        downvotes: 2,
+      },
+      {
+        id: 'd1_comm3',
+        author: mockAdminUser, // Alex Doe
+        authorIsAdmin: true,
+        text: "Moderator Note: We are reviewing the logs provided by Speedy Shippers. Community, please keep the discussion focused on the evidence presented. Personal attacks will be removed.",
+        createdAt: new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString(),
+        upvotes: 40,
+        downvotes: 0,
+      }
   ]
 };
 
@@ -449,6 +497,27 @@ export const mockDisputes: Dispute[] = [
         decision: "The endorsement is deemed promotional.",
         reason: "After review, evidence suggested a coordinated campaign. The endorsement has been flagged as sponsored content."
     },
+  },
+  {
+    id: 'dispute3',
+    originalPostId: 'post9',
+    title: 'Dispute over "TechSolutions LLC" software update report',
+    description:
+      'TechSolutions LLC is disputing the claim by @samgreen that their software update "bricked" his device. They claim the user did not follow the installation instructions and have offered to repair the device free of charge as a gesture of goodwill.',
+    involvedParties: [mockReportingUser, mockTechCompany],
+    createdAt: new Date(Date.now() - 2.5 * 24 * 60 * 60 * 1000).toISOString(),
+    status: 'voting',
+    commentsCount: 0,
+    poll: {
+      question: 'Whose position is more reasonable?',
+      options: [
+        { text: "The user's report of a faulty update", votes: 55 },
+        { text: "The company's claim of user error", votes: 89 },
+        { text: 'Both sides have valid points', votes: 112 },
+      ],
+      voters: [],
+    },
+    verdict: null,
   },
 ];
 

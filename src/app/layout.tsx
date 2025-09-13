@@ -4,6 +4,11 @@ import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { AuthProvider } from '@/context/auth-context';
 import { ThemeProvider } from '@/components/theme-provider';
+import { LeftSidebar } from '@/components/main-layout/left-sidebar';
+import { RightSidebar } from '@/components/main-layout/right-sidebar';
+import { MobileBottomNav } from '@/components/main-layout/mobile-bottom-nav';
+import { NotificationProvider } from '@/context/notification-context';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export const metadata: Metadata = {
   title: 'Shame',
@@ -40,8 +45,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            {children}
-            <Toaster />
+            <NotificationProvider>
+              {children}
+              <Toaster />
+            </NotificationProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

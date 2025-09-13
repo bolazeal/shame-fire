@@ -30,6 +30,7 @@ import {
   Ban,
   RotateCcw,
   UserCog,
+  Broadcast,
 } from 'lucide-react';
 import {
   Tabs,
@@ -53,6 +54,7 @@ import {
   getFlaggedContent,
   getAllDisputes,
   getAllUsers,
+  getTrendingTopics,
 } from '@/lib/firestore';
 import { approvePostAction } from '@/lib/actions/post';
 import type { Post, Dispute, FlaggedContent, User } from '@/lib/types';
@@ -89,6 +91,11 @@ import {
   removeFlaggedItemAction,
   deletePostAndFlagsAction,
 } from '@/lib/actions/admin';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { userActivity } from '@/lib/mock-data';
+import { UserActivityChart } from '@/components/charts/user-activity-chart';
+import { ContentBreakdownChart } from '@/components/charts/content-breakdown-chart';
+import { SettingsForm } from '@/components/settings-form';
 
 export default function AdminPage() {
   const { fullProfile, loading: authLoading } = useAuth();
@@ -102,6 +109,10 @@ export default function AdminPage() {
     totalEndorsements: 0,
     activeDisputes: 0,
   });
+  const [trendingTopic, setTrendingTopic] = useState<{
+    category: string;
+    count: number;
+  } | null>(null);
   const [flaggedContent, setFlaggedContent] = useState<FlaggedContent[]>([]);
   const [allDisputes, setAllDisputes] = useState<Dispute[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -129,6 +140,7 @@ export default function AdminPage() {
         postCount,
         reportCount,
         endorsementCount,
+        trends,
         flagged,
         disputesData,
         usersData,
@@ -137,6 +149,7 @@ export default function AdminPage() {
         getCollectionCount('posts', 'type', '==', 'post'),
         getCollectionCount('posts', 'type', '==', 'report'),
         getCollectionCount('posts', 'type', '==', 'endorsement'),
+        getTrendingTopics(),
         getFlaggedContent(),
         getAllDisputes(),
         getAllUsers(),
@@ -151,6 +164,7 @@ export default function AdminPage() {
           .length,
       });
 
+      setTrendingTopic(trends.length > 0 ? trends[0] : null);
       setFlaggedContent(flagged);
       setAllDisputes(disputesData);
       setAllUsers(usersData);
@@ -325,7 +339,8 @@ export default function AdminPage() {
           <Skeleton className="h-6 w-40" />
         </header>
         <div className="space-y-8 p-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <Skeleton className="h-28 w-full" />
             <Skeleton className="h-28 w-full" />
             <Skeleton className="h-28 w-full" />
             <Skeleton className="h-28 w-full" />
@@ -340,6 +355,12 @@ export default function AdminPage() {
     );
   }
 
+  const contentBreakdownData = [
+    { type: 'posts', count: stats.totalPosts, fill: 'var(--color-posts)' },
+    { type: 'reports', count: stats.totalReports, fill: 'var(--color-reports)' },
+    { type: 'endorsements', count: stats.totalEndorsements, fill: 'var(--color-endorsements)' },
+  ];
+
   return (
     <div>
       <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/80 p-4 backdrop-blur-sm">
@@ -347,510 +368,559 @@ export default function AdminPage() {
         <h1 className="text-xl font-bold font-headline">Admin Panel</h1>
       </header>
 
-      <Tabs defaultValue="dashboard" className="w-full p-4">
-        <TabsList>
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="moderation">Content Moderation</TabsTrigger>
-          <TabsTrigger value="users">User Management</TabsTrigger>
-          <TabsTrigger value="disputes">Dispute Management</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
-        <TabsContent value="dashboard" className="mt-4">
-          <div className="space-y-8">
-            <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Users
-                  </CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalUsers}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Reports
-                  </CardTitle>
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalReports}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Endorsements
-                  </CardTitle>
-                  <ThumbsUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {stats.totalEndorsements}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Active Disputes
-                  </CardTitle>
-                  <Gavel className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {stats.activeDisputes}
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
-            {/* Charts section removed */}
-          </div>
-        </TabsContent>
-        <TabsContent value="moderation" className="mt-4">
-          <div className="space-y-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertCircle />
-                  Content Review Queue ({flaggedContent.length})
-                </CardTitle>
-                <CardDescription>
-                  Review content flagged by AI for policy violations or by users. Approve to
-                  post, or remove.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Content</TableHead>
-                      <TableHead>Author</TableHead>
-                      <TableHead>Reason</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {flaggedContent.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="max-w-xs truncate font-mono text-xs">
-                          {item.postText || item.postData?.text}
-                        </TableCell>
-                        <TableCell>
-                          <Link
-                            href={`/profile/${item.author.id}`}
-                            className="hover:underline"
-                          >
-                            {item.author.name}
-                          </Link>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="destructive">{item.reason}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {item.postId ? (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDismissFlag(item.id)}
+      <div className="p-4">
+        <ScrollArea>
+          <Tabs defaultValue="dashboard" className="w-full">
+            <TabsList>
+              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+              <TabsTrigger value="moderation">Content Moderation</TabsTrigger>
+              <TabsTrigger value="users">User Management</TabsTrigger>
+              <TabsTrigger value="disputes">Dispute Management</TabsTrigger>
+              <TabsTrigger value="settings">Platform Settings</TabsTrigger>
+            </TabsList>
+            <ScrollBar orientation="horizontal" />
+            <TabsContent value="dashboard" className="mt-4">
+              <div className="space-y-8">
+                <section className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Total Users
+                      </CardTitle>
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{stats.totalUsers}</div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Total Reports
+                      </CardTitle>
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {stats.totalReports}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Total Endorsements
+                      </CardTitle>
+                      <ThumbsUp className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {stats.totalEndorsements}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Active Disputes
+                      </CardTitle>
+                      <Gavel className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {stats.activeDisputes}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Top Trend
+                      </CardTitle>
+                      <Broadcast className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-base font-bold">
+                        #{trendingTopic?.category || 'N/A'}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {trendingTopic?.count || 0} posts this week
+                      </p>
+                    </CardContent>
+                  </Card>
+                </section>
+                
+                <section>
+                    <h2 className="text-2xl font-bold font-headline mb-4">Analytics</h2>
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>New Users (Last 7 Days)</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <UserActivityChart data={userActivity} />
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Content Breakdown</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <ContentBreakdownChart data={contentBreakdownData} />
+                            </CardContent>
+                        </Card>
+                    </div>
+                </section>
+              </div>
+            </TabsContent>
+            <TabsContent value="moderation" className="mt-4">
+              <div className="space-y-8">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertCircle />
+                      Content Review Queue ({flaggedContent.length})
+                    </CardTitle>
+                    <CardDescription>
+                      Review content flagged by AI for policy violations or by
+                      users. Approve to post, or remove.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Content</TableHead>
+                          <TableHead>Author</TableHead>
+                          <TableHead>Reason</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {flaggedContent.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="max-w-xs truncate font-mono text-xs">
+                              {item.postText || item.postData?.text}
+                            </TableCell>
+                            <TableCell>
+                              <Link
+                                href={`/profile/${item.author.id}`}
+                                className="hover:underline"
                               >
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Dismiss Flag
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleRemove(item)}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Remove Post
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleApprove(item)}
-                              >
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Approve
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleRemove(item)}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Remove
-                              </Button>
-                            </>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                {flaggedContent.length === 0 && (
-                  <p className="p-4 text-center text-muted-foreground">
-                    The review queue is empty. Great job!
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+                                {item.author.name}
+                              </Link>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="destructive">
+                                {item.reason}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {item.postId ? (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDismissFlag(item.id)}
+                                  >
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    Dismiss Flag
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => handleRemove(item)}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Remove Post
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleApprove(item)}
+                                  >
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    Approve
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => handleRemove(item)}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Remove
+                                  </Button>
+                                </>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    {flaggedContent.length === 0 && (
+                      <p className="p-4 text-center text-muted-foreground">
+                        The review queue is empty. Great job!
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
 
-        <TabsContent value="users" className="mt-4">
-          <div className="space-y-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users />
-                  User Management ({allUsers.length})
-                </CardTitle>
-                <CardDescription>
-                  View, manage, and take action on user accounts.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead className="hidden md:table-cell">
-                        Email
-                      </TableHead>
-                      <TableHead className="hidden sm:table-cell">
-                        Trust Score
-                      </TableHead>
-                       <TableHead className="hidden text-center sm:table-cell">
-                        Mod Nominations
-                       </TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {allUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                           <div className="flex items-center gap-3">
-                                <UserAvatar user={user} className="h-10 w-10" />
+            <TabsContent value="users" className="mt-4">
+              <div className="space-y-8">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users />
+                      User Management ({allUsers.length})
+                    </CardTitle>
+                    <CardDescription>
+                      View, manage, and take action on user accounts.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>User</TableHead>
+                          <TableHead className="hidden md:table-cell">
+                            Email
+                          </TableHead>
+                          <TableHead className="hidden sm:table-cell">
+                            Trust Score
+                          </TableHead>
+                          <TableHead className="hidden text-center sm:table-cell">
+                            Mod Nominations
+                          </TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {allUsers.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <UserAvatar
+                                  user={user}
+                                  className="h-10 w-10"
+                                />
                                 <div>
-                                    <Link
-                                        href={`/profile/${user.id}`}
-                                        className="font-medium hover:underline"
-                                    >
-                                        {user.name}
-                                    </Link>
-                                    <p className="text-xs text-muted-foreground">
-                                        @{user.username}
-                                    </p>
+                                  <Link
+                                    href={`/profile/${user.id}`}
+                                    className="font-medium hover:underline"
+                                  >
+                                    {user.name}
+                                  </Link>
+                                  <p className="text-xs text-muted-foreground">
+                                    @{user.username}
+                                  </p>
                                 </div>
-                           </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {user.email}
-                        </TableCell>
-                        <TableCell className="hidden text-center sm:table-cell">
-                          {user.trustScore}
-                        </TableCell>
-                        <TableCell className="hidden text-center sm:table-cell">
-                            <Tooltip>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              {user.email}
+                            </TableCell>
+                            <TableCell className="hidden text-center sm:table-cell">
+                              {user.trustScore}
+                            </TableCell>
+                            <TableCell className="hidden text-center sm:table-cell">
+                              <Tooltip>
                                 <TooltipTrigger>
-                                <div className="flex items-center justify-center gap-1">
-                                    <UserCog className="h-4 w-4"/>
-                                    <span>{user.moderatorNominationsCount || 0}</span>
-                                </div>
+                                  <div className="flex items-center justify-center gap-1">
+                                    <UserCog className="h-4 w-4" />
+                                    <span>
+                                      {user.moderatorNominationsCount || 0}
+                                    </span>
+                                  </div>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    <p>Moderator Nominations</p>
+                                  <p>Moderator Nominations</p>
                                 </TooltipContent>
-                            </Tooltip>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap items-center gap-1">
-                            <Badge
-                              variant={
-                                user.accountStatus === 'active'
-                                  ? 'secondary'
-                                  : 'destructive'
-                              }
-                              className="capitalize"
-                            >
-                              {user.accountStatus}
-                            </Badge>
-                            {user.isAdmin && (
-                              <Badge variant="destructive">Admin</Badge>
-                            )}
-                            {user.isVerified && (
-                              <Badge variant="secondary">Verified</Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                disabled={
-                                  updatingUserId === user.id ||
-                                  updatingTrustScore === user.id ||
-                                  updatingAdminId === user.id
-                                }
-                              >
-                                {updatingUserId === user.id ||
-                                updatingTrustScore === user.id ||
-                                updatingAdminId === user.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <MoreHorizontal className="h-4 w-4" />
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap items-center gap-1">
+                                <Badge
+                                  variant={
+                                    user.accountStatus === 'active'
+                                      ? 'secondary'
+                                      : 'destructive'
+                                  }
+                                  className="capitalize"
+                                >
+                                  {user.accountStatus}
+                                </Badge>
+                                {user.isAdmin && (
+                                  <Badge variant="destructive">Admin</Badge>
                                 )}
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              {user.accountStatus !== 'active' && (
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    handleUpdateUserStatus(user.id, 'active')
-                                  }
-                                >
-                                  <UserCheck className="mr-2 h-4 w-4" />
-                                  Reactivate
-                                </DropdownMenuItem>
-                              )}
-
-                              {user.accountStatus === 'active' && (
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    handleUpdateUserStatus(
-                                      user.id,
-                                      'suspended'
-                                    )
-                                  }
-                                >
-                                  <UserX className="mr-2 h-4 w-4" />
-                                  Suspend
-                                </DropdownMenuItem>
-                              )}
-
-                              {user.accountStatus !== 'banned' && (
-                                <DropdownMenuItem
-                                  className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                                  onClick={() =>
-                                    handleUpdateUserStatus(user.id, 'banned')
-                                  }
-                                >
-                                  <Ban className="mr-2 h-4 w-4" />
-                                  Ban
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() => handleToggleAdminStatus(user)}
-                                  disabled={fullProfile?.id === user.id}
-                                >
-                                  <UserCog className="mr-2 h-4 w-4" />
-                                  {user.isAdmin ? 'Remove Admin' : 'Make Admin'}
-                                </DropdownMenuItem>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <DropdownMenuItem
-                                    onSelect={(e) => e.preventDefault()}
-                                    className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                {user.isVerified && (
+                                  <Badge variant="secondary">Verified</Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    disabled={
+                                      updatingUserId === user.id ||
+                                      updatingTrustScore === user.id ||
+                                      updatingAdminId === user.id
+                                    }
                                   >
-                                    <RotateCcw className="mr-2 h-4 w-4" />
-                                    Reset Trust Score
-                                  </DropdownMenuItem>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                      Are you sure?
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      This will reset @{user.username}'s
-                                      trust score to the default value of 50.
-                                      This action cannot be undone.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
+                                    {updatingUserId === user.id ||
+                                    updatingTrustScore === user.id ||
+                                    updatingAdminId === user.id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  {user.accountStatus !== 'active' && (
+                                    <DropdownMenuItem
                                       onClick={() =>
-                                        handleResetTrustScore(user.id)
+                                        handleUpdateUserStatus(
+                                          user.id,
+                                          'active'
+                                        )
                                       }
-                                      disabled={updatingTrustScore === user.id}
                                     >
-                                      {updatingTrustScore === user.id && (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                      )}
-                                      Confirm Reset
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+                                      <UserCheck className="mr-2 h-4 w-4" />
+                                      Reactivate
+                                    </DropdownMenuItem>
+                                  )}
 
-        <TabsContent value="disputes" className="mt-4">
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Gavel />
-                  Active Disputes ({activeDisputes.length})
-                </CardTitle>
-                <CardDescription>
-                  Oversee ongoing disputes in the Village Square.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Dispute Title</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Involved Parties</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {activeDisputes.map((dispute) => (
-                      <TableRow key={dispute.id}>
-                        <TableCell className="font-medium">
-                          {dispute.title}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="capitalize">
-                            {dispute.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {dispute.involvedParties
-                            .map((p) => p.name)
-                            .join(', ')}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button asChild variant="outline" size="sm">
-                            <Link href={`/dispute/${dispute.id}`}>
-                              <View className="mr-2 h-4 w-4" />
-                              View Dispute
-                            </Link>
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                {activeDisputes.length === 0 && (
-                  <p className="p-4 text-center text-muted-foreground">
-                    No active disputes.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle />
-                  Closed Disputes ({closedDisputes.length})
-                </CardTitle>
-                <CardDescription>
-                  Review the history of resolved disputes.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Dispute Title</TableHead>
-                      <TableHead>Verdict By</TableHead>
-                      <TableHead>Decision</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {closedDisputes.map((dispute) => (
-                      <TableRow key={dispute.id}>
-                        <TableCell className="font-medium">
-                          {dispute.title}
-                        </TableCell>
-                        <TableCell>
-                          {dispute.verdict ? (
-                            <div className="flex items-center gap-2">
-                              <UserAvatar
-                                user={dispute.verdict.moderator}
-                                className="h-8 w-8"
-                              />
-                              <p>{dispute.verdict.moderator.name}</p>
-                            </div>
-                          ) : (
-                            'N/A'
-                          )}
-                        </TableCell>
-                        <TableCell className="max-w-xs truncate text-muted-foreground">
-                          {dispute.verdict?.decision}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button asChild variant="outline" size="sm">
-                            <Link href={`/dispute/${dispute.id}`}>
-                              <View className="mr-2 h-4 w-4" />
-                              View Details
-                            </Link>
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                {closedDisputes.length === 0 && (
-                  <p className="p-4 text-center text-muted-foreground">
-                    No closed disputes yet.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+                                  {user.accountStatus === 'active' && (
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleUpdateUserStatus(
+                                          user.id,
+                                          'suspended'
+                                        )
+                                      }
+                                    >
+                                      <UserX className="mr-2 h-4 w-4" />
+                                      Suspend
+                                    </DropdownMenuItem>
+                                  )}
 
-        <TabsContent value="settings" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings />
-                Platform Settings
-              </CardTitle>
-              <CardDescription>
-                This feature is under construction.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Configuration options for the platform will be available here
-                soon.
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                                  {user.accountStatus !== 'banned' && (
+                                    <DropdownMenuItem
+                                      className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                      onClick={() =>
+                                        handleUpdateUserStatus(
+                                          user.id,
+                                          'banned'
+                                        )
+                                      }
+                                    >
+                                      <Ban className="mr-2 h-4 w-4" />
+                                      Ban
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      handleToggleAdminStatus(user)
+                                    }
+                                    disabled={fullProfile?.id === user.id}
+                                  >
+                                    <UserCog className="mr-2 h-4 w-4" />
+                                    {user.isAdmin
+                                      ? 'Remove Admin'
+                                      : 'Make Admin'}
+                                  </DropdownMenuItem>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <DropdownMenuItem
+                                        onSelect={(e) => e.preventDefault()}
+                                        className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                      >
+                                        <RotateCcw className="mr-2 h-4 w-4" />
+                                        Reset Trust Score
+                                      </DropdownMenuItem>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>
+                                          Are you sure?
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          This will reset @{user.username}'s
+                                          trust score to the default value of
+                                          50. This action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>
+                                          Cancel
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() =>
+                                            handleResetTrustScore(user.id)
+                                          }
+                                          disabled={
+                                            updatingTrustScore === user.id
+                                          }
+                                        >
+                                          {updatingTrustScore === user.id && (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                          )}
+                                          Confirm Reset
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="disputes" className="mt-4">
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Gavel />
+                      Active Disputes ({activeDisputes.length})
+                    </CardTitle>
+                    <CardDescription>
+                      Oversee ongoing disputes in the Village Square.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Dispute Title</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Involved Parties</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {activeDisputes.map((dispute) => (
+                          <TableRow key={dispute.id}>
+                            <TableCell className="font-medium">
+                              {dispute.title}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="capitalize">
+                                {dispute.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {dispute.involvedParties
+                                .map((p) => p.name)
+                                .join(', ')}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button asChild variant="outline" size="sm">
+                                <Link href={`/dispute/${dispute.id}`}>
+                                  <View className="mr-2 h-4 w-4" />
+                                  View Dispute
+                                </Link>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    {activeDisputes.length === 0 && (
+                      <p className="p-4 text-center text-muted-foreground">
+                        No active disputes.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <CheckCircle />
+                      Closed Disputes ({closedDisputes.length})
+                    </CardTitle>
+                    <CardDescription>
+                      Review the history of resolved disputes.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Dispute Title</TableHead>
+                          <TableHead>Verdict By</TableHead>
+                          <TableHead>Decision</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {closedDisputes.map((dispute) => (
+                          <TableRow key={dispute.id}>
+                            <TableCell className="font-medium">
+                              {dispute.title}
+                            </TableCell>
+                            <TableCell>
+                              {dispute.verdict ? (
+                                <div className="flex items-center gap-2">
+                                  <UserAvatar
+                                    user={dispute.verdict.moderator}
+                                    className="h-8 w-8"
+                                  />
+                                  <p>{dispute.verdict.moderator.name}</p>
+                                </div>
+                              ) : (
+                                'N/A'
+                              )}
+                            </TableCell>
+                            <TableCell className="max-w-xs truncate text-muted-foreground">
+                              {dispute.verdict?.decision}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button asChild variant="outline" size="sm">
+                                <Link href={`/dispute/${dispute.id}`}>
+                                  <View className="mr-2 h-4 w-4" />
+                                  View Details
+                                </Link>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    {closedDisputes.length === 0 && (
+                      <p className="p-4 text-center text-muted-foreground">
+                        No closed disputes yet.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="settings" className="mt-4">
+              <SettingsForm />
+            </TabsContent>
+          </Tabs>
+        </ScrollArea>
+      </div>
     </div>
   );
 }

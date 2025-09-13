@@ -186,7 +186,7 @@ export type Dispute = {
   involvedParties: User[];
   originalPostId: string;
   createdAt: string;
-  status: 'open' | 'voting' | 'closed';
+  status: 'voting' | 'closed';
   commentsCount: number;
   poll: Poll;
   verdict: Verdict | null;

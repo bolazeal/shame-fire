@@ -259,7 +259,7 @@ export function SettingsForm() {
                         <FormItem>
                         <FormLabel>Default Trust Score</FormLabel>
                         <FormControl>
-                            <Input type="number" className="w-40" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))}/>
+                            <Input type="number" className="w-40" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}/>
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -281,7 +281,7 @@ export function SettingsForm() {
                         <FormItem>
                         <FormLabel>Maximum Post Length</FormLabel>
                         <FormControl>
-                            <Input type="number" className="w-40" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))}/>
+                            <Input type="number" className="w-40" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}/>
                         </FormControl>
                         <FormDescription>Maximum number of characters allowed in a post.</FormDescription>
                         <FormMessage />
@@ -315,7 +315,7 @@ export function SettingsForm() {
                         <FormItem>
                         <FormLabel>Auto-Flag Threshold</FormLabel>
                         <FormControl>
-                            <Input type="number" className="w-40" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))}/>
+                            <Input type="number" className="w-40" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}/>
                         </FormControl>
                         <FormDescription>Number of flags required to automatically hide content.</FormDescription>
                         <FormMessage />
@@ -381,7 +381,7 @@ export function SettingsForm() {
                         <FormItem>
                         <FormLabel>Flagged Content Retention (Days)</FormLabel>
                         <FormControl>
-                            <Input type="number" className="w-40" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))}/>
+                            <Input type="number" className="w-40" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}/>
                         </FormControl>
                         <FormDescription>How long to keep flagged content before automatic deletion.</FormDescription>
                         <FormMessage />

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useParams } from 'next/navigation';
@@ -277,10 +278,6 @@ export default function DisputePage() {
                   </AlertTitle>
                   <AlertDescription className="mt-2 space-y-2">
                     <p>{dispute.verdict.decision}</p>
-                    <p className="text-xs text-muted-foreground">
-                      <span className="font-semibold">Reasoning:</span>{' '}
-                      {dispute.verdict.reason}
-                    </p>
                     <div className="flex items-center gap-2 pt-2">
                       <UserAvatar
                         user={dispute.verdict.moderator as any}
@@ -291,6 +288,10 @@ export default function DisputePage() {
                         <p className="text-xs text-muted-foreground">Moderator</p>
                       </div>
                     </div>
+                    <p className="text-xs text-muted-foreground pt-2">
+                      <span className="font-semibold">Reasoning:</span>{' '}
+                      {dispute.verdict.reason}
+                    </p>
                   </AlertDescription>
                 </Alert>
               </>

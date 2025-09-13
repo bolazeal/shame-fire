@@ -270,14 +270,15 @@ export function PostCard({ post }: PostCardProps) {
 
     setIsEscalating(true);
     try {
-      await createDisputeAction(post, fullProfile);
+      const disputeId = await createDisputeAction(post, fullProfile);
       toast({
         title: 'Post Escalated',
         description:
           'This report is now a public dispute in the Village Square.',
       });
       // You might want to update the post state to reflect `isEscalated: true`
-      // to disable the button immediately, but for now we rely on page refresh.
+      // to disable the button immediately, but for now we rely on page refresh or router push.
+      router.push(`/dispute/${disputeId}`);
     } catch (error) {
       console.error('Failed to escalate post:', error);
       toast({
@@ -471,6 +472,7 @@ export function PostCard({ post }: PostCardProps) {
                         Cancel
                       </AlertDialogCancel>
                       <AlertDialogAction onClick={handleEscalateConfirm}>
+                        {isEscalating && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                         Confirm & Escalate
                       </AlertDialogAction>
                     </AlertDialogFooter>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -29,6 +30,8 @@ export function DisputeCard({ dispute }: DisputeCardProps) {
     <article
       onClick={handleCardClick}
       className="cursor-pointer border-b p-4 transition-colors last:border-b-0 hover:bg-accent/10 focus:outline-none focus:ring-2 focus:ring-ring"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter') handleCardClick()}}
     >
       <div className="flex items-start justify-between gap-4">
         <div>

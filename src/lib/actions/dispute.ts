@@ -32,7 +32,7 @@ export async function createDisputeAction(
     description: `This dispute was opened regarding the following report: "${post.text}"`,
     involvedParties: [authorProfile, disputingUser],
     createdAt: serverTimestamp(),
-    status: 'open',
+    status: 'voting', // Start in voting phase
     commentsCount: 0,
     poll: {
       question: 'Whose account do you find more credible in this dispute?',

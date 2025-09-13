@@ -510,6 +510,16 @@ export const listenToDispute = (
     return unsubscribe;
   };
 
+export const getDisputeComments = async (disputeId: string): Promise<Comment[]> => {
+    if (!isFirebaseConfigured) {
+        return mockComments[disputeId] || [];
+    }
+    const commentsRef = collection(db, `disputes/${disputeId}/comments`);
+    const q = query(commentsRef, orderBy('createdAt', 'asc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => fromFirestore<Comment>(doc));
+};
+
 export const listenToDisputeComments = (
     disputeId: string,
     callback: (comments: Comment[]) => void
@@ -645,4 +655,5 @@ export const listenToMessages = (
 
   return unsubscribe;
 };
+
 

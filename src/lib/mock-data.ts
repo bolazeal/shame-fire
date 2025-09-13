@@ -13,10 +13,10 @@ const mockAdminUser: User = {
     isVerified: true,
     isAdmin: true,
     bio: 'Platform admin. Keeping things fair and square.',
-    nominations: 0,
-    publicVotes: 0,
-    followersCount: 150,
-    followingCount: 20,
+    nominations: 5,
+    publicVotes: 250,
+    followersCount: 1500,
+    followingCount: 200,
     createdAt: new Date('2023-01-01T10:00:00Z').toISOString(),
     accountStatus: 'active',
 };
@@ -32,7 +32,7 @@ const mockUser2: User = {
   trustScore: 85,
   isVerified: true,
   bio: 'Building products that matter. Founder @ TechStart. She/Her.',
-  nominations: 5,
+  nominations: 10,
   publicVotes: 1200,
   followersCount: 1200,
   followingCount: 150,
@@ -124,11 +124,30 @@ const mockCommunityMember: User = {
     trustScore: 75,
     isVerified: false,
     bio: 'Local resident and food enthusiast.',
-    nominations: 0,
+    nominations: 1,
     publicVotes: 150,
     followersCount: 45,
     followingCount: 80,
     createdAt: new Date('2023-06-22T14:00:00Z').toISOString(),
+    accountStatus: 'active',
+};
+
+const mockTechCompany: User = {
+    id: 'user8',
+    name: 'TechSolutions LLC',
+    username: 'techsolutions',
+    email: 'support@techsolutions.llc',
+    avatarUrl: 'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?w=100&h=100&fit=crop',
+    'data-ai-hint': 'modern office',
+    bannerUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1500&h=500&fit=crop',
+    trustScore: 72,
+    isVerified: true,
+    bio: 'Innovative tech solutions for a modern world. 24/7 customer support.',
+    nominations: 3,
+    publicVotes: 1800,
+    followersCount: 3500,
+    followingCount: 10,
+    createdAt: new Date('2022-11-15T10:00:00Z').toISOString(),
     accountStatus: 'active',
 };
 
@@ -141,6 +160,7 @@ export const mockUsers = {
     user5: mockCommenter,
     user6: mockBakeryOwner,
     user7: mockCommunityMember,
+    user8: mockTechCompany
 };
 
 // --- Mock Posts ---
@@ -228,7 +248,88 @@ export const mockPosts: Post[] = [
         downvotedBy: [],
         sentiment: { score: -0.7, biasDetected: false, biasExplanation: 'The language is strong but describes a specific issue.' },
         summary: 'An anonymous user reports that broken parking meters on Elm Street are leading to unfair ticketing.',
-    }
+    },
+    {
+        id: 'post5',
+        type: 'post',
+        author: mockUser2, // Jane Smith
+        authorId: mockUser2.id,
+        text: "Excited to announce our new project aimed at increasing transparency in local government spending. We'll be using public data to create visualizations that everyone can understand. Follow our journey! #OpenGov #DataForGood",
+        createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+        commentsCount: 8,
+        reposts: 25,
+        repostedBy: [],
+        upvotes: 190,
+        downvotes: 3,
+        bookmarks: 15,
+        bookmarkedBy: [],
+        upvotedBy: [],
+        downvotedBy: [],
+    },
+    {
+        id: 'post6',
+        type: 'report',
+        author: mockCommunityMember, // Maria Garcia
+        authorId: mockCommunityMember.id,
+        entity: 'TechSolutions LLC',
+        category: 'Customer Service',
+        text: 'I bought a laptop from TechSolutions LLC and the screen cracked within a week with normal use. Their support team claims it\'s "user damage" and refuses to honor the warranty. The build quality is clearly not what they advertise. Here\'s a photo of the crack.',
+        mediaUrl: 'https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?w=600&h=400&fit=crop',
+        'data-ai-hint': 'cracked laptop screen',
+        mediaType: 'image',
+        createdAt: new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000).toISOString(),
+        commentsCount: 18,
+        reposts: 7,
+        repostedBy: [],
+        upvotes: 120,
+        downvotes: 5,
+        bookmarks: 9,
+        bookmarkedBy: [],
+        upvotedBy: [],
+        downvotedBy: [],
+        sentiment: { score: -0.9, biasDetected: false },
+        summary: 'A customer reports that TechSolutions LLC is refusing to honor the warranty for a laptop with a cracked screen.',
+    },
+    {
+        id: 'post7',
+        type: 'endorsement',
+        author: mockCommenter, // Emily Carter
+        authorId: mockCommenter.id,
+        entity: 'Alex Doe',
+        category: 'Community Leadership',
+        text: 'I want to give a shout-out to @alexdoe for their incredible work moderating this platform. They are always fair, transparent, and quick to respond to issues. It\'s their hard work that makes this community a safe place for important discussions. Thank you!',
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+        commentsCount: 6,
+        reposts: 15,
+        repostedBy: [],
+        upvotes: 210,
+        downvotes: 1,
+        bookmarks: 11,
+        bookmarkedBy: [],
+        upvotedBy: [],
+        downvotedBy: [],
+        sentiment: { score: 0.95, biasDetected: false },
+        summary: 'A user commends Alex Doe for fair and effective platform moderation.',
+    },
+    {
+        id: 'post8',
+        type: 'post',
+        author: mockUser2, // Jane Smith
+        authorId: mockUser2.id,
+        text: "Sharing a short clip from our team's volunteer day last weekend. It was great to give back and help clean up the local park. #volunteering #community",
+        mediaUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+        mediaType: 'video',
+        createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+        commentsCount: 12,
+        reposts: 18,
+        repostedBy: [],
+        upvotes: 150,
+        downvotes: 2,
+        bookmarks: 8,
+        bookmarkedBy: [],
+        upvotedBy: [],
+        downvotedBy: [],
+    },
 ];
 
 // --- Mock Comments ---
@@ -284,6 +385,16 @@ export const mockComments: { [key: string]: Comment[] } = {
       upvotes: 2,
       downvotes: 8,
     }
+  ],
+  'post6': [
+    {
+      id: 'comment7',
+      author: mockTechCompany,
+      text: "We are sorry to hear about your experience. Please check your DMs so we can get more details and arrange a resolution for you.",
+      createdAt: new Date(Date.now() - 1.4 * 24 * 60 * 60 * 1000).toISOString(),
+      upvotes: 5,
+      downvotes: 2,
+    },
   ]
 };
 

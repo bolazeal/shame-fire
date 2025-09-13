@@ -442,7 +442,50 @@ export const mockComments: { [key: string]: Comment[] } = {
         createdAt: new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString(),
         upvotes: 40,
         downvotes: 0,
+      },
+      {
+        id: 'd1_comm4',
+        author: mockReportingUser,
+        text: "Thanks for the note, @alexdoe. My issue isn't just the delay, it's the lack of any proactive communication. Their response here is the first I've heard from them.",
+        createdAt: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
+        upvotes: 35,
+        downvotes: 1,
+      },
+      {
+        id: 'd1_comm5',
+        author: mockUser2,
+        text: "I've had issues with them too. They mark packages as 'delivered' days before they actually show up. Seems like a systemic problem.",
+        createdAt: new Date(Date.now() - 15 * 60 * 60 * 1000).toISOString(),
+        upvotes: 22,
+        downvotes: 0,
       }
+  ],
+  'dispute3': [
+    {
+      id: 'd3_comm1',
+      author: mockTechCompany,
+      text: "We have provided the installation logs showing the user bypassed several warning prompts. While we maintain this is user error, we have offered a free replacement as a courtesy. We believe this is a fair resolution.",
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      upvotes: 40,
+      downvotes: 10,
+    },
+    {
+        id: 'd3_comm2',
+        author: mockReportingUser,
+        text: "Those 'warnings' were generic prompts. A software update shouldn't be capable of destroying the hardware regardless. Their offer of a replacement comes after weeks of me trying to get a response.",
+        createdAt: new Date(Date.now() - 1.9 * 24 * 60 * 60 * 1000).toISOString(),
+        upvotes: 60,
+        downvotes: 5,
+    },
+    {
+        id: 'd3_comm3',
+        author: mockAdminUser,
+        authorIsAdmin: true,
+        text: "Moderator Note: Both parties have submitted their evidence. The community poll is now open. Please review the arguments and vote based on the information provided.",
+        createdAt: new Date(Date.now() - 1.8 * 24 * 60 * 60 * 1000).toISOString(),
+        upvotes: 50,
+        downvotes: 0,
+    }
   ]
 };
 
@@ -457,7 +500,7 @@ export const mockDisputes: Dispute[] = [
     involvedParties: [mockReportingUser, mockDisputingUser],
     createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     status: 'voting',
-    commentsCount: 3,
+    commentsCount: 5,
     poll: {
       question: 'Whose account do you find more credible?',
       options: [
@@ -507,7 +550,7 @@ export const mockDisputes: Dispute[] = [
     involvedParties: [mockReportingUser, mockTechCompany],
     createdAt: new Date(Date.now() - 2.5 * 24 * 60 * 60 * 1000).toISOString(),
     status: 'voting',
-    commentsCount: 0,
+    commentsCount: 3,
     poll: {
       question: 'Whose position is more reasonable?',
       options: [
@@ -661,3 +704,4 @@ export const mockConversations: Conversation[] = [
         createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
     }
 ];
+

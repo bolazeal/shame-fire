@@ -272,7 +272,7 @@ export default function AdminPage() {
       await updateUserAccountStatusAction(userId, status);
       toast({
         title: 'User Status Updated',
-        description: `User has been set to ${status}.`,
+        description: `User has been set to ${'${status}'}.`,
       });
       fetchData(); // Refresh the user list
     } catch (error) {
@@ -315,9 +315,7 @@ export default function AdminPage() {
       await toggleAdminStatusAction(userToUpdate.id);
       toast({
         title: 'Success',
-        description: `${userToUpdate.name} is ${
-          userToUpdate.isAdmin ? 'no longer' : 'now'
-        } an admin.`,
+        description: `${'${userToUpdate.name}'} is ${'${userToUpdate.isAdmin ? \'no longer\' : \'now\'}'} an admin.`,
       });
       fetchData(); // Refresh data
     } catch (error: any) {
@@ -504,7 +502,7 @@ export default function AdminPage() {
                             </TableCell>
                             <TableCell>
                               <Link
-                                href={`/profile/${item.author.id}`}
+                                href={`/profile/${'${item.author.id}'}`}
                                 className="hover:underline"
                               >
                                 {item.author.name}
@@ -611,7 +609,7 @@ export default function AdminPage() {
                                 />
                                 <div>
                                   <Link
-                                    href={`/profile/${user.id}`}
+                                    href={`/profile/${'${user.id}'}`}
                                     className="font-medium hover:underline"
                                   >
                                     {user.name}
@@ -834,7 +832,7 @@ export default function AdminPage() {
                             </TableCell>
                             <TableCell className="text-right">
                               <Button asChild variant="outline" size="sm">
-                                <Link href={`/dispute/${dispute.id}`}>
+                                <Link href={`/dispute/${'${dispute.id}'}`}>
                                   <View className="mr-2 h-4 w-4" />
                                   View Dispute
                                 </Link>
@@ -895,7 +893,7 @@ export default function AdminPage() {
                             </TableCell>
                             <TableCell className="text-right">
                               <Button asChild variant="outline" size="sm">
-                                <Link href={`/dispute/${dispute.id}`}>
+                                <Link href={`/dispute/${'${dispute.id}'}`}>
                                   <View className="mr-2 h-4 w-4" />
                                   View Details
                                 </Link>
@@ -924,3 +922,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    

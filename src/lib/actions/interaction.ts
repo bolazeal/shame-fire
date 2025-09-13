@@ -207,13 +207,15 @@ export async function addCommentAction(
     text: string;
     mediaUrl?: string;
     mediaType?: 'image' | 'video';
+    parentId?: string | null;
   },
   author: User
 ): Promise<void> {
   if (!db) throw new Error('Firestore not initialized');
+  const batch = writeBatch(db);
 
-  const commentRef = collection(db, `posts/${postId}/comments`);
-  const postRef = doc(db, 'posts', postId);
+  const commentsRef = collection(db, `posts/${postId}/comments`);
+  const newCommentRef = doc(commentsRef);
 
   const newComment: Omit<Comment, 'id' | 'createdAt'> & {
     createdAt: FieldValue;
@@ -228,15 +230,22 @@ export async function addCommentAction(
     text: commentData.text,
     mediaUrl: commentData.mediaUrl,
     mediaType: commentData.mediaType,
+    parentId: commentData.parentId || null,
     createdAt: serverTimestamp(),
     upvotes: 0,
     downvotes: 0,
+    replyCount: 0,
   };
+  batch.set(newCommentRef, newComment);
 
-  const commentDocRef = await addDoc(commentRef, newComment);
-  await updateDoc(postRef, {
-    commentsCount: increment(1),
-  });
+  const postRef = doc(db, 'posts', postId);
+  batch.update(postRef, { commentsCount: increment(1) });
+  
+  if (commentData.parentId) {
+    const parentCommentRef = doc(db, `posts/${postId}/comments`, commentData.parentId);
+    batch.update(parentCommentRef, { replyCount: increment(1) });
+  }
+
 
   // Handle Mentions in comment
   const mentionRegex = /@(\w+)/g;
@@ -253,16 +262,18 @@ export async function addCommentAction(
     }
   }
 
-  // Add post author to notification list (if not mentioned)
-  if (author.id !== postAuthorId) {
-      mentionedUserIds.add(postAuthorId);
+  // Add post author to notification list (if not mentioned and it's a top-level comment)
+  if (!commentData.parentId && author.id !== postAuthorId) {
+    mentionedUserIds.add(postAuthorId);
   }
+
+  // TODO: Add parent comment author to notification list
   
   // Send notifications
   const post = await getPost(postId);
   if (post) {
       for (const recipientId of mentionedUserIds) {
-          const notificationType = recipientId === postAuthorId ? 'comment' : 'mention';
+          const notificationType = (recipientId === postAuthorId && !commentData.parentId) ? 'comment' : 'mention';
           await createNotification({
               type: notificationType,
               recipientId,
@@ -272,6 +283,8 @@ export async function addCommentAction(
           });
       }
   }
+
+  await batch.commit();
 }
 
 export async function deleteCommentAction(
@@ -281,10 +294,19 @@ export async function deleteCommentAction(
   if (!db) throw new Error('Firestore not initialized');
   const batch = writeBatch(db);
   const commentRef = doc(db, `posts/${postId}/comments`, commentId);
+
+  const commentSnap = await getDoc(commentRef);
+  const commentData = commentSnap.data() as Comment | undefined;
+  
   batch.delete(commentRef);
 
   const postRef = doc(db, 'posts', postId);
   batch.update(postRef, { commentsCount: increment(-1) });
+
+  if (commentData?.parentId) {
+    const parentCommentRef = doc(db, `posts/${postId}/comments`, commentData.parentId);
+    batch.update(parentCommentRef, { replyCount: increment(-1) });
+  }
 
   await batch.commit();
 }

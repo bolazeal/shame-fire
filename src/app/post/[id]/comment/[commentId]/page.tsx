@@ -1,14 +1,34 @@
+
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { CommentCard } from '@/components/comment-card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { mockComments, mockUsers } from '@/lib/mock-data';
+import { getComments, getPost } from '@/lib/firestore';
 import type { Comment } from '@/lib/types';
 import { useEffect, useState } from 'react';
+import { CommentThread } from '@/components/comment-thread';
+import { deleteCommentAction } from '@/lib/actions/interaction';
+
+function buildCommentTree(comments: Comment[], rootId: string): (Comment & { replies: Comment[] }) | null {
+  const commentMap = new Map<string, Comment & { replies: Comment[] }>();
+  
+  comments.forEach(comment => {
+    commentMap.set(comment.id, { ...comment, replies: [] });
+  });
+
+  comments.forEach(comment => {
+    if (comment.parentId && commentMap.has(comment.parentId)) {
+      const parent = commentMap.get(comment.parentId)!;
+      parent.replies.push(commentMap.get(comment.id)!);
+    }
+  });
+
+  return commentMap.get(rootId) || null;
+}
+
 
 function CommentThreadSkeleton() {
   return (
@@ -36,54 +56,50 @@ function CommentThreadSkeleton() {
 export default function CommentThreadPage() {
   const router = useRouter();
   const params = useParams<{ id: string; commentId: string }>();
-  const [parentComment, setParentComment] = useState<Comment | null>(null);
-  const [replies, setReplies] = useState<Comment[]>([]);
+  const [commentTree, setCommentTree] = useState<(Comment & { replies: Comment[] }) | null>(null);
   const [loading, setLoading] = useState(true);
+  const [postAuthorId, setPostAuthorId] = useState<string>('');
+
+  const postId = params.id as string;
+  const commentId = params.commentId as string;
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+        const [allComments, post] = await Promise.all([
+            getComments(postId),
+            getPost(postId)
+        ]);
+
+        if (post) {
+            setPostAuthorId(post.authorId);
+        }
+        const tree = buildCommentTree(allComments, commentId);
+        setCommentTree(tree);
+
+    } catch (e) {
+        console.error("Failed to fetch comment thread", e);
+    } finally {
+        setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    // This is a mock implementation.
-    // In a real app, you would fetch the comment and its replies from Firestore.
-    setLoading(true);
-    const postId = params.id as string;
-    const commentId = params.commentId as string;
-
-    const findComment = (comments: Comment[]): Comment | undefined => {
-        for(const c of comments) {
-            if (c.id === commentId) return c;
-        }
-        return undefined;
+    if (postId && commentId) {
+      fetchData();
     }
+  }, [postId, commentId]);
 
-    const allComments = Object.values(mockComments).flat();
-    const pComment = findComment(allComments);
-    
-    if (pComment) {
-      setParentComment(pComment);
-      // Mock replies
-      setReplies([
-        {
-            id: 'reply1',
-            author: mockUsers.user7,
-            text: "That's a great point, I hadn't considered that perspective.",
-            createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-            upvotes: 2,
-            downvotes: 0,
-        },
-        {
-            id: 'reply2',
-            author: mockUsers.user2,
-            text: "I disagree, I think the original report was completely justified.",
-            createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-            upvotes: 5,
-            downvotes: 1,
-        },
-      ]);
+  const handleDelete = async (commentIdToDelete: string) => {
+    await deleteCommentAction(postId, commentIdToDelete);
+    // If the deleted comment is the root of this thread, go back.
+    if (commentIdToDelete === commentId) {
+        router.back();
+    } else {
+        fetchData(); // Otherwise, just refresh the data
     }
+  };
 
-    // Simulate loading delay
-    setTimeout(() => setLoading(false), 500);
-
-  }, [params.id, params.commentId]);
 
   if (loading) {
     return (
@@ -97,7 +113,7 @@ export default function CommentThreadPage() {
     );
   }
 
-  if (!parentComment) {
+  if (!commentTree) {
     return (
       <div>
         <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/80 p-4 backdrop-blur-sm">
@@ -123,22 +139,13 @@ export default function CommentThreadPage() {
       </header>
 
       <div className="p-4">
-        {/* The parent comment */}
-        <CommentCard comment={parentComment} onDelete={async () => { router.back() }} postId={params.id as string} />
-        
-        <Separator className="my-4" />
-
-        <h2 className="mb-4 text-lg font-bold">Replies</h2>
-        <div className="space-y-4">
-            {/* Replies to the parent comment */}
-            {replies.map(reply => (
-                <CommentCard key={reply.id} comment={reply} onDelete={async () => {}} postId={params.id as string} isReply />
-            ))}
-        </div>
-
-        <div className="mt-8 text-center text-muted-foreground">
-            <p className="text-sm">(Replying and voting functionality on this page is for demonstration.)</p>
-        </div>
+        <CommentThread 
+            comment={commentTree as any}
+            postId={postId}
+            postAuthorId={postAuthorId}
+            onDelete={handleDelete}
+            onReplySuccess={fetchData}
+        />
       </div>
     </div>
   );

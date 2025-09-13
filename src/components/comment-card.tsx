@@ -11,44 +11,35 @@ import { useState } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { deleteCommentAction, deleteDisputeCommentAction } from '@/lib/actions/interaction';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from './ui/badge';
+import { CommentForm } from './comment-form';
 
 interface CommentCardProps {
   comment: Comment;
-  isReply?: boolean;
   onDelete: (commentId: string) => Promise<void>;
-  postId?: string;
-  disputeId?: string;
+  onReplySuccess: () => void;
+  postId: string;
+  postAuthorId: string;
 }
 
-export function CommentCard({ comment, isReply = false, onDelete, postId, disputeId }: CommentCardProps) {
+export function CommentCard({ comment, onDelete, onReplySuccess, postId, postAuthorId }: CommentCardProps) {
   const commentDate = comment.createdAt ? new Date(comment.createdAt) : new Date();
   const { user: authUser } = useAuth();
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [showReplyForm, setShowReplyForm] = useState(false);
 
   const isAuthor = authUser?.uid === comment.author.id;
 
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      if (postId) {
-        await deleteCommentAction(postId, comment.id);
-      } else if (disputeId) {
-        await deleteDisputeCommentAction(disputeId, comment.id);
-      } else {
-        throw new Error("No post or dispute ID provided to delete comment.");
-      }
-      
+      await onDelete(comment.id);
       toast({ title: "Comment Deleted", description: "Your comment has been successfully removed."});
       setIsAlertOpen(false); // Close the dialog on success
-      if (onDelete) {
-        await onDelete(comment.id);
-      }
     } catch (error) {
         console.error("Failed to delete comment:", error);
         toast({ title: "Error", description: "Could not delete comment.", variant: 'destructive' });
@@ -57,15 +48,15 @@ export function CommentCard({ comment, isReply = false, onDelete, postId, disput
     }
   }
   
-  const replyHref = postId ? `/post/${postId}/comment/${comment.id}` : '#';
-
   return (
-    <div className={`flex gap-4 ${isReply ? 'ml-12' : ''}`}>
+    <div className="flex gap-4">
       <UserAvatar user={comment.author} className="h-10 w-10" />
       <div className="flex-1">
         <div className="rounded-lg bg-muted p-3">
           <div className="flex items-center gap-2 text-sm">
-            <span className="font-bold">{comment.author.name}</span>
+            <Link href={`/profile/${comment.author.username}`} className="font-bold hover:underline" onClick={e => e.stopPropagation()}>
+                {comment.author.name}
+            </Link>
             {comment.authorIsAdmin && (
               <Badge variant="secondary" className="border-red-500/50 text-red-500">
                 <ShieldCheck className="mr-1 h-3 w-3" />
@@ -112,11 +103,9 @@ export function CommentCard({ comment, isReply = false, onDelete, postId, disput
               <ArrowBigDown className="h-4 w-4" />
               <span>{comment.downvotes}</span>
             </Button>
-            <Button variant="ghost" size="sm" asChild className="flex items-center gap-1">
-                <Link href={replyHref}>
-                    <MessageSquare className="h-4 w-4" />
-                    <span>Reply</span>
-                </Link>
+            <Button variant="ghost" size="sm" className="flex items-center gap-1" onClick={() => setShowReplyForm(!showReplyForm)}>
+                <MessageSquare className="h-4 w-4" />
+                <span>Reply</span>
             </Button>
           </div>
           
@@ -159,6 +148,22 @@ export function CommentCard({ comment, isReply = false, onDelete, postId, disput
             </AlertDialog>
           )}
         </div>
+
+        {showReplyForm && (
+            <div className="mt-4">
+                <CommentForm
+                    postId={postId}
+                    postAuthorId={postAuthorId}
+                    parentId={comment.id}
+                    onCommentAdded={() => {
+                        setShowReplyForm(false);
+                        onReplySuccess();
+                    }}
+                    placeholder={`Replying to @${comment.author.username}...`}
+                    isReply
+                />
+            </div>
+        )}
       </div>
     </div>
   );

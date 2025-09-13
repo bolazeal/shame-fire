@@ -120,6 +120,8 @@ export type Comment = {
   createdAt: string;
   upvotes: number;
   downvotes: number;
+  parentId?: string | null;
+  replyCount?: number;
 };
 
 export type Post = {

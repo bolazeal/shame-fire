@@ -513,8 +513,7 @@ export const listenToDisputeComments = (
     callback: (comments: Comment[]) => void
   ): (() => void) => {
     if (!isFirebaseConfigured) {
-        // In mock mode, dispute comments are not available in mockComments, so return empty
-        callback([]);
+        callback(mockComments[disputeId] || []);
         return () => {};
     }
     const commentsRef = collection(db, `disputes/${disputeId}/comments`);

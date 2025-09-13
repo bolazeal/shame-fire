@@ -49,8 +49,6 @@ import {
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { UserActivityChart } from '@/components/charts/user-activity-chart';
-import { ContentBreakdownChart } from '@/components/charts/content-breakdown-chart';
 import {
   getCollectionCount,
   getFlaggedContent,
@@ -479,7 +477,7 @@ export default function AdminPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <UserActivityChart data={userActivityData} />
+                  {/*<UserActivityChart data={userActivityData} />*/}
                 </CardContent>
               </Card>
               <Card>
@@ -490,7 +488,7 @@ export default function AdminPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ContentBreakdownChart data={contentBreakdownData} />
+                  {/*<ContentBreakdownChart data={contentBreakdownData} />*/}
                 </CardContent>
               </Card>
             </section>
@@ -956,7 +954,8 @@ export default function AdminPage() {
     </div>
   );
 }
+    
+    
+    
 
-    
-    
     

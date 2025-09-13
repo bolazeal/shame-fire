@@ -19,6 +19,7 @@ import { analyzeSentiment } from '@/ai/flows/analyze-sentiment';
 import { detectHarmfulContent } from '@/ai/flows/detect-harmful-content';
 import { generateEndorsementSummary } from '@/ai/flows/generate-endorsement-summary';
 import { suggestTrustScore } from '@/ai/flows/suggest-trust-score';
+import { identifyAdvocacyCause } from '@/ai/flows/identify-advocacy-cause';
 import type {
   Post,
   PostCreationData,
@@ -118,6 +119,7 @@ async function _createPostInternal(
     newPost.entityContact = entityContact;
   }
 
+  // AI analysis for reports and endorsements
   if (postData.type !== 'post') {
     const [sentimentResult, summaryResult] = await Promise.all([
       analyzeSentiment({ text: postData.text }),
@@ -148,6 +150,30 @@ async function _createPostInternal(
       }
     }
   }
+
+  // Advocacy cause identification for reports
+  if (postData.type === 'report') {
+    try {
+      const advocacyResult = await identifyAdvocacyCause({
+        postText: postData.text,
+        postType: 'report',
+      });
+      if (advocacyResult.isAdvocacyCause) {
+        newPost.advocacy = {
+          isAdvocacyCause: true,
+          title: advocacyResult.suggestedTitle || `Support for ${postData.entity}`,
+          reasoning: advocacyResult.reasoning,
+          goalAmount: advocacyResult.suggestedGoal || 5000,
+          currentAmount: 0,
+          contributorsCount: 0,
+          contributors: [],
+        };
+      }
+    } catch(e) {
+      console.error('Failed to identify advocacy cause:', e);
+    }
+  }
+
 
   batch.set(postRef, newPost);
 

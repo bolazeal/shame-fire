@@ -162,6 +162,15 @@ export type Post = {
     biasExplanation?: string;
   };
   summary?: string;
+  advocacy?: {
+    isAdvocacyCause: boolean;
+    title: string;
+    reasoning: string;
+    goalAmount: number;
+    currentAmount: number;
+    contributorsCount: number;
+    contributors?: string[];
+  };
 };
 
 export type Poll = {
@@ -279,5 +288,3 @@ export type PlatformSettings = {
   featureHallOfHonour: boolean;
   featureDirectMessages: boolean;
 };
-
-    

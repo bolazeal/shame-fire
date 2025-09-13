@@ -440,4 +440,48 @@ export async function addDisputeCommentAction(
     await batch.commit();
   }
 
+  export async function supportCauseAction(postId: string, userId: string): Promise<Post> {
+    if (!db) throw new Error('Firestore not initialized');
     
+    // In a real app, this would integrate with a payment provider like Stripe.
+    // For this simulation, we'll just increment the amounts and contributors.
+    const postRef = doc(db, 'posts', postId);
+    
+    return await runTransaction(db, async (transaction) => {
+        const postDoc = await transaction.get(postRef);
+        if (!postDoc.exists()) {
+            throw new Error("Post not found!");
+        }
+        
+        const postData = postDoc.data() as Post;
+        if (!postData.advocacy || !postData.advocacy.isAdvocacyCause) {
+            throw new Error("This post is not an active advocacy cause.");
+        }
+
+        if (postData.advocacy.contributors?.includes(userId)) {
+            throw new Error("You have already contributed to this cause.");
+        }
+
+        // Simulate a contribution amount, e.g., $10
+        const contributionAmount = 10;
+
+        const newCurrentAmount = (postData.advocacy.currentAmount || 0) + contributionAmount;
+
+        transaction.update(postRef, {
+            'advocacy.currentAmount': newCurrentAmount,
+            'advocacy.contributorsCount': increment(1),
+            'advocacy.contributors': arrayUnion(userId),
+        });
+
+        // Return the updated post data for optimistic UI update
+        return {
+            ...postData,
+            advocacy: {
+                ...postData.advocacy,
+                currentAmount: newCurrentAmount,
+                contributorsCount: (postData.advocacy.contributorsCount || 0) + 1,
+                contributors: [...(postData.advocacy.contributors || []), userId],
+            }
+        };
+    });
+}

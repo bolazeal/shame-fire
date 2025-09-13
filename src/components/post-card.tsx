@@ -23,6 +23,7 @@ import {
   Trophy,
   Loader2,
   Flag,
+  HeartHandshake,
 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import Image from 'next/image';
@@ -52,7 +53,7 @@ import { useAuth } from '@/hooks/use-auth';
 import {
   getUserNominations,
 } from '@/lib/firestore';
-import { toggleBookmarkAction, toggleVoteOnPostAction, toggleRepostAction, flagExistingPostAction } from '@/lib/actions/interaction';
+import { toggleBookmarkAction, toggleVoteOnPostAction, toggleRepostAction, flagExistingPostAction, supportCauseAction } from '@/lib/actions/interaction';
 import { createDisputeAction } from '@/lib/actions/dispute';
 import { nominateUserForMedalFromPostAction } from '@/lib/actions/nomination';
 
@@ -66,6 +67,7 @@ import {
 } from './ui/dropdown-menu';
 import { CreatePostDialog } from './create-post-dialog';
 import { NominationDialog } from './nomination-dialog';
+import { Progress } from './ui/progress';
 
 interface PostCardProps {
   post: Post;
@@ -91,11 +93,12 @@ const renderTextWithMentions = (text: string) => {
     });
   };
 
-export function PostCard({ post }: PostCardProps) {
+export function PostCard({ post: initialPost }: PostCardProps) {
   const router = useRouter();
   const { user: authUser, fullProfile } = useAuth();
   const { toast } = useToast();
 
+  const [post, setPost] = useState(initialPost);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [bookmarkCount, setBookmarkCount] = useState(post.bookmarks);
   const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
@@ -116,6 +119,7 @@ export function PostCard({ post }: PostCardProps) {
   
   const [hasFlagged, setHasFlagged] = useState(false);
   const [isFlagging, setIsFlagging] = useState(false);
+  const [isSupporting, setIsSupporting] = useState(false);
 
 
   useEffect(() => {
@@ -365,6 +369,29 @@ export function PostCard({ post }: PostCardProps) {
     }
   };
 
+  const handleSupportCause = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!authUser) {
+      toast({ title: 'Please log in to support a cause.', variant: 'destructive' });
+      return;
+    }
+    setIsSupporting(true);
+    try {
+      const updatedPost = await supportCauseAction(post.id, authUser.uid);
+      setPost(updatedPost); // Optimistically update the post state
+      toast({
+        title: 'Thank you for your support!',
+        description: "Your contribution has been recorded. (This is a simulation)"
+      });
+    } catch(e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive'});
+    } finally {
+      setIsSupporting(false);
+    }
+  };
+
+
   const canEscalate =
     post.type === 'report' &&
     fullProfile &&
@@ -372,6 +399,9 @@ export function PostCard({ post }: PostCardProps) {
     !post.isEscalated;
 
   const postDate = post.createdAt ? new Date(post.createdAt) : new Date();
+  
+  const advocacyProgress = post.advocacy?.goalAmount ? (post.advocacy.currentAmount / post.advocacy.goalAmount) * 100 : 0;
+
 
   return (
     <article
@@ -609,6 +639,32 @@ export function PostCard({ post }: PostCardProps) {
               )}
             </div>
           )}
+          
+          {post.advocacy?.isAdvocacyCause && (
+            <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
+              <h3 className="font-headline text-lg text-primary">{post.advocacy.title}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{post.advocacy.reasoning}</p>
+              
+              <Progress value={advocacyProgress} className="mt-4 h-3" />
+              <div className="mt-2 flex justify-between text-sm text-muted-foreground">
+                <p><span className="font-bold text-foreground">${post.advocacy.currentAmount.toLocaleString()}</span> raised</p>
+                <p>Goal: <span className="font-bold text-foreground">${post.advocacy.goalAmount.toLocaleString()}</span></p>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">{post.advocacy.contributorsCount} contributors</p>
+                <Button
+                  onClick={handleSupportCause}
+                  disabled={isSupporting}
+                  className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
+                >
+                  {isSupporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <HeartHandshake className="mr-2 h-4 w-4" />}
+                  Support this Cause
+                </Button>
+              </div>
+            </div>
+          )}
+
 
           {post.type === 'endorsement' && post.entity && (
             <div className="mt-4 flex justify-end">
@@ -769,5 +825,3 @@ export function PostCard({ post }: PostCardProps) {
     </article>
   );
 }
-
-    

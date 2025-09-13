@@ -515,7 +515,8 @@ export const listenToDisputeComments = (
     callback: (comments: Comment[]) => void
   ): (() => void) => {
     if (!isFirebaseConfigured) {
-        callback(mockComments[disputeId] || []);
+        const comments = mockComments[disputeId] || [];
+        callback(comments);
         return () => {};
     }
     const commentsRef = collection(db, `disputes/${disputeId}/comments`);
@@ -644,3 +645,4 @@ export const listenToMessages = (
 
   return unsubscribe;
 };
+

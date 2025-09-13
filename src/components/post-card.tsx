@@ -49,13 +49,13 @@ import {
 } from './ui/alert-dialog';
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/use-auth';
 import {
   getUserNominations,
 } from '@/lib/firestore';
 import { toggleBookmarkAction, toggleVoteOnPostAction, toggleRepostAction, flagExistingPostAction, supportCauseAction } from '@/lib/actions/interaction';
 import { createDisputeAction } from '@/lib/actions/dispute';
 import { nominateUserForMedalFromPostAction } from '@/lib/actions/nomination';
+import { useAuth } from '@/hooks/use-auth';
 
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -68,9 +68,11 @@ import {
 import { CreatePostDialog } from './create-post-dialog';
 import { NominationDialog } from './nomination-dialog';
 import { Progress } from './ui/progress';
+import type { User as FirebaseUser } from 'firebase/auth';
 
 interface PostCardProps {
   post: Post;
+  authUser: FirebaseUser | null;
 }
 
 const renderTextWithMentions = (text: string) => {
@@ -93,10 +95,10 @@ const renderTextWithMentions = (text: string) => {
     });
   };
 
-export function PostCard({ post: initialPost }: PostCardProps) {
+export function PostCard({ post: initialPost, authUser }: PostCardProps) {
   const router = useRouter();
-  const { user: authUser, fullProfile } = useAuth();
   const { toast } = useToast();
+  const { fullProfile } = useAuth(); // We still need fullProfile for escalating
 
   const [post, setPost] = useState(initialPost);
   const [isBookmarked, setIsBookmarked] = useState(false);
@@ -583,7 +585,7 @@ export function PostCard({ post: initialPost }: PostCardProps) {
             </div>
           )}
 
-          <p className="mt-1 whitespace-pre-wrap text-base">{renderTextWithMentions(post.text)}</p>
+          <div className="mt-1 whitespace-pre-wrap text-base">{renderTextWithMentions(post.text)}</div>
 
           {post.summary && post.type !== 'post' && (
             <p className="mt-2 rounded-lg bg-muted/50 p-2 text-sm italic text-muted-foreground">

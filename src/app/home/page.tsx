@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PostCard } from '@/components/post-card';
@@ -141,10 +142,11 @@ export default function HomePage() {
                     </>
                 ) : posts.length > 0 ? (
                     posts.map((post, index) => {
+                      const card = <PostCard post={post} authUser={user} />;
                       if (posts.length === index + 1) {
-                        return <div ref={lastPostElementRef} key={post.id}><PostCard post={post} /></div>
+                        return <div ref={lastPostElementRef} key={post.id}>{card}</div>
                       } else {
-                        return <PostCard key={post.id} post={post} />
+                        return <div key={post.id}>{card}</div>
                       }
                     })
                 ) : (

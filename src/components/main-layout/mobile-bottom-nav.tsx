@@ -10,6 +10,11 @@ import { Button } from '../ui/button';
 import { useNotification } from '@/hooks/use-notification';
 import { Badge } from '../ui/badge';
 import { MobileMoreSheet } from './mobile-more-sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 
 export function MobileBottomNav() {
   const pathname = usePathname();

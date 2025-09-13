@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
@@ -606,15 +607,20 @@ export default function AdminPage() {
                     {allUsers.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell>
-                          <Link
-                            href={`/profile/${user.id}`}
-                            className="font-medium hover:underline"
-                          >
-                            {user.name}
-                          </Link>
-                          <p className="text-xs text-muted-foreground">
-                            @{user.username}
-                          </p>
+                           <div className="flex items-center gap-3">
+                                <UserAvatar user={user} className="h-10 w-10" />
+                                <div>
+                                    <Link
+                                        href={`/profile/${user.id}`}
+                                        className="font-medium hover:underline"
+                                    >
+                                        {user.name}
+                                    </Link>
+                                    <p className="text-xs text-muted-foreground">
+                                        @{user.username}
+                                    </p>
+                                </div>
+                           </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           {user.email}

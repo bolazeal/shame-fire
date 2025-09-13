@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -46,12 +47,10 @@ export default function RootLayout({
         >
           <AuthProvider>
             <NotificationProvider>
-              <div className="relative flex min-h-screen">
+              <div className="container mx-auto flex min-h-screen max-w-7xl">
                 <LeftSidebar />
                 <main className="flex-1 border-x border-border">
-                  <ScrollArea className="h-screen">
-                    <div className="lg:pb-0 pb-16">{children}</div>
-                  </ScrollArea>
+                    <div className="lg:pb-0 pb-16 h-screen overflow-y-auto">{children}</div>
                 </main>
                 <RightSidebar />
               </div>

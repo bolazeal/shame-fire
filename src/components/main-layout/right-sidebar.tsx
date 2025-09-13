@@ -114,7 +114,7 @@ export function RightSidebar() {
 
 
     return (
-        <aside className="sticky top-0 hidden h-screen w-80 flex-col gap-4 p-4 lg:flex">
+        <aside className="sticky top-0 hidden h-screen w-80 flex-col gap-4 p-4 lg:flex overflow-y-auto">
              <form onSubmit={handleSearchSubmit}>
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />

@@ -1,4 +1,5 @@
 
+
 import {
   collection,
   doc,
@@ -489,7 +490,8 @@ export const listenToDispute = (
     callback: (dispute: Dispute | null) => void
   ): (() => void) => {
     if (!isFirebaseConfigured) {
-        callback(mockDisputes.find(d => d.id === disputeId) || null);
+        const dispute = mockDisputes.find(d => d.id === disputeId) || null;
+        callback(dispute);
         return () => {}; // No-op unsubscribe for mock
     }
     const disputeRef = doc(db, 'disputes', disputeId);

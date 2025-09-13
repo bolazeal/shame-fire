@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserAvatar } from '@/components/user-avatar';
 import { getHonourRollUsers } from '@/lib/firestore';
 import { medals } from '@/lib/medals';
-import { Crown, Info, Trophy, UserCog } from 'lucide-react';
+import { Crown, Info, UserCog } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function HallOfHonourPage() {
@@ -13,7 +13,7 @@ export default async function HallOfHonourPage() {
     <div>
       <header className="sticky top-0 z-10 border-b border-border bg-background/80 p-4 backdrop-blur-sm">
         <div className="flex items-center gap-2">
-          <Trophy className="h-6 w-6 text-amber-500" />
+          <Crown className="h-6 w-6 text-amber-500" />
           <h1 className="text-xl font-bold font-headline">Hall of Honour</h1>
         </div>
       </header>

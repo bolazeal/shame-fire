@@ -46,12 +46,14 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           </aside>
         )}
         <main className="flex-1 border-x border-border">
-          <div className="border-b p-4">
-            <Skeleton className="h-8 w-48" />
-          </div>
-          <div className="p-4">
-            <Skeleton className="h-96 w-full" />
-          </div>
+          <ScrollArea className="h-screen">
+            <div className="border-b p-4">
+                <Skeleton className="h-8 w-48" />
+            </div>
+            <div className="p-4">
+                <Skeleton className="h-96 w-full" />
+            </div>
+          </ScrollArea>
         </main>
         {!isAdminPage && (
           <aside className="sticky top-0 hidden h-screen w-80 flex-col gap-4 p-4 lg:flex">

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
@@ -872,7 +873,7 @@ export default function AdminPage() {
                               {dispute.verdict ? (
                                 <div className="flex items-center gap-2">
                                   <UserAvatar
-                                    user={dispute.verdict.moderator as any}
+                                    user={dispute.verdict.moderator}
                                     className="h-8 w-8"
                                   />
                                   <div>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Search as SearchIcon, Loader2, X } from 'lucide-react';

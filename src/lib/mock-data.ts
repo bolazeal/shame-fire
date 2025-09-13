@@ -333,8 +333,8 @@ export const mockPosts: Post[] = [
     {
         id: 'post9',
         type: 'report',
-        author: mockUser3, // Samuel Green
-        authorId: mockUser3.id,
+        author: mockReportingUser, // Samuel Green
+        authorId: mockReportingUser.id,
         entity: 'TechSolutions LLC',
         category: 'Product Quality',
         text: 'The new software update from @techsolutions bricked my device. The support documents are out of date and their support line just keeps disconnecting. This is the second time this has happened with one of their updates.',

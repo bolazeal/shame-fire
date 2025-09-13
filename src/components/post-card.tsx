@@ -2,7 +2,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import type { Post } from '@/lib/types';
+import type { Post, MedalNomination } from '@/lib/types';
 import { UserAvatar } from './user-avatar';
 import { Button } from './ui/button';
 import {
@@ -50,8 +50,7 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import {
-  getUserByEntityName,
-  hasUserNominated,
+  getUserNominations,
 } from '@/lib/firestore';
 import { toggleBookmarkAction, toggleVoteOnPostAction, toggleRepostAction, flagExistingPostAction } from '@/lib/actions/interaction';
 import { createDisputeAction } from '@/lib/actions/dispute';
@@ -66,6 +65,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { CreatePostDialog } from './create-post-dialog';
+import { NominationDialog } from './nomination-dialog';
 
 interface PostCardProps {
   post: Post;
@@ -112,9 +112,8 @@ export function PostCard({ post }: PostCardProps) {
   const [repostCount, setRepostCount] = useState(post.reposts);
   const [isRepostLoading, setIsRepostLoading] = useState(false);
 
-  const [isNominating, setIsNominating] = useState(false);
-  const [hasNominated, setHasNominated] = useState(false);
-
+  const [userNominations, setUserNominations] = useState<MedalNomination[]>([]);
+  
   const [hasFlagged, setHasFlagged] = useState(false);
   const [isFlagging, setIsFlagging] = useState(false);
 
@@ -137,21 +136,6 @@ export function PostCard({ post }: PostCardProps) {
         setVoteStatus(null);
       }
 
-      // Check nomination status asynchronously
-      if (post.entity && post.type === 'endorsement') {
-        try {
-          const targetUser = await getUserByEntityName(post.entity);
-          if (targetUser && isMounted) {
-            const nominated = await hasUserNominated(
-              authUser.uid,
-              targetUser.id
-            );
-            if (isMounted) setHasNominated(nominated);
-          }
-        } catch (error) {
-          console.error('Error checking nomination status', error);
-        }
-      }
     };
 
     checkUserStatus();
@@ -291,29 +275,24 @@ export function PostCard({ post }: PostCardProps) {
     }
   };
 
-  const handleNominateFromPost = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleNominateFromPost = async (medalTitle: string) => {
     if (!authUser || !post.entity) {
-      toast({ title: 'Cannot nominate from this post.', variant: 'destructive' });
-      return;
+        throw new Error('Cannot nominate from this post.');
     }
-    setIsNominating(true);
     try {
-      await nominateUserForMedalFromPostAction(post.entity, authUser.uid);
-      setHasNominated(true);
-      toast({
-        title: 'Nomination successful!',
-        description: `${post.entity} has been nominated for a Medal of Honour.`,
-      });
+        await nominateUserForMedalFromPostAction(post.entity, authUser.uid, medalTitle);
+        toast({
+            title: 'Nomination successful!',
+            description: `${post.entity} has been nominated for the "${medalTitle}".`,
+        });
     } catch (error: any) {
-      toast({
-        title: 'Nomination failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsNominating(false);
+        toast({
+            title: 'Nomination failed',
+            description: error.message,
+            variant: 'destructive',
+        });
+        // Re-throw to be caught by the dialog
+        throw error;
     }
   };
 
@@ -631,56 +610,25 @@ export function PostCard({ post }: PostCardProps) {
             </div>
           )}
 
-          {post.type === 'endorsement' && (
+          {post.type === 'endorsement' && post.entity && (
             <div className="mt-4 flex justify-end">
-              <AlertDialog>
-                <AlertDialogTrigger
-                  asChild
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                >
+              <NominationDialog
+                nominatedUserName={post.entity}
+                onNominate={handleNominateFromPost}
+              >
                   <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-full font-bold"
-                    disabled={isNominating || hasNominated}
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full font-bold"
+                      onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                      }}
                   >
-                    {isNominating ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
                       <Trophy className="mr-2 h-4 w-4 text-amber-500" />
-                    )}
-                    {hasNominated
-                      ? 'Nominated'
-                      : `Nominate ${post.entity} for Medal`}
+                      Nominate {post.entity} for Medal
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      Nominate {post.entity}?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will formally nominate {post.entity} for a Medal of
-                      Honour, recognizing their positive impact. This action is
-                      public.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel onClick={(e) => e.stopPropagation()}>
-                      Cancel
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleNominateFromPost}
-                      disabled={isNominating}
-                    >
-                      Confirm Nomination
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              </NominationDialog>
             </div>
           )}
 

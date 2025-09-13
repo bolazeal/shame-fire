@@ -57,6 +57,7 @@ export type User = {
   location?: string;
   website?: string;
   nominations: number;
+  medalNominations?: { [key: string]: boolean };
   moderatorNominationsCount?: number;
   publicVotes: number;
   followersCount: number;
@@ -96,6 +97,12 @@ export type MedalInfo = {
   title: string;
   description: string;
   icon: ElementType;
+};
+
+export type MedalNomination = {
+  nominatorId: string;
+  medalTitle: string;
+  nominatedAt: any; // serverTimestamp
 };
 
 export type Comment = {

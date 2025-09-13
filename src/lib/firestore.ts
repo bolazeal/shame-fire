@@ -145,13 +145,25 @@ export const getHonourRollUsers = async (): Promise<User[]> => {
 
 export const hasUserNominated = async (
   nominatorId: string,
-  nominatedUserId: string
+  nominatedUserId: string,
+  medalTitle: string
 ): Promise<boolean> => {
     if (!isFirebaseConfigured) return false;
-  const nominationRef = doc(db, `users/${nominatedUserId}/nominators`, nominatorId);
-  const docSnap = await getDoc(nominationRef);
-  return docSnap.exists();
+    const nominationId = `${nominatorId}_${medalTitle.replace(/\s+/g, '_')}`;
+    const nominationRef = doc(db, `users/${nominatedUserId}/medalNominations`, nominationId);
+    const docSnap = await getDoc(nominationRef);
+    return docSnap.exists();
 };
+
+export const getUserNominations = async (
+  userId: string
+): Promise<{ medalTitle: string, nominatorId: string }[]> => {
+  if (!isFirebaseConfigured) return [];
+  const nominationsRef = collection(db, `users/${userId}/medalNominations`);
+  const snapshot = await getDocs(nominationsRef);
+  return snapshot.docs.map(doc => doc.data() as { medalTitle: string, nominatorId: string });
+}
+
 
 export const hasUserNominatedForModerator = async (
   nominatorId: string,

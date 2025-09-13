@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserAvatar } from '@/components/user-avatar';
-import type { User, Post } from '@/lib/types';
+import type { User, Post, MedalNomination } from '@/lib/types';
 import {
   Calendar,
   Flag,
@@ -31,7 +31,7 @@ import {
   getUserProfile,
   getUserPosts,
   isFollowing,
-  hasUserNominated,
+  getUserNominations,
   hasUserNominatedForModerator,
   getFollowers,
   getFollowing,
@@ -58,6 +58,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { findOrCreateConversationAction } from '@/lib/actions/conversation';
 import { FollowListDialog } from '@/components/follow-list-dialog';
+import { NominationDialog } from '@/components/nomination-dialog';
 
 function ProfileSkeleton() {
   return (
@@ -99,8 +100,9 @@ export default function ProfilePage() {
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [following, setFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
-  const [isNominating, setIsNominating] = useState(false);
-  const [hasNominated, setHasNominated] = useState(false);
+  
+  const [userNominations, setUserNominations] = useState<MedalNomination[]>([]);
+  
   const [isNominatingMod, setIsNominatingMod] = useState(false);
   const [hasNominatedMod, setHasNominatedMod] = useState(false);
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
@@ -115,15 +117,15 @@ export default function ProfilePage() {
       const userProfile = await getUserProfile(userId as string);
       setProfileUser(userProfile);
       if (authUser && userProfile && authUser.uid !== userProfile.id) {
-        const [isUserFollowing, userHasNominated, userHasNominatedForMod] =
+        const [isUserFollowing, userHasNominatedForMod, userNoms] =
           await Promise.all([
             isFollowing(authUser.uid, userProfile.id as string),
-            hasUserNominated(authUser.uid, userProfile.id as string),
             hasUserNominatedForModerator(authUser.uid, userProfile.id as string),
+            getUserNominations(userProfile.id as string) as Promise<MedalNomination[]>
           ]);
         setFollowing(isUserFollowing);
-        setHasNominated(userHasNominated);
         setHasNominatedMod(userHasNominatedForMod);
+        setUserNominations(userNoms);
       }
     } catch (error) {
       console.error('Failed to fetch profile', error);
@@ -173,16 +175,17 @@ export default function ProfilePage() {
     }
   };
 
-  const handleNominate = async () => {
+  const handleNominate = async (medalTitle: string) => {
     if (!authUser || !profileUser) return;
-    setIsNominating(true);
     try {
-      await nominateUserForMedalAction(profileUser.id, authUser.uid);
+      await nominateUserForMedalAction(profileUser.id, authUser.uid, medalTitle);
       toast({
         title: 'Nomination successful!',
-        description: `${profileUser.name} has been nominated for a Medal of Honour.`,
+        description: `${profileUser.name} has been nominated for the "${medalTitle}".`,
       });
-      setHasNominated(true);
+      // Refresh nominations to update state
+      const userNoms = await getUserNominations(profileUser.id) as MedalNomination[];
+      setUserNominations(userNoms);
       setProfileUser((prev) =>
         prev ? { ...prev, nominations: prev.nominations + 1 } : null
       );
@@ -192,8 +195,6 @@ export default function ProfilePage() {
         description: error.message,
         variant: 'destructive',
       });
-    } finally {
-      setIsNominating(false);
     }
   };
 
@@ -383,46 +384,18 @@ export default function ProfilePage() {
                 }
               />
               {profileUser.trustScore > 80 && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
+                <NominationDialog
+                    nominatedUserName={profileUser.name}
+                    onNominate={handleNominate}
+                >
                     <Button
                       variant="outline"
                       className="w-full font-bold"
-                      disabled={isNominating || hasNominated}
                     >
-                      {isNominating ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trophy className="mr-2 h-4 w-4 text-amber-500" />
-                      )}
-                      {hasNominated ? 'Nominated' : 'Nominate for Medal'}
+                      <Trophy className="mr-2 h-4 w-4 text-amber-500" />
+                      Nominate for Medal
                     </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        Nominate {profileUser.name}?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will formally nominate {profileUser.name} for a
-                        Medal of Honour, recognizing their positive impact. This
-                        action is public and cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleNominate}
-                        disabled={isNominating}
-                      >
-                        {isNominating && (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        )}
-                        Confirm Nomination
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                </NominationDialog>
               )}
               {profileUser.trustScore > 75 && (
                 <AlertDialog>
@@ -438,7 +411,7 @@ export default function ProfilePage() {
                         <UserCog className="mr-2 h-4 w-4" />
                       )}
                       {hasNominatedMod
-                        ? 'Nominated'
+                        ? 'Nominated for Mod'
                         : 'Nominate for Moderator'}
                     </Button>
                   </AlertDialogTrigger>

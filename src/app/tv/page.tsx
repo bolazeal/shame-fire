@@ -44,6 +44,8 @@ function TVPageSkeleton() {
     );
 }
 
+// This page has client components that depend on state, so we'll fetch the data
+// initially and then manage the active video on the client.
 export default function TVPage() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [activeVideo, setActiveVideo] = useState<Video | null>(null);

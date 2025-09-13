@@ -1,11 +1,7 @@
-'use client';
-
 import { DisputeCard } from '@/components/dispute-card';
 import { Landmark, Loader2 } from 'lucide-react';
-import { useState, useEffect, useMemo } from 'react';
 import { getAllDisputes } from '@/lib/firestore';
 import type { Dispute } from '@/lib/types';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tabs,
   TabsContent,
@@ -13,56 +9,11 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 
-function DisputeSkeleton() {
-  return (
-    <div className="border-b p-4">
-      <div className="space-y-4">
-        <div className="flex justify-between">
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-6 w-24" />
-        </div>
-        <Skeleton className="h-6 w-3/4" />
-        <Skeleton className="h-12 w-full" />
-        <div className="flex gap-2">
-          <Skeleton className="h-8 w-8 rounded-full" />
-          <Skeleton className="h-8 w-8 rounded-full" />
-        </div>
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-full" />
-        </div>
-      </div>
-    </div>
-  );
-}
+export default async function VillageSquarePage() {
+  const disputes = await getAllDisputes();
 
-export default function VillageSquarePage() {
-  const [disputes, setDisputes] = useState<Dispute[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchDisputes = async () => {
-      setLoading(true);
-      try {
-        const fetchedDisputes = await getAllDisputes();
-        setDisputes(fetchedDisputes);
-      } catch (error) {
-        console.error('Failed to fetch disputes:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDisputes();
-  }, []);
-
-  const activeDisputes = useMemo(
-    () => disputes.filter((d) => d.status !== 'closed'),
-    [disputes]
-  );
-  const closedDisputes = useMemo(
-    () => disputes.filter((d) => d.status === 'closed'),
-    [disputes]
-  );
+  const activeDisputes = disputes.filter((d) => d.status !== 'closed');
+  const closedDisputes = disputes.filter((d) => d.status === 'closed');
 
   return (
     <div>
@@ -90,12 +41,7 @@ export default function VillageSquarePage() {
         </div>
 
         <TabsContent value="active">
-          {loading ? (
-            <>
-              <DisputeSkeleton />
-              <DisputeSkeleton />
-            </>
-          ) : activeDisputes.length === 0 ? (
+          {activeDisputes.length === 0 ? (
             <p className="p-4 text-center text-muted-foreground">
               No active disputes right now.
             </p>
@@ -106,12 +52,7 @@ export default function VillageSquarePage() {
           )}
         </TabsContent>
         <TabsContent value="closed">
-          {loading ? (
-            <>
-              <DisputeSkeleton />
-              <DisputeSkeleton />
-            </>
-          ) : closedDisputes.length === 0 ? (
+          {closedDisputes.length === 0 ? (
             <p className="p-4 text-center text-muted-foreground">
               No closed disputes yet.
             </p>

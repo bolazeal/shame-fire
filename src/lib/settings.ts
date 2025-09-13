@@ -1,4 +1,3 @@
-
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './firebase';
 import { fromFirestore } from './firestore';
@@ -57,3 +56,5 @@ export const updatePlatformSettings = async (
   const settingsRef = doc(db, 'config', 'platform_settings');
   await setDoc(settingsRef, { ...newSettings, lastUpdated: serverTimestamp() }, { merge: true });
 };
+
+    

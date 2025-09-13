@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
@@ -742,7 +740,7 @@ export default function AdminPage() {
                                       Are you sure?
                                     </AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      This will reset @{user.username}&apos;s
+                                      This will reset @{user.username}'s
                                       trust score to the default value of 50.
                                       This action cannot be undone.
                                     </AlertDialogDescription>
@@ -936,3 +934,5 @@ export default function AdminPage() {
     </TooltipProvider>
   );
 }
+
+    

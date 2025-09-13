@@ -1,4 +1,3 @@
-
 import type { ElementType } from 'react';
 import { z } from 'zod';
 
@@ -281,3 +280,5 @@ export type PlatformSettings = {
   featureHallOfHonour: boolean;
   featureDirectMessages: boolean;
 };
+
+    

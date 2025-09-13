@@ -28,20 +28,18 @@ function TVPageSkeleton() {
                 </div>
                 <aside className="w-full lg:w-96">
                     <h3 className="mb-4 text-lg font-bold">Up Next</h3>
-                    <ScrollArea className="h-[calc(100vh-250px)]">
-                        <div className="flex flex-col gap-2 pr-4">
-                            {[...Array(3)].map((_, i) => (
-                            <div key={i} className="flex w-full gap-3 rounded-lg p-2">
-                                <Skeleton className="relative aspect-video h-20 shrink-0 overflow-hidden rounded-md" />
-                                <div className="flex-1 py-1">
-                                    <Skeleton className="h-4 w-full" />
-                                    <Skeleton className="mt-2 h-4 w-2/3" />
-                                    <Skeleton className="mt-2 h-3 w-1/3" />
-                                </div>
+                    <div className="flex flex-col gap-2 pr-4">
+                        {[...Array(3)].map((_, i) => (
+                        <div key={i} className="flex w-full gap-3 rounded-lg p-2">
+                            <Skeleton className="relative aspect-video h-20 shrink-0 overflow-hidden rounded-md" />
+                            <div className="flex-1 py-1 space-y-2">
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-4 w-2/3" />
+                                <Skeleton className="h-3 w-1/3" />
                             </div>
-                            ))}
                         </div>
-                    </ScrollArea>
+                        ))}
+                    </div>
                 </aside>
             </main>
         </div>

@@ -30,7 +30,6 @@ import {
   Ban,
   RotateCcw,
   UserCog,
-  Broadcast,
 } from 'lucide-react';
 import {
   Tabs,
@@ -54,7 +53,6 @@ import {
   getFlaggedContent,
   getAllDisputes,
   getAllUsers,
-  getTrendingTopics,
 } from '@/lib/firestore';
 import { approvePostAction } from '@/lib/actions/post';
 import type { Post, Dispute, FlaggedContent, User } from '@/lib/types';
@@ -79,10 +77,18 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { UserAvatar } from '@/components/user-avatar';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { toggleAdminStatusAction, updateUserAccountStatusAction, resetUserTrustScoreAction, removeFlaggedItemAction, deletePostAndFlagsAction } from '@/lib/actions/admin';
-import { SettingsForm } from '@/components/settings-form';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  toggleAdminStatusAction,
+  updateUserAccountStatusAction,
+  resetUserTrustScoreAction,
+  removeFlaggedItemAction,
+  deletePostAndFlagsAction,
+} from '@/lib/actions/admin';
 
 export default function AdminPage() {
   const { fullProfile, loading: authLoading } = useAuth();
@@ -95,7 +101,6 @@ export default function AdminPage() {
     totalReports: 0,
     totalEndorsements: 0,
     activeDisputes: 0,
-    topTrend: '',
   });
   const [flaggedContent, setFlaggedContent] = useState<FlaggedContent[]>([]);
   const [allDisputes, setAllDisputes] = useState<Dispute[]>([]);
@@ -106,9 +111,6 @@ export default function AdminPage() {
     null
   );
   const [updatingAdminId, setUpdatingAdminId] = useState<string | null>(null);
-  
-  const [contentBreakdownData, setContentBreakdownData] = useState<any[]>([]);
-  const [userActivityData, setUserActivityData] = useState<any[]>([]);
 
   const activeDisputes = useMemo(
     () => allDisputes.filter((d) => d.status !== 'closed'),
@@ -130,7 +132,6 @@ export default function AdminPage() {
         flagged,
         disputesData,
         usersData,
-        trendsData,
       ] = await Promise.all([
         getCollectionCount('users'),
         getCollectionCount('posts', 'type', '==', 'post'),
@@ -139,58 +140,16 @@ export default function AdminPage() {
         getFlaggedContent(),
         getAllDisputes(),
         getAllUsers(),
-        getTrendingTopics(),
       ]);
 
-      const newStats = {
+      setStats({
         totalUsers: userCount,
         totalPosts: postCount,
         totalReports: reportCount,
         totalEndorsements: endorsementCount,
-        activeDisputes: disputesData.filter((d) => d.status !== 'closed').length,
-        topTrend: trendsData.length > 0 ? `#${trendsData[0].category}` : 'N/A',
-      };
-
-      setStats(newStats);
-      setContentBreakdownData([
-        { type: 'posts', count: newStats.totalPosts },
-        { type: 'reports', count: newStats.totalReports },
-        { type: 'endorsements', count: newStats.totalEndorsements },
-      ]);
-      
-      const processUserActivity = (users: User[]) => {
-        const last7Days = Array.from({ length: 7 }, (_, i) => {
-            const d = new Date();
-            d.setHours(0, 0, 0, 0);
-            d.setDate(d.getDate() - i);
-            return d;
-        }).reverse(); 
-
-        const dailySignups = last7Days.map(day => ({
-            date: day.toLocaleDateString('en-US', { weekday: 'short' }),
-            signups: 0
-        }));
-
-        users.forEach(user => {
-            if (user.createdAt) {
-                const signupDate = new Date(user.createdAt);
-                signupDate.setHours(0,0,0,0);
-                
-                const diffTime = new Date().setHours(0,0,0,0) - signupDate.getTime();
-                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                
-                if (diffDays >= 0 && diffDays < 7) {
-                    const dayIndex = 6 - diffDays;
-                    if(dailySignups[dayIndex]) {
-                        dailySignups[dayIndex].signups++;
-                    }
-                }
-            }
-        });
-        return dailySignups;
-    };
-    
-      setUserActivityData(processUserActivity(usersData));
+        activeDisputes: disputesData.filter((d) => d.status !== 'closed')
+          .length,
+      });
 
       setFlaggedContent(flagged);
       setAllDisputes(disputesData);
@@ -290,7 +249,6 @@ export default function AdminPage() {
     }
   };
 
-
   const handleUpdateUserStatus = async (
     userId: string,
     status: 'active' | 'suspended' | 'banned'
@@ -367,8 +325,7 @@ export default function AdminPage() {
           <Skeleton className="h-6 w-40" />
         </header>
         <div className="space-y-8 p-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            <Skeleton className="h-28 w-full" />
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Skeleton className="h-28 w-full" />
             <Skeleton className="h-28 w-full" />
             <Skeleton className="h-28 w-full" />
@@ -390,24 +347,17 @@ export default function AdminPage() {
         <h1 className="text-xl font-bold font-headline">Admin Panel</h1>
       </header>
 
-      <Tabs defaultValue="dashboard" className="w-full">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-8">
-            <ScrollArea className="w-full whitespace-nowrap rounded-lg">
-                <TabsList className="w-max">
-                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                <TabsTrigger value="moderation">Content Moderation</TabsTrigger>
-                <TabsTrigger value="users">User Management</TabsTrigger>
-                <TabsTrigger value="disputes">Dispute Management</TabsTrigger>
-                <TabsTrigger value="settings">Settings</TabsTrigger>
-                </TabsList>
-                <ScrollBar orientation="horizontal" />
-            </ScrollArea>
-        </div>
-
-
-        <TabsContent value="dashboard" className="m-0 border-t">
-          <div className="space-y-8 p-4 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <Tabs defaultValue="dashboard" className="w-full p-4">
+        <TabsList>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="moderation">Content Moderation</TabsTrigger>
+          <TabsTrigger value="users">User Management</TabsTrigger>
+          <TabsTrigger value="disputes">Dispute Management</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
+        <TabsContent value="dashboard" className="mt-4">
+          <div className="space-y-8">
+            <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
@@ -456,46 +406,12 @@ export default function AdminPage() {
                   </div>
                 </CardContent>
               </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Top Trend
-                  </CardTitle>
-                  <Broadcast className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold truncate">{stats.topTrend}</div>
-                </CardContent>
-              </Card>
             </section>
-            <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent User Activity</CardTitle>
-                  <CardDescription>
-                    New user signups over the last 7 days.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {/*<UserActivityChart data={userActivityData} />*/}
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Content Breakdown</CardTitle>
-                  <CardDescription>
-                    A summary of all content types on the platform.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {/*<ContentBreakdownChart data={contentBreakdownData} />*/}
-                </CardContent>
-              </Card>
-            </section>
+            {/* Charts section removed */}
           </div>
         </TabsContent>
-        <TabsContent value="moderation" className="m-0 border-t">
-          <div className="space-y-8 p-4 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <TabsContent value="moderation" className="mt-4">
+          <div className="space-y-8">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -589,8 +505,8 @@ export default function AdminPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="users" className="m-0 border-t">
-          <div className="space-y-8 p-4 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <TabsContent value="users" className="mt-4">
+          <div className="space-y-8">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -712,7 +628,7 @@ export default function AdminPage() {
                                 </DropdownMenuItem>
                               )}
 
-                              {user.accountStatus === 'active' && !user.isAdmin && (
+                              {user.accountStatus === 'active' && (
                                 <DropdownMenuItem
                                   onClick={() =>
                                     handleUpdateUserStatus(
@@ -726,7 +642,7 @@ export default function AdminPage() {
                                 </DropdownMenuItem>
                               )}
 
-                              {user.accountStatus !== 'banned' && !user.isAdmin && (
+                              {user.accountStatus !== 'banned' && (
                                 <DropdownMenuItem
                                   className="text-destructive focus:bg-destructive/10 focus:text-destructive"
                                   onClick={() =>
@@ -794,168 +710,149 @@ export default function AdminPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="disputes" className="m-0 border-t">
-          <div className="p-4 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <Tabs defaultValue="active" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="active">
-                  Active ({activeDisputes.length})
-                </TabsTrigger>
-                <TabsTrigger value="closed">
-                  Closed ({closedDisputes.length})
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="active" className="mt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Gavel />
-                      Active Disputes
-                    </CardTitle>
-                    <CardDescription>
-                      Oversee ongoing disputes in the Village Square.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Dispute Title</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Involved Parties</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {activeDisputes.map((dispute) => (
-                          <TableRow key={dispute.id}>
-                            <TableCell className="font-medium">
-                              {dispute.title}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="capitalize">
-                                {dispute.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {dispute.involvedParties
-                                .map((p) => p.name)
-                                .join(', ')}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button asChild variant="outline" size="sm">
-                                <Link href={`/dispute/${dispute.id}`}>
-                                  <View className="mr-2 h-4 w-4" />
-                                  View Dispute
-                                </Link>
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                    {activeDisputes.length === 0 && (
-                      <p className="p-4 text-center text-muted-foreground">
-                        No active disputes.
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="closed" className="mt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <CheckCircle />
-                      Closed Disputes
-                    </CardTitle>
-                    <CardDescription>
-                      Review the history of resolved disputes.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Dispute Title</TableHead>
-                          <TableHead>Verdict By</TableHead>
-                          <TableHead>Decision</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {closedDisputes.map((dispute) => (
-                          <TableRow key={dispute.id}>
-                            <TableCell className="font-medium">
-                              {dispute.title}
-                            </TableCell>
-                            <TableCell>
-                              {dispute.verdict ? (
-                                <div className="flex items-center gap-2">
-                                  <UserAvatar
-                                    user={dispute.verdict.moderator}
-                                    className="h-8 w-8"
-                                  />
-                                  <div>
-                                    <p className="font-bold">{dispute.verdict.moderator.name}</p>
-                                    <p className="text-xs text-muted-foreground">Moderator</p>
-                                  </div>
-                                </div>
-                              ) : (
-                                'N/A'
-                              )}
-                            </TableCell>
-                            <TableCell className="max-w-xs truncate text-muted-foreground">
-                              {dispute.verdict?.decision}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button asChild variant="outline" size="sm">
-                                <Link href={`/dispute/${dispute.id}`}>
-                                  <View className="mr-2 h-4 w-4" />
-                                  View Details
-                                </Link>
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                    {closedDisputes.length === 0 && (
-                      <p className="p-4 text-center text-muted-foreground">
-                        No closed disputes yet.
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="settings" className="m-0 border-t">
-          <div className="p-4 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <TabsContent value="disputes" className="mt-4">
+          <div className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Settings />
-                  Platform Settings
+                  <Gavel />
+                  Active Disputes ({activeDisputes.length})
                 </CardTitle>
                 <CardDescription>
-                  Configure global aspects of the platform.
+                  Oversee ongoing disputes in the Village Square.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <SettingsForm />
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Dispute Title</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Involved Parties</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {activeDisputes.map((dispute) => (
+                      <TableRow key={dispute.id}>
+                        <TableCell className="font-medium">
+                          {dispute.title}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="capitalize">
+                            {dispute.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {dispute.involvedParties
+                            .map((p) => p.name)
+                            .join(', ')}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button asChild variant="outline" size="sm">
+                            <Link href={`/dispute/${dispute.id}`}>
+                              <View className="mr-2 h-4 w-4" />
+                              View Dispute
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {activeDisputes.length === 0 && (
+                  <p className="p-4 text-center text-muted-foreground">
+                    No active disputes.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle />
+                  Closed Disputes ({closedDisputes.length})
+                </CardTitle>
+                <CardDescription>
+                  Review the history of resolved disputes.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Dispute Title</TableHead>
+                      <TableHead>Verdict By</TableHead>
+                      <TableHead>Decision</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {closedDisputes.map((dispute) => (
+                      <TableRow key={dispute.id}>
+                        <TableCell className="font-medium">
+                          {dispute.title}
+                        </TableCell>
+                        <TableCell>
+                          {dispute.verdict ? (
+                            <div className="flex items-center gap-2">
+                              <UserAvatar
+                                user={dispute.verdict.moderator}
+                                className="h-8 w-8"
+                              />
+                              <p>{dispute.verdict.moderator.name}</p>
+                            </div>
+                          ) : (
+                            'N/A'
+                          )}
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate text-muted-foreground">
+                          {dispute.verdict?.decision}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button asChild variant="outline" size="sm">
+                            <Link href={`/dispute/${dispute.id}`}>
+                              <View className="mr-2 h-4 w-4" />
+                              View Details
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {closedDisputes.length === 0 && (
+                  <p className="p-4 text-center text-muted-foreground">
+                    No closed disputes yet.
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="settings" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings />
+                Platform Settings
+              </CardTitle>
+              <CardDescription>
+                This feature is under construction.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Configuration options for the platform will be available here
+                soon.
+              </p>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
   );
 }
-    
-    
-    
 
     

@@ -77,7 +77,7 @@ export function DisputePageClient({ initialDispute, initialComments }: { initial
 
   const [dispute, setDispute] = useState<Dispute | null>(initialDispute);
   const [comments, setComments] = useState<Comment[]>(initialComments);
-  const [loading, setLoading] = useState(!initialDispute);
+  const [loading, setLoading] = useState(false);
 
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isVoting, setIsVoting] = useState(false);
@@ -88,16 +88,15 @@ export function DisputePageClient({ initialDispute, initialComments }: { initial
 
   useEffect(() => {
     if (!disputeId) return;
-    setLoading(true);
 
     const unsubscribeDispute = listenToDispute(disputeId, (disputeData) => {
-        setDispute(disputeData);
-        if (!disputeData) setLoading(false); // If dispute is deleted
+        if (disputeData) {
+            setDispute(disputeData);
+        }
     });
 
     const unsubscribeComments = listenToDisputeComments(disputeId, (commentsData) => {
         setComments(commentsData);
-        setLoading(false); // Set loading to false once comments are loaded
     });
 
     return () => {

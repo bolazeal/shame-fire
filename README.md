@@ -1,6 +1,6 @@
 # Shame: A Platform for Public Accountability
 
-![Shame App Screenshot](https://placehold.co/1200x600.png "Shame App UI")
+![Shame App Screenshot](https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=1200&h=600&fit=crop)
 
 **Shame** is a modern, full-stack social media application built to promote transparency and public accountability. Leveraging Next.js, Firebase, and Google's Genkit AI, it provides a feature-rich platform where users can report misconduct, endorse positive actions, and engage in community-governed dispute resolution.
 

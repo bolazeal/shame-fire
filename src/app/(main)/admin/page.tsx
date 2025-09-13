@@ -78,7 +78,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { UserAvatar } from '@/components/user-avatar';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toggleAdminStatusAction, updateUserAccountStatusAction, resetUserTrustScoreAction, removeFlaggedItemAction, deletePostAndFlagsAction } from '@/lib/actions/admin';
 import { SettingsForm } from '@/components/settings-form';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -378,7 +378,6 @@ export default function AdminPage() {
   }
 
   return (
-    <TooltipProvider>
     <div>
       <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/80 p-4 backdrop-blur-sm">
         <Shield className="h-6 w-6 text-primary" />
@@ -386,7 +385,7 @@ export default function AdminPage() {
       </header>
 
       <Tabs defaultValue="dashboard" className="w-full">
-        <div className="mx-4 mb-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-8">
             <ScrollArea className="w-full whitespace-nowrap rounded-lg">
                 <TabsList className="w-max">
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
@@ -401,7 +400,7 @@ export default function AdminPage() {
 
 
         <TabsContent value="dashboard" className="m-0 border-t">
-          <div className="space-y-8 p-4">
+          <div className="space-y-8 p-4 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -479,7 +478,7 @@ export default function AdminPage() {
           </div>
         </TabsContent>
         <TabsContent value="moderation" className="m-0 border-t">
-          <div className="space-y-8 p-4">
+          <div className="space-y-8 p-4 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -574,7 +573,7 @@ export default function AdminPage() {
         </TabsContent>
 
         <TabsContent value="users" className="m-0 border-t">
-          <div className="space-y-8 p-4">
+          <div className="space-y-8 p-4 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -774,7 +773,7 @@ export default function AdminPage() {
         </TabsContent>
 
         <TabsContent value="disputes" className="m-0 border-t">
-          <div className="p-4">
+          <div className="p-4 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <Tabs defaultValue="active" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="active">
@@ -912,7 +911,7 @@ export default function AdminPage() {
         </TabsContent>
 
         <TabsContent value="settings" className="m-0 border-t">
-          <div className="p-4">
+          <div className="p-4 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -931,7 +930,6 @@ export default function AdminPage() {
         </TabsContent>
       </Tabs>
     </div>
-    </TooltipProvider>
   );
 }
 

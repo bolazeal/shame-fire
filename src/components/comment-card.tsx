@@ -4,7 +4,7 @@
 import type { Comment } from '@/lib/types';
 import { UserAvatar } from './user-avatar';
 import { Button } from './ui/button';
-import { ArrowBigUp, ArrowBigDown, MessageSquare, MoreHorizontal, Trash2, Loader2 } from 'lucide-react';
+import { ArrowBigUp, ArrowBigDown, MessageSquare, MoreHorizontal, Trash2, Loader2, ShieldCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
 import { useState } from 'react';
@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { deleteCommentAction, deleteDisputeCommentAction } from '@/lib/actions/interaction';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Badge } from './ui/badge';
 
 interface CommentCardProps {
   comment: Comment;
@@ -65,6 +66,12 @@ export function CommentCard({ comment, isReply = false, onDelete, postId, disput
         <div className="rounded-lg bg-muted p-3">
           <div className="flex items-center gap-2 text-sm">
             <span className="font-bold">{comment.author.name}</span>
+            {comment.authorIsAdmin && (
+              <Badge variant="secondary" className="border-red-500/50 text-red-500">
+                <ShieldCheck className="mr-1 h-3 w-3" />
+                Admin
+              </Badge>
+            )}
             <span className="text-muted-foreground">
               @{comment.author.username}
             </span>
@@ -156,5 +163,3 @@ export function CommentCard({ comment, isReply = false, onDelete, postId, disput
     </div>
   );
 }
-
-    

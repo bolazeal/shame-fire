@@ -1,3 +1,4 @@
+
 import type { ElementType } from 'react';
 import { z } from 'zod';
 
@@ -112,6 +113,7 @@ export type Comment = {
     username: string;
     avatarUrl?: string;
   };
+  authorIsAdmin?: boolean;
   text: string;
   mediaUrl?: string;
   mediaType?: 'image' | 'video';

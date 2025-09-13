@@ -14,8 +14,8 @@ import { Separator } from '@/components/ui/separator';
 import { UserAvatar } from '@/components/user-avatar';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Gavel, Scale, Users, Vote, Loader2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Gavel, Scale, Users, Vote, Loader2, MessageSquare, ShieldCheck, UserCheck } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { CommentCard } from '@/components/comment-card';
@@ -109,6 +109,26 @@ export default function DisputePage() {
 
   const hasVoted = authUser && dispute?.poll.voters?.includes(authUser.uid);
   const totalVotes = dispute?.poll.options.reduce((acc, option) => acc + option.votes, 0) ?? 0;
+
+  const { involvedPartyComments, moderatorComments, communityComments } = useMemo(() => {
+    if (!dispute) return { involvedPartyComments: [], moderatorComments: [], communityComments: [] };
+    const involvedPartyIds = new Set(dispute.involvedParties.map(p => p.id));
+    
+    const involved = [];
+    const moderators = [];
+    const community = [];
+
+    for (const comment of comments) {
+      if (comment.authorIsAdmin) {
+        moderators.push(comment);
+      } else if (involvedPartyIds.has(comment.author.id)) {
+        involved.push(comment);
+      } else {
+        community.push(comment);
+      }
+    }
+    return { involvedPartyComments: involved, moderatorComments: moderators, communityComments: community };
+  }, [comments, dispute]);
 
   const handleVote = async () => {
     if (!selectedOption || !authUser || !dispute) {
@@ -315,36 +335,76 @@ export default function DisputePage() {
             )}
 
             <Separator />
+            
+            <div className="space-y-8">
+              <div>
+                  <h3 className="flex items-center gap-2 text-lg font-semibold">
+                    Discussion ({dispute.commentsCount})
+                  </h3>
+                  <div className="mt-6 flex gap-4">
+                    {authUser ? (
+                      <UserAvatar user={authUser} className="h-10 w-10" />
+                    ) : (
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                    )}
+                    <div className="flex-1">
+                      <Textarea
+                        placeholder="Add your comment to the discussion..."
+                        rows={3}
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        disabled={!authUser || isSubmittingComment}
+                      />
+                      <Button className="mt-2" onClick={handleCommentSubmit} disabled={!authUser || isSubmittingComment || !newComment.trim()}>
+                        {isSubmittingComment && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Submit Comment
+                      </Button>
+                    </div>
+                  </div>
+              </div>
 
-            <div>
-              <h3 className="flex items-center gap-2 text-lg font-semibold">
-                Discussion ({dispute.commentsCount})
-              </h3>
-              <div className="mt-6 space-y-6">
-                <div className="flex gap-4">
-                  {authUser ? (
-                    <UserAvatar user={authUser} className="h-10 w-10" />
-                   ) : (
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                   )}
-                  <div className="flex-1">
-                    <Textarea
-                      placeholder="Add your comment to the discussion..."
-                      rows={3}
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      disabled={!authUser || isSubmittingComment}
-                    />
-                    <Button className="mt-2" onClick={handleCommentSubmit} disabled={!authUser || isSubmittingComment || !newComment.trim()}>
-                      {isSubmittingComment && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Submit Comment
-                    </Button>
+              {involvedPartyComments.length > 0 && (
+                <div className="space-y-4 rounded-lg border bg-muted/50 p-4">
+                  <h4 className="flex items-center gap-2 font-semibold">
+                    <UserCheck className="h-5 w-5 text-primary" />
+                    Official Discussion
+                  </h4>
+                  <div className="space-y-6">
+                    {involvedPartyComments.map((comment) => (
+                        <CommentCard key={comment.id} comment={comment} onDelete={handleDeleteDisputeComment} disputeId={dispute.id} />
+                    ))}
                   </div>
                 </div>
-                {comments.map((comment) => (
-                  <CommentCard key={comment.id} comment={comment} onDelete={handleDeleteDisputeComment} disputeId={dispute.id} />
-                ))}
-              </div>
+              )}
+              
+              {moderatorComments.length > 0 && (
+                <div className="space-y-4">
+                  <h4 className="flex items-center gap-2 font-semibold">
+                    <ShieldCheck className="h-5 w-5 text-primary" />
+                    Moderator Comments
+                  </h4>
+                  <div className="space-y-6">
+                    {moderatorComments.map((comment) => (
+                        <CommentCard key={comment.id} comment={comment} onDelete={handleDeleteDisputeComment} disputeId={dispute.id} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {communityComments.length > 0 && (
+                <div className="space-y-4 pt-4">
+                   <h4 className="flex items-center gap-2 font-semibold">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                    Community Discussion
+                  </h4>
+                  <div className="space-y-6">
+                    {communityComments.map((comment) => (
+                        <CommentCard key={comment.id} comment={comment} onDelete={handleDeleteDisputeComment} disputeId={dispute.id} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </div>
           </CardContent>
         </Card>
@@ -352,5 +412,3 @@ export default function DisputePage() {
     </div>
   );
 }
-
-    

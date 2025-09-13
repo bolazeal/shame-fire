@@ -1,3 +1,4 @@
+
 # Shame: A Platform for Public Accountability
 
 ![Shame App Screenshot](https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=1200&h=600&fit=crop)
@@ -87,3 +88,5 @@ For AI features like content summarization and moderation to work, you must also
 5.  Save your changes.
 
 After adding all these variables, redeploy your application. It will now connect to your live Firebase backend and enable all AI features.
+
+    

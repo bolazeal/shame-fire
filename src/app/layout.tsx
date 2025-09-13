@@ -46,7 +46,16 @@ export default function RootLayout({
         >
           <AuthProvider>
             <NotificationProvider>
-              {children}
+              <div className="relative flex min-h-screen">
+                <LeftSidebar />
+                <main className="flex-1 border-x border-border">
+                  <ScrollArea className="h-screen">
+                    <div className="lg:pb-0 pb-16">{children}</div>
+                  </ScrollArea>
+                </main>
+                <RightSidebar />
+              </div>
+              <MobileBottomNav />
               <Toaster />
             </NotificationProvider>
           </AuthProvider>

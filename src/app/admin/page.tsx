@@ -178,7 +178,7 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     if (!authLoading) {
@@ -922,5 +922,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

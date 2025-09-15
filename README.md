@@ -1,4 +1,3 @@
-
 # Shame: A Platform for Public Accountability
 
 ![Shame App Screenshot](https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=1200&h=600&fit=crop)
@@ -28,7 +27,7 @@ This project showcases a complete, production-ready application with real-time f
 ### Community & Governance
 *   **Community Governance**:
     *   **Village Square**: A dedicated space for escalating reports into public disputes, featuring real-time community polling and discussion.
-    *   **Hall of Honour**: Recognizes highly-trusted users through a medal and nomination system.
+    *   **Hall of Honour & Hall of Shame**: Recognizes highly-trusted users through a medal and nomination system, and highlights users with the lowest trust scores.
     *   **Moderator Selection**: Community members can nominate trusted users (with high Trust Scores) to be considered for moderator roles.
 *   **Full-Featured Admin Panel**: A protected dashboard for administrators to monitor platform metrics, manage users (suspend/ban/reset trust score), review content, and configure platform-wide settings.
 
@@ -88,5 +87,3 @@ For AI features like content summarization and moderation to work, you must also
 5.  Save your changes.
 
 After adding all these variables, redeploy your application. It will now connect to your live Firebase backend and enable all AI features.
-
-    

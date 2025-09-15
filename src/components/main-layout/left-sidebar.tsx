@@ -37,6 +37,7 @@ import {
   Laptop,
   LogOut,
   MoreHorizontal,
+  ThumbsDown,
 } from 'lucide-react';
 
 const navItems = [
@@ -47,6 +48,7 @@ const navItems = [
   { href: '/bookmarks', icon: Bookmark, text: 'Bookmarks' },
   { href: '/village-square', icon: Landmark, text: 'Village Square' },
   { href: '/hall-of-honour', icon: Trophy, text: 'Hall of Honour' },
+  { href: '/hall-of-shame', icon: ThumbsDown, text: 'Hall of Shame' },
   { href: '/profile', icon: User, text: 'Profile' },
   { href: '/admin', icon: Shield, text: 'Admin Panel' },
 ];

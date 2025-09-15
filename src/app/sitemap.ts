@@ -26,6 +26,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+        url: baseUrl + '/hall-of-shame',
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.7,
+    },
+    {
         url: baseUrl + '/search',
         lastModified: new Date(),
         changeFrequency: 'always',

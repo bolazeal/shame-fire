@@ -144,6 +144,16 @@ export const getHonourRollUsers = async (): Promise<User[]> => {
   return snapshot.docs.map((doc) => fromFirestore<User>(doc));
 };
 
+export const getShameRollUsers = async (): Promise<User[]> => {
+    if (!isFirebaseConfigured) {
+        return Object.values(mockUsers).sort((a, b) => a.trustScore - b.trustScore).slice(0, 5);
+    }
+  const usersRef = collection(db, 'users');
+  const q = query(usersRef, orderBy('trustScore', 'asc'), limit(5));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => fromFirestore<User>(doc));
+};
+
 export const hasUserNominated = async (
   nominatorId: string,
   nominatedUserId: string,
@@ -475,7 +485,8 @@ export const getAllDisputes = async (): Promise<Dispute[]> => {
 
 export const getDispute = async (disputeId: string): Promise<Dispute | null> => {
     if (!isFirebaseConfigured) {
-        return mockDisputes.find(d => d.id === disputeId) || null;
+        const dispute = mockDisputes.find(d => d.id === disputeId) || null;
+        return dispute;
     }
     const disputeRef = doc(db, 'disputes', disputeId);
     const disputeSnap = await getDoc(disputeRef);

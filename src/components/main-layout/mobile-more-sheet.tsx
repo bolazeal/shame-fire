@@ -23,6 +23,7 @@ import {
   Moon,
   Laptop,
   Tv,
+  ThumbsDown,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,7 @@ const navItems = [
   { href: '/bookmarks', icon: Bookmark, text: 'Bookmarks' },
   { href: '/village-square', icon: Landmark, text: 'Village Square' },
   { href: '/hall-of-honour', icon: Trophy, text: 'Hall of Honour' },
+  { href: '/hall-of-shame', icon: ThumbsDown, text: 'Hall of Shame' },
   { href: '/admin', icon: Shield, text: 'Admin Panel' },
 ];
 

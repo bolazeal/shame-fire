@@ -188,7 +188,7 @@ export default function AdminPage() {
         fetchData();
       }
     }
-  }, [fullProfile, authLoading, router, fetchData]);
+  }, [fullProfile, authLoading, router]);
 
   const handleApprove = async (item: FlaggedContent) => {
     try {
@@ -627,8 +627,7 @@ export default function AdminPage() {
                               {user.trustScore}
                             </TableCell>
                             <TableCell className="hidden text-center sm:table-cell">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
+                              <TooltipTrigger asChild>
                                   <div className="flex items-center justify-center gap-1">
                                     <UserCog className="h-4 w-4" />
                                     <span>
@@ -636,10 +635,6 @@ export default function AdminPage() {
                                     </span>
                                   </div>
                                 </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Moderator Nominations</p>
-                                </TooltipContent>
-                              </Tooltip>
                             </TableCell>
                             <TableCell>
                               <div className="flex flex-wrap items-center gap-1">
@@ -922,5 +917,7 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
 
     

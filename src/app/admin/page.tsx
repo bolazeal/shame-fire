@@ -448,7 +448,6 @@ export default function AdminPage() {
                   </Card>
                 </section>
                 
-                {/*
                 <section>
                     <h2 className="text-2xl font-bold font-headline mb-4">Analytics</h2>
                     <div className="grid gap-4 md:grid-cols-2">
@@ -470,7 +469,6 @@ export default function AdminPage() {
                         </Card>
                     </div>
                 </section>
-                */}
               </div>
             </TabsContent>
             <TabsContent value="moderation" className="mt-4">

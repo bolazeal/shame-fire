@@ -20,8 +20,9 @@ let auth;
 let db;
 let isFirebaseConfigured = false;
 
-// Initialize Firebase only if all the required config values are provided
+// Initialize Firebase only if all the required config values are provided AND demo mode is disabled
 if (
+  process.env.NEXT_PUBLIC_ENABLE_FIREBASE === 'true' &&
   firebaseConfig.apiKey &&
   firebaseConfig.authDomain &&
   firebaseConfig.projectId
@@ -31,12 +32,13 @@ if (
     auth = getAuth(app);
     db = getFirestore(app);
     isFirebaseConfigured = true;
+    console.log("Firebase has been initialized.");
   } catch (error) {
     console.error('Firebase initialization failed:', error);
   }
 } else {
   console.warn(
-    'Firebase config is missing or incomplete. Firebase services will be unavailable.'
+    'Running in Demo Mode. Firebase is not configured or NEXT_PUBLIC_ENABLE_FIREBASE is not set to "true".'
   );
 }
 

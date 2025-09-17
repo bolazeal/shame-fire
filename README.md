@@ -46,9 +46,11 @@ This project showcases a complete, production-ready application with real-time f
 -   **State Management**: React Context & React Hook Form with Zod validation
 -   **Deployment**: Configured for standalone production builds on Firebase App Hosting.
 
-## Deployment & Setup
+## Running in Demo Mode vs. Live Mode
 
-To deploy this application and connect it to your Firebase project, you must configure your environment variables in Firebase App Hosting. Without these, the app will run in a "mock mode" with placeholder data and AI features will be disabled.
+By default, the application runs in **Demo Mode**, using mock data for all features. This allows for a full preview of the application without connecting to a live database.
+
+To connect the application to your own Firebase project (**Live Mode**), you need to set up your environment variables.
 
 ### Step 1: Find Your Firebase Credentials
 
@@ -66,6 +68,7 @@ To deploy this application and connect it to your Firebase project, you must con
 3.  Select the **Settings** tab for your backend.
 4.  In the **Environment variables** section, click **Edit**.
 5.  Add the following variables, copying the corresponding values from your `firebaseConfig` object:
+    *   `NEXT_PUBLIC_ENABLE_FIREBASE` - **Set this to `true` to enable live mode.**
     *   `NEXT_PUBLIC_FIREBASE_API_KEY`
     *   `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
     *   `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
@@ -86,4 +89,4 @@ For AI features like content summarization and moderation to work, you must also
     *   **Value:** *Paste your API key here*
 5.  Save your changes.
 
-After adding all these variables, redeploy your application. It will now connect to your live Firebase backend and enable all AI features.
+After adding all these variables and setting `NEXT_PUBLIC_ENABLE_FIREBASE` to `true`, redeploy your application. It will now connect to your live Firebase backend and enable all AI features.

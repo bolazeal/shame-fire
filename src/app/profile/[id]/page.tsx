@@ -1,3 +1,4 @@
+'use client';
 
 import { PostCard } from '@/components/post-card';
 import { Button } from '@/components/ui/button';
@@ -520,7 +521,7 @@ export default function ProfilePage() {
               <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
             </div>
           ) : posts.length > 0 ? (
-            posts.map((post) => <PostCard key={post.id} post={post} />)
+            posts.map((post) => <PostCard key={post.id} post={post} authUser={authUser} />)
           ) : (
             <p className="p-4 text-center text-muted-foreground">
               No {activeTab} yet.
@@ -531,3 +532,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    

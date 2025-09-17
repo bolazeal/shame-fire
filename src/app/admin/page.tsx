@@ -178,7 +178,7 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     if (!authLoading) {
@@ -628,7 +628,7 @@ export default function AdminPage() {
                             </TableCell>
                             <TableCell className="hidden text-center sm:table-cell">
                               <Tooltip>
-                                <TooltipTrigger>
+                                <TooltipTrigger asChild>
                                   <div className="flex items-center justify-center gap-1">
                                     <UserCog className="h-4 w-4" />
                                     <span>
@@ -922,3 +922,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    

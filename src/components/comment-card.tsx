@@ -25,6 +25,7 @@ interface CommentCardProps {
 }
 
 const renderTextWithMentions = (text: string) => {
+    if (!text) return null;
     const parts = text.split(/(@\w+)/g);
     return parts.map((part, index) => {
       if (part.startsWith('@')) {
@@ -89,7 +90,7 @@ export function CommentCard({ comment, onDelete, onReplySuccess, postId, postAut
             <span className="text-muted-foreground">·</span>
             <span className="text-muted-foreground" suppressHydrationWarning>{formatDistanceToNow(commentDate, { addSuffix: true })}</span>
           </div>
-          {comment.text && <div className="mt-2 text-base">{renderTextWithMentions(comment.text)}</div>}
+          <div className="mt-2 text-base">{renderTextWithMentions(comment.text)}</div>
           {comment.mediaUrl && (
             <div
               className="relative mt-2 aspect-video w-full max-w-sm overflow-hidden rounded-lg border"
@@ -188,3 +189,5 @@ export function CommentCard({ comment, onDelete, onReplySuccess, postId, postAut
     </div>
   );
 }
+
+    

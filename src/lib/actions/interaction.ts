@@ -249,11 +249,12 @@ export async function addCommentAction(
   await batch.commit();
 
 
-  // Handle Mentions in comment after the batch has committed
-  const mentionRegex = /@(\w+)/g;
-  const mentions = commentData.text.match(mentionRegex);
+  // --- NOTIFICATION LOGIC ---
   const mentionedUserIds = new Set<string>();
 
+  // Find mentions in the comment text
+  const mentionRegex = /@(\w+)/g;
+  const mentions = commentData.text.match(mentionRegex);
   if (mentions) {
     for (const mention of mentions) {
       const username = mention.substring(1);
@@ -266,18 +267,33 @@ export async function addCommentAction(
     }
   }
 
-  // Add post author to notification list (if not mentioned and it's a top-level comment)
+  // Notify the original post author (if it's a top-level comment and they weren't mentioned)
   if (!commentData.parentId && author.id !== postAuthorId) {
     mentionedUserIds.add(postAuthorId);
   }
 
-  // TODO: Add parent comment author to notification list
+  // Notify the parent comment author (if it's a reply and they weren't mentioned)
+  if (commentData.parentId) {
+    const parentCommentRef = doc(db, `posts/${postId}/comments`, commentData.parentId);
+    const parentCommentSnap = await getDoc(parentCommentRef);
+    if (parentCommentSnap.exists()) {
+        const parentComment = parentCommentSnap.data() as Comment;
+        if (parentComment.author.id !== author.id) {
+            mentionedUserIds.add(parentComment.author.id);
+        }
+    }
+  }
   
   // Send notifications
   const post = await getPost(postId);
   if (post) {
       for (const recipientId of mentionedUserIds) {
-          const notificationType = (recipientId === postAuthorId && !commentData.parentId) ? 'comment' : 'mention';
+          // Determine notification type
+          let notificationType: 'comment' | 'mention' = 'mention';
+          if (recipientId === postAuthorId && !commentData.parentId) {
+              notificationType = 'comment';
+          }
+
           await createNotification({
               type: notificationType,
               recipientId,
@@ -511,3 +527,5 @@ export async function addDisputeCommentAction(
         };
     });
 }
+
+    

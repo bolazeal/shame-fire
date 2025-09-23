@@ -3,7 +3,7 @@
 
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Card,
@@ -131,8 +131,8 @@ export default function AdminPage() {
     () => allDisputes.filter((d) => d.status === 'closed'),
     [allDisputes]
   );
-
-  const fetchData = useCallback(async () => {
+  
+  const fetchData = async () => {
     setLoading(true);
     try {
       const [
@@ -178,7 +178,7 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  };
 
   useEffect(() => {
     if (!authLoading) {
@@ -188,7 +188,7 @@ export default function AdminPage() {
         fetchData();
       }
     }
-  }, [fullProfile, authLoading, router, fetchData]);
+  }, [fullProfile, authLoading, router]);
 
   const handleApprove = async (item: FlaggedContent) => {
     try {
@@ -922,3 +922,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    

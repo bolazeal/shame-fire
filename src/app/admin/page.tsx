@@ -54,7 +54,6 @@ import {
   getFlaggedContent,
   getAllDisputes,
   getAllUsers,
-  getTrendingTopics,
 } from '@/lib/firestore';
 import { approvePostAction } from '@/lib/actions/post';
 import type { Post, Dispute, FlaggedContent, User } from '@/lib/types';
@@ -79,11 +78,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { UserAvatar } from '@/components/user-avatar';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   toggleAdminStatusAction,
   updateUserAccountStatusAction,
@@ -92,27 +87,12 @@ import {
   deletePostAndFlagsAction,
 } from '@/lib/actions/admin';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { userActivity } from '@/lib/mock-data';
-import { UserActivityChart } from '@/components/charts/user-activity-chart';
-import { ContentBreakdownChart } from '@/components/charts/content-breakdown-chart';
-import { SettingsForm } from '@/components/settings-form';
 
 export default function AdminPage() {
   const { fullProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    totalPosts: 0,
-    totalReports: 0,
-    totalEndorsements: 0,
-    activeDisputes: 0,
-  });
-  const [trendingTopic, setTrendingTopic] = useState<{
-    category: string;
-    count: number;
-  } | null>(null);
   const [flaggedContent, setFlaggedContent] = useState<FlaggedContent[]>([]);
   const [allDisputes, setAllDisputes] = useState<Dispute[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -136,35 +116,15 @@ export default function AdminPage() {
     setLoading(true);
     try {
       const [
-        userCount,
-        postCount,
-        reportCount,
-        endorsementCount,
-        trends,
         flagged,
         disputesData,
         usersData,
       ] = await Promise.all([
-        getCollectionCount('users'),
-        getCollectionCount('posts', 'type', '==', 'post'),
-        getCollectionCount('posts', 'type', '==', 'report'),
-        getCollectionCount('posts', 'type', '==', 'endorsement'),
-        getTrendingTopics(),
         getFlaggedContent(),
         getAllDisputes(),
         getAllUsers(),
       ]);
 
-      setStats({
-        totalUsers: userCount,
-        totalPosts: postCount,
-        totalReports: reportCount,
-        totalEndorsements: endorsementCount,
-        activeDisputes: disputesData.filter((d) => d.status !== 'closed')
-          .length,
-      });
-
-      setTrendingTopic(trends.length > 0 ? trends[0] : null);
       setFlaggedContent(flagged);
       setAllDisputes(disputesData);
       setAllUsers(usersData);
@@ -337,14 +297,7 @@ export default function AdminPage() {
           <Skeleton className="h-6 w-40" />
         </header>
         <div className="space-y-8 p-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            <Skeleton className="h-28 w-full" />
-            <Skeleton className="h-28 w-full" />
-            <Skeleton className="h-28 w-full" />
-            <Skeleton className="h-28 w-full" />
-            <Skeleton className="h-28 w-full" />
-          </div>
-          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-10 w-full" />
           <div>
             <Skeleton className="h-96 w-full" />
           </div>
@@ -352,12 +305,6 @@ export default function AdminPage() {
       </div>
     );
   }
-
-  const contentBreakdownData = [
-    { type: 'posts', count: stats.totalPosts, fill: 'var(--color-posts)' },
-    { type: 'reports', count: stats.totalReports, fill: 'var(--color-reports)' },
-    { type: 'endorsements', count: stats.totalEndorsements, fill: 'var(--color-endorsements)' },
-  ];
 
   return (
     <div>
@@ -368,109 +315,14 @@ export default function AdminPage() {
 
       <div className="p-4">
         <ScrollArea>
-          <Tabs defaultValue="dashboard" className="w-full">
+          <Tabs defaultValue="moderation" className="w-full">
             <TabsList>
-              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="moderation">Content Moderation</TabsTrigger>
               <TabsTrigger value="users">User Management</TabsTrigger>
               <TabsTrigger value="disputes">Dispute Management</TabsTrigger>
-              <TabsTrigger value="settings">Platform Settings</TabsTrigger>
             </TabsList>
             <ScrollBar orientation="horizontal" />
-            <TabsContent value="dashboard" className="mt-4">
-              <div className="space-y-8">
-                <section className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Total Users
-                      </CardTitle>
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{stats.totalUsers}</div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Total Reports
-                      </CardTitle>
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
-                        {stats.totalReports}
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Total Endorsements
-                      </CardTitle>
-                      <ThumbsUp className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
-                        {stats.totalEndorsements}
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Active Disputes
-                      </CardTitle>
-                      <Gavel className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
-                        {stats.activeDisputes}
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Top Trend
-                      </CardTitle>
-                      <Broadcast className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-base font-bold">
-                        #{trendingTopic?.category || 'N/A'}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {trendingTopic?.count || 0} posts this week
-                      </p>
-                    </CardContent>
-                  </Card>
-                </section>
-                
-                <section>
-                    <h2 className="text-2xl font-bold font-headline mb-4">Analytics</h2>
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>New Users (Last 7 Days)</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <UserActivityChart data={userActivity} />
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Content Breakdown</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <ContentBreakdownChart data={contentBreakdownData} />
-                            </CardContent>
-                        </Card>
-                    </div>
-                </section>
-              </div>
-            </TabsContent>
+            
             <TabsContent value="moderation" className="mt-4">
               <div className="space-y-8">
                 <Card>
@@ -913,9 +765,6 @@ export default function AdminPage() {
               </div>
             </TabsContent>
 
-            <TabsContent value="settings" className="mt-4">
-              <SettingsForm />
-            </TabsContent>
           </Tabs>
         </ScrollArea>
       </div>

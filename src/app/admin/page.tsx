@@ -31,6 +31,7 @@ import {
   RotateCcw,
   UserCog,
   Broadcast,
+  LayoutDashboard,
 } from 'lucide-react';
 import {
   Tabs,
@@ -54,6 +55,7 @@ import {
   getFlaggedContent,
   getAllDisputes,
   getAllUsers,
+  getTrendingTopics,
 } from '@/lib/firestore';
 import { approvePostAction } from '@/lib/actions/post';
 import type { Post, Dispute, FlaggedContent, User } from '@/lib/types';
@@ -78,7 +80,11 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { UserAvatar } from '@/components/user-avatar';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   toggleAdminStatusAction,
   updateUserAccountStatusAction,
@@ -87,12 +93,26 @@ import {
   deletePostAndFlagsAction,
 } from '@/lib/actions/admin';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { SettingsForm } from '@/components/settings-form';
+import { userActivity } from '@/lib/mock-data';
+import { ContentBreakdownChart } from '@/components/charts/content-breakdown-chart';
+import { UserActivityChart } from '@/components/charts/user-activity-chart';
+
+interface DashboardStats {
+  totalUsers: number;
+  totalPosts: number;
+  totalReports: number;
+  totalEndorsements: number;
+  pendingFlags: number;
+  activeDisputes: number;
+}
 
 export default function AdminPage() {
   const { fullProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [flaggedContent, setFlaggedContent] = useState<FlaggedContent[]>([]);
   const [allDisputes, setAllDisputes] = useState<Dispute[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -111,19 +131,37 @@ export default function AdminPage() {
     () => allDisputes.filter((d) => d.status === 'closed'),
     [allDisputes]
   );
-  
+
   const fetchData = async () => {
     setLoading(true);
     try {
       const [
+        totalUsers,
+        totalPosts,
+        totalReports,
+        totalEndorsements,
         flagged,
         disputesData,
         usersData,
       ] = await Promise.all([
+        getCollectionCount('users'),
+        getCollectionCount('posts', 'type', '==', 'post'),
+        getCollectionCount('posts', 'type', '==', 'report'),
+        getCollectionCount('posts', 'type', '==', 'endorsement'),
         getFlaggedContent(),
         getAllDisputes(),
         getAllUsers(),
       ]);
+
+      setStats({
+        totalUsers,
+        totalPosts,
+        totalReports,
+        totalEndorsements,
+        pendingFlags: flagged.length,
+        activeDisputes: disputesData.filter((d) => d.status !== 'closed')
+          .length,
+      });
 
       setFlaggedContent(flagged);
       setAllDisputes(disputesData);
@@ -306,342 +344,414 @@ export default function AdminPage() {
     );
   }
 
+  const contentBreakdownData = stats
+    ? [
+        { type: 'posts', count: stats.totalPosts, fill: 'var(--color-posts)' },
+        {
+          type: 'reports',
+          count: stats.totalReports,
+          fill: 'var(--color-reports)',
+        },
+        {
+          type: 'endorsements',
+          count: stats.totalEndorsements,
+          fill: 'var(--color-endorsements)',
+        },
+      ]
+    : [];
+
   return (
-    <div>
+    <div className="h-full">
       <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/80 p-4 backdrop-blur-sm">
         <Shield className="h-6 w-6 text-primary" />
         <h1 className="text-xl font-bold font-headline">Admin Panel</h1>
       </header>
 
-      <div className="p-4">
-        <ScrollArea>
-          <Tabs defaultValue="moderation" className="w-full">
+      <ScrollArea className="h-[calc(100%-60px)]">
+        <div className="p-4">
+          <Tabs defaultValue="dashboard" className="w-full">
             <TabsList>
-              <TabsTrigger value="moderation">Content Moderation</TabsTrigger>
-              <TabsTrigger value="users">User Management</TabsTrigger>
-              <TabsTrigger value="disputes">Dispute Management</TabsTrigger>
+              <TabsTrigger value="dashboard">
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                Dashboard
+              </TabsTrigger>
+              <TabsTrigger value="moderation">
+                <AlertCircle className="mr-2 h-4 w-4" />
+                Content Moderation
+              </TabsTrigger>
+              <TabsTrigger value="users">
+                <Users className="mr-2 h-4 w-4" />
+                User Management
+              </TabsTrigger>
+              <TabsTrigger value="disputes">
+                <Gavel className="mr-2 h-4 w-4" />
+                Dispute Management
+              </TabsTrigger>
+              <TabsTrigger value="settings">
+                <Settings className="mr-2 h-4 w-4" />
+                Platform Settings
+              </TabsTrigger>
             </TabsList>
-            <ScrollBar orientation="horizontal" />
-            
-            <TabsContent value="moderation" className="mt-4">
-              <div className="space-y-8">
+
+            <TabsContent value="dashboard" className="mt-4">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Total Users
+                    </CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {stats?.totalUsers ?? 0}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Total Posts
+                    </CardTitle>
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {stats
+                        ? (
+                            stats.totalPosts +
+                            stats.totalReports +
+                            stats.totalEndorsements
+                          ).toLocaleString()
+                        : 0}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Pending Flags
+                    </CardTitle>
+                    <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {stats?.pendingFlags ?? 0}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <AlertCircle />
-                      Content Review Queue ({flaggedContent.length})
-                    </CardTitle>
+                    <CardTitle>New User Signups (Demo)</CardTitle>
                     <CardDescription>
-                      Review content flagged by AI for policy violations or by
-                      users. Approve to post, or remove.
+                      This is a demonstration of user signup trends.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Content</TableHead>
-                          <TableHead>Author</TableHead>
-                          <TableHead>Reason</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {flaggedContent.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="max-w-xs truncate font-mono text-xs">
-                              {item.postText || item.postData?.text}
-                            </TableCell>
-                            <TableCell>
-                              <Link
-                                href={`/profile/${item.author.id}`}
-                                className="hover:underline"
-                              >
-                                {item.author.name}
-                              </Link>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="destructive">
-                                {item.reason}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {item.postId ? (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleDismissFlag(item.id)}
-                                  >
-                                    <CheckCircle className="mr-2 h-4 w-4" />
-                                    Dismiss Flag
-                                  </Button>
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => handleRemove(item)}
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Remove Post
-                                  </Button>
-                                </>
-                              ) : (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleApprove(item)}
-                                  >
-                                    <CheckCircle className="mr-2 h-4 w-4" />
-                                    Approve
-                                  </Button>
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => handleRemove(item)}
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Remove
-                                  </Button>
-                                </>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                    {flaggedContent.length === 0 && (
-                      <p className="p-4 text-center text-muted-foreground">
-                        The review queue is empty. Great job!
-                      </p>
-                    )}
+                    <UserActivityChart data={userActivity} />
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Content Breakdown</CardTitle>
+                    <CardDescription>
+                      A breakdown of all content types on the platform.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ContentBreakdownChart data={contentBreakdownData} />
                   </CardContent>
                 </Card>
               </div>
             </TabsContent>
 
-            <TabsContent value="users" className="mt-4">
-              <div className="space-y-8">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users />
-                      User Management ({allUsers.length})
-                    </CardTitle>
-                    <CardDescription>
-                      View, manage, and take action on user accounts.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>User</TableHead>
-                          <TableHead className="hidden md:table-cell">
-                            Email
-                          </TableHead>
-                          <TableHead className="hidden sm:table-cell">
-                            Trust Score
-                          </TableHead>
-                          <TableHead className="hidden text-center sm:table-cell">
-                            Mod Nominations
-                          </TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {allUsers.map((user) => (
-                          <TableRow key={user.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <UserAvatar
-                                  user={user}
-                                  className="h-10 w-10"
-                                />
-                                <div>
-                                  <Link
-                                    href={`/profile/${user.id}`}
-                                    className="font-medium hover:underline"
-                                  >
-                                    {user.name}
-                                  </Link>
-                                  <p className="text-xs text-muted-foreground">
-                                    @{user.username}
-                                  </p>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              {user.email}
-                            </TableCell>
-                            <TableCell className="hidden text-center sm:table-cell">
-                              {user.trustScore}
-                            </TableCell>
-                            <TableCell className="hidden text-center sm:table-cell">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="flex items-center justify-center gap-1">
-                                    <UserCog className="h-4 w-4" />
-                                    <span>
-                                      {user.moderatorNominationsCount || 0}
-                                    </span>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Moderator Nominations</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex flex-wrap items-center gap-1">
-                                <Badge
-                                  variant={
-                                    user.accountStatus === 'active'
-                                      ? 'secondary'
-                                      : 'destructive'
-                                  }
-                                  className="capitalize"
+            <TabsContent value="moderation" className="mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    Content Review Queue ({flaggedContent.length})
+                  </CardTitle>
+                  <CardDescription>
+                    Review content flagged by AI for policy violations or by
+                    users.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Content</TableHead>
+                        <TableHead>Author</TableHead>
+                        <TableHead>Reason</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {flaggedContent.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="max-w-xs truncate font-mono text-xs">
+                            {item.postText || item.postData?.text}
+                          </TableCell>
+                          <TableCell>
+                            <Link
+                              href={`/profile/${item.author.id}`}
+                              className="hover:underline"
+                            >
+                              {item.author.name}
+                            </Link>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="destructive">{item.reason}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {item.postId ? (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDismissFlag(item.id)}
                                 >
-                                  {user.accountStatus}
-                                </Badge>
-                                {user.isAdmin && (
-                                  <Badge variant="destructive">Admin</Badge>
-                                )}
-                                {user.isVerified && (
-                                  <Badge variant="secondary">Verified</Badge>
-                                )}
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  Dismiss Flag
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleRemove(item)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Remove Post
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleApprove(item)}
+                                >
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  Approve
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleRemove(item)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Remove
+                                </Button>
+                              </>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {flaggedContent.length === 0 && (
+                        <TableRow>
+                          <TableCell
+                            colSpan={4}
+                            className="p-4 text-center text-muted-foreground"
+                          >
+                            The review queue is empty. Great job!
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="users" className="mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    User Management ({allUsers.length})
+                  </CardTitle>
+                  <CardDescription>
+                    View, manage, and take action on user accounts.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User</TableHead>
+                        <TableHead className="hidden md:table-cell">
+                          Email
+                        </TableHead>
+                        <TableHead className="hidden sm:table-cell">
+                          Trust Score
+                        </TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {allUsers.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <UserAvatar user={user} className="h-10 w-10" />
+                              <div>
+                                <Link
+                                  href={`/profile/${user.id}`}
+                                  className="font-medium hover:underline"
+                                >
+                                  {user.name}
+                                </Link>
+                                <p className="text-xs text-muted-foreground">
+                                  @{user.username}
+                                </p>
                               </div>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    disabled={
-                                      updatingUserId === user.id ||
-                                      updatingTrustScore === user.id ||
-                                      updatingAdminId === user.id
-                                    }
-                                  >
-                                    {updatingUserId === user.id ||
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            {user.email}
+                          </TableCell>
+                          <TableCell className="hidden text-center sm:table-cell">
+                            {user.trustScore}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap items-center gap-1">
+                              <Badge
+                                variant={
+                                  user.accountStatus === 'active'
+                                    ? 'secondary'
+                                    : 'destructive'
+                                }
+                                className="capitalize"
+                              >
+                                {user.accountStatus}
+                              </Badge>
+                              {user.isAdmin && (
+                                <Badge variant="destructive">Admin</Badge>
+                              )}
+                              {user.isVerified && (
+                                <Badge variant="secondary">Verified</Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  disabled={
+                                    updatingUserId === user.id ||
                                     updatingTrustScore === user.id ||
-                                    updatingAdminId === user.id ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    )}
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                  <DropdownMenuSeparator />
-                                  {user.accountStatus !== 'active' && (
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        handleUpdateUserStatus(
-                                          user.id,
-                                          'active'
-                                        )
-                                      }
-                                    >
-                                      <UserCheck className="mr-2 h-4 w-4" />
-                                      Reactivate
-                                    </DropdownMenuItem>
+                                    updatingAdminId === user.id
+                                  }
+                                >
+                                  {updatingUserId === user.id ||
+                                  updatingTrustScore === user.id ||
+                                  updatingAdminId === user.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <MoreHorizontal className="h-4 w-4" />
                                   )}
-
-                                  {user.accountStatus === 'active' && (
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        handleUpdateUserStatus(
-                                          user.id,
-                                          'suspended'
-                                        )
-                                      }
-                                    >
-                                      <UserX className="mr-2 h-4 w-4" />
-                                      Suspend
-                                    </DropdownMenuItem>
-                                  )}
-
-                                  {user.accountStatus !== 'banned' && (
-                                    <DropdownMenuItem
-                                      className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                                      onClick={() =>
-                                        handleUpdateUserStatus(
-                                          user.id,
-                                          'banned'
-                                        )
-                                      }
-                                    >
-                                      <Ban className="mr-2 h-4 w-4" />
-                                      Ban
-                                    </DropdownMenuItem>
-                                  )}
-                                  <DropdownMenuSeparator />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {user.accountStatus !== 'active' && (
                                   <DropdownMenuItem
                                     onClick={() =>
-                                      handleToggleAdminStatus(user)
+                                      handleUpdateUserStatus(user.id, 'active')
                                     }
-                                    disabled={fullProfile?.id === user.id}
                                   >
-                                    <UserCog className="mr-2 h-4 w-4" />
-                                    {user.isAdmin
-                                      ? 'Remove Admin'
-                                      : 'Make Admin'}
+                                    <UserCheck className="mr-2 h-4 w-4" />
+                                    Reactivate
                                   </DropdownMenuItem>
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <DropdownMenuItem
-                                        onSelect={(e) => e.preventDefault()}
-                                        className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                )}
+                                {user.accountStatus === 'active' && (
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      handleUpdateUserStatus(
+                                        user.id,
+                                        'suspended'
+                                      )
+                                    }
+                                  >
+                                    <UserX className="mr-2 h-4 w-4" />
+                                    Suspend
+                                  </DropdownMenuItem>
+                                )}
+                                {user.accountStatus !== 'banned' && (
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                    onClick={() =>
+                                      handleUpdateUserStatus(user.id, 'banned')
+                                    }
+                                  >
+                                    <Ban className="mr-2 h-4 w-4" />
+                                    Ban
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleToggleAdminStatus(user)}
+                                  disabled={fullProfile?.id === user.id}
+                                >
+                                  <UserCog className="mr-2 h-4 w-4" />
+                                  {user.isAdmin
+                                    ? 'Remove Admin'
+                                    : 'Make Admin'}
+                                </DropdownMenuItem>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem
+                                      onSelect={(e) => e.preventDefault()}
+                                      className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                    >
+                                      <RotateCcw className="mr-2 h-4 w-4" />
+                                      Reset Trust Score
+                                    </DropdownMenuItem>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Are you sure?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This will reset @{user.username}'s
+                                        trust score to the default value of 50.
+                                        This action cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Cancel
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() =>
+                                          handleResetTrustScore(user.id)
+                                        }
+                                        disabled={
+                                          updatingTrustScore === user.id
+                                        }
                                       >
-                                        <RotateCcw className="mr-2 h-4 w-4" />
-                                        Reset Trust Score
-                                      </DropdownMenuItem>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>
-                                          Are you sure?
-                                        </AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          This will reset @{user.username}'s
-                                          trust score to the default value of
-                                          50. This action cannot be undone.
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>
-                                          Cancel
-                                        </AlertDialogCancel>
-                                        <AlertDialogAction
-                                          onClick={() =>
-                                            handleResetTrustScore(user.id)
-                                          }
-                                          disabled={
-                                            updatingTrustScore === user.id
-                                          }
-                                        >
-                                          {updatingTrustScore === user.id && (
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                          )}
-                                          Confirm Reset
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              </div>
+                                        {updatingTrustScore === user.id && (
+                                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        )}
+                                        Confirm Reset
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="disputes" className="mt-4">
@@ -765,9 +875,12 @@ export default function AdminPage() {
               </div>
             </TabsContent>
 
+            <TabsContent value="settings" className="mt-4">
+              <SettingsForm />
+            </TabsContent>
           </Tabs>
-        </ScrollArea>
-      </div>
+        </div>
+      </ScrollArea>
     </div>
   );
 }

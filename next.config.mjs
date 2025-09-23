@@ -1,9 +1,26 @@
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
   compiler: {
-    // removeConsole: process.env.NODE_ENV === 'production',
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+      },
+      {
+        protocol: 'https',
+        hostname: 'storage.googleapis.com',
+      },
+    ],
   },
   async headers() {
     return [
@@ -12,7 +29,7 @@ const nextConfig = {
         headers: [
           {
             key: 'X-Powered-By',
-            value: 'Shame.com',
+            value: 'Shame',
           },
         ],
       },

@@ -32,6 +32,7 @@ import {
   UserCog,
   Broadcast,
   LayoutDashboard,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   Tabs,
@@ -330,9 +331,12 @@ export default function AdminPage() {
   if (authLoading || loading) {
     return (
       <div>
-        <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/80 p-4 backdrop-blur-sm">
-          <Skeleton className="h-6 w-6 rounded-full" />
-          <Skeleton className="h-6 w-40" />
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/80 p-4 backdrop-blur-sm">
+            <div className="flex items-center gap-2">
+                <Skeleton className="h-6 w-6 rounded-full" />
+                <Skeleton className="h-6 w-40" />
+            </div>
+            <Skeleton className="h-10 w-32" />
         </header>
         <div className="space-y-8 p-4">
           <Skeleton className="h-10 w-full" />
@@ -362,9 +366,17 @@ export default function AdminPage() {
 
   return (
     <div className="h-full">
-      <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/80 p-4 backdrop-blur-sm">
-        <Shield className="h-6 w-6 text-primary" />
-        <h1 className="text-xl font-bold font-headline">Admin Panel</h1>
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/80 p-4 backdrop-blur-sm">
+        <div className='flex items-center gap-2'>
+            <Shield className="h-6 w-6 text-primary" />
+            <h1 className="text-xl font-bold font-headline">Admin Panel</h1>
+        </div>
+        <Button asChild variant="outline">
+            <Link href="/home">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to App
+            </Link>
+        </Button>
       </header>
 
       <ScrollArea className="h-[calc(100%-60px)]">

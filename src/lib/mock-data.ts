@@ -1,4 +1,5 @@
 
+
 import type { User, Post, Dispute, FlaggedContent, Comment, Conversation, Message, Video } from '@/lib/types';
 
 const mockAdminUser: User = {
@@ -613,10 +614,10 @@ export const contentOverTime = [
 ];
 
 export const recentActivity = [
-    { type: 'signup', user: mockCommunityMember, time: '2h ago' },
-    { type: 'post', user: mockReportingUser, post: mockPosts[1] },
-    { type: 'endorsement', user: mockUser2, post: mockPosts[0] },
-    { type: 'dispute', user: mockDisputingUser, dispute: mockDisputes[0] },
+    { type: 'signup', user: mockCommunityMember, time: new Date(Date.now() - 2 * 60 * 60 * 1000) },
+    { type: 'post', user: mockReportingUser, post: mockPosts[1], time: new Date(Date.now() - 4 * 60 * 60 * 1000) },
+    { type: 'endorsement', user: mockUser2, post: mockPosts[0], time: new Date(Date.now() - 8 * 60 * 60 * 1000) },
+    { type: 'dispute', user: mockDisputingUser, dispute: mockDisputes[0], time: new Date(Date.now() - 12 * 60 * 60 * 1000) },
 ];
 
 // --- Mock Data for Messages ---

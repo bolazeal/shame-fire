@@ -1,28 +1,22 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   output: 'standalone',
   reactStrictMode: true,
-  images: {
-    remotePatterns: [
+  compiler: {
+    // removeConsole: process.env.NODE_ENV === 'production',
+  },
+  async headers() {
+    return [
       {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-Powered-By',
+            value: 'Shame.com',
+          },
+        ],
       },
-      {
-        protocol: 'https',
-        hostname: 'storage.googleapis.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-      },
-    ],
+    ];
   },
 };
 

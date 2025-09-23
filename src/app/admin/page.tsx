@@ -98,6 +98,13 @@ import { SettingsForm } from '@/components/settings-form';
 import { UserActivityChart } from '@/components/charts/user-activity-chart';
 import { ContentBreakdownChart } from '@/components/charts/content-breakdown-chart';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface DashboardStats {
   totalUsers: number;
@@ -109,15 +116,21 @@ interface DashboardStats {
 }
 
 const RecentActivityIcon = ({ type }: { type: string }) => {
-    switch (type) {
-        case 'signup': return <UserPlus className="h-4 w-4" />;
-        case 'post': return <Newspaper className="h-4 w-4" />;
-        case 'endorsement': return <ThumbsUp className="h-4 w-4" />;
-        case 'report': return <FileText className="h-4 w-4" />;
-        case 'dispute': return <Landmark className="h-4 w-4" />;
-        default: return <FileText className="h-4 w-4" />;
-    }
-}
+  switch (type) {
+    case 'signup':
+      return <UserPlus className="h-4 w-4" />;
+    case 'post':
+      return <Newspaper className="h-4 w-4" />;
+    case 'endorsement':
+      return <ThumbsUp className="h-4 w-4" />;
+    case 'report':
+      return <FileText className="h-4 w-4" />;
+    case 'dispute':
+      return <Landmark className="h-4 w-4" />;
+    default:
+      return <FileText className="h-4 w-4" />;
+  }
+};
 
 export default function AdminPage() {
   const { fullProfile, loading: authLoading } = useAuth();
@@ -135,7 +148,9 @@ export default function AdminPage() {
   );
   const [updatingAdminId, setUpdatingAdminId] = useState<string | null>(null);
   const [userSearchQuery, setUserSearchQuery] = useState('');
-
+  const [userStatusFilter, setUserStatusFilter] = useState('all');
+  const [userRoleFilter, setUserRoleFilter] = useState('all');
+  const [userVerifiedFilter, setUserVerifiedFilter] = useState('all');
 
   const activeDisputes = useMemo(
     () => allDisputes.filter((d) => d.status !== 'closed'),
@@ -145,16 +160,37 @@ export default function AdminPage() {
     () => allDisputes.filter((d) => d.status === 'closed'),
     [allDisputes]
   );
-  
+
   const filteredUsers = useMemo(() => {
-    if (!userSearchQuery) return allUsers;
-    const lowercasedQuery = userSearchQuery.toLowerCase();
-    return allUsers.filter(user => 
-        user.name.toLowerCase().includes(lowercasedQuery) ||
-        user.username.toLowerCase().includes(lowercasedQuery) ||
-        user.email.toLowerCase().includes(lowercasedQuery)
-    );
-  }, [allUsers, userSearchQuery]);
+    return allUsers.filter((user) => {
+      const searchMatch =
+        !userSearchQuery ||
+        user.name.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+        user.username.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(userSearchQuery.toLowerCase());
+
+      const statusMatch =
+        userStatusFilter === 'all' || user.accountStatus === userStatusFilter;
+
+      const roleMatch =
+        userRoleFilter === 'all' ||
+        (userRoleFilter === 'admin' && user.isAdmin) ||
+        (userRoleFilter === 'user' && !user.isAdmin);
+
+      const verifiedMatch =
+        userVerifiedFilter === 'all' ||
+        (userVerifiedFilter === 'verified' && user.isVerified) ||
+        (userVerifiedFilter === 'not_verified' && !user.isVerified);
+
+      return searchMatch && statusMatch && roleMatch && verifiedMatch;
+    });
+  }, [
+    allUsers,
+    userSearchQuery,
+    userStatusFilter,
+    userRoleFilter,
+    userVerifiedFilter,
+  ]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -337,7 +373,9 @@ export default function AdminPage() {
       await toggleAdminStatusAction(userToUpdate.id);
       toast({
         title: 'Success',
-        description: `${userToUpdate.name} is ${userToUpdate.isAdmin ? 'no longer' : 'now'} an admin.`,
+        description: `${userToUpdate.name} is ${
+          userToUpdate.isAdmin ? 'no longer' : 'now'
+        } an admin.`,
       });
       fetchData(); // Refresh data
     } catch (error: any) {
@@ -355,19 +393,19 @@ export default function AdminPage() {
     return (
       <div className="h-screen bg-muted/40">
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/80 p-4 backdrop-blur-sm">
-            <div className="flex items-center gap-2">
-                <Skeleton className="h-6 w-6 rounded-full" />
-                <Skeleton className="h-6 w-40" />
-            </div>
-            <Skeleton className="h-10 w-32" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-6 w-6 rounded-full" />
+            <Skeleton className="h-6 w-40" />
+          </div>
+          <Skeleton className="h-10 w-32" />
         </header>
         <div className="space-y-8 p-4 md:p-8">
           <Skeleton className="h-10 w-full" />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Skeleton className="h-28" />
-              <Skeleton className="h-28" />
-              <Skeleton className="h-28" />
-              <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
           </div>
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <Skeleton className="h-96 w-full" />
@@ -380,7 +418,11 @@ export default function AdminPage() {
 
   const contentBreakdownData = stats
     ? [
-        { type: 'posts', count: stats.totalPosts, fill: 'var(--color-posts)' },
+        {
+          type: 'posts',
+          count: stats.totalPosts,
+          fill: 'var(--color-posts)',
+        },
         {
           type: 'reports',
           count: stats.totalReports,
@@ -397,15 +439,15 @@ export default function AdminPage() {
   return (
     <div className="h-screen bg-muted/40">
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/80 p-4 backdrop-blur-sm">
-        <div className='flex items-center gap-2'>
-            <Shield className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold font-headline">Admin Panel</h1>
+        <div className="flex items-center gap-2">
+          <Shield className="h-6 w-6 text-primary" />
+          <h1 className="text-xl font-bold font-headline">Admin Panel</h1>
         </div>
         <Button asChild variant="outline">
-            <Link href="/home">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to App
-            </Link>
+          <Link href="/home">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to App
+          </Link>
         </Button>
       </header>
 
@@ -463,13 +505,17 @@ export default function AdminPage() {
                     </div>
                   </CardContent>
                 </Card>
-                 <Card>
+                <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Endorsements</CardTitle>
+                    <CardTitle className="text-sm font-medium">
+                      Total Endorsements
+                    </CardTitle>
                     <ThumbsUp className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{stats?.totalEndorsements.toLocaleString() ?? 0}</div>
+                    <div className="text-2xl font-bold">
+                      {stats?.totalEndorsements.toLocaleString() ?? 0}
+                    </div>
                   </CardContent>
                 </Card>
                 <Card>
@@ -491,7 +537,8 @@ export default function AdminPage() {
                   <CardHeader>
                     <CardTitle>Content Volume</CardTitle>
                     <CardDescription>
-                      Volume of posts, reports, and endorsements over the last 30 days (demo).
+                      Volume of posts, reports, and endorsements over the last
+                      30 days (demo).
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -501,31 +548,93 @@ export default function AdminPage() {
                 <Card className="col-span-1 lg:col-span-3">
                   <CardHeader>
                     <CardTitle>Recent Activity</CardTitle>
-                     <CardDescription>A live feed of important events on the platform.</CardDescription>
+                    <CardDescription>
+                      A live feed of important events on the platform.
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                      {recentActivity.map((activity, index) => (
-                          <div key={index} className="flex items-center gap-4">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary">
-                                <RecentActivityIcon type={activity.type} />
-                              </div>
-                              <div className="flex-1 text-sm">
-                                  {activity.type === 'signup' && (
-                                      <p>New user <Link href={`/profile/${activity.user.id}`} className="font-semibold text-primary hover:underline">{activity.user.name}</Link> just signed up.</p>
-                                  )}
-                                  {activity.type === 'post' && activity.post && (
-                                      <p><Link href={`/profile/${activity.user.id}`} className="font-semibold text-primary hover:underline">{activity.user.name}</Link> created a new <Link href={`/post/${activity.post.id}`} className="font-semibold hover:underline">post</Link>.</p>
-                                  )}
-                                   {activity.type === 'endorsement' && activity.post && (
-                                      <p><Link href={`/profile/${activity.user.id}`} className="font-semibold text-primary hover:underline">{activity.user.name}</Link> gave an <Link href={`/post/${activity.post.id}`} className="font-semibold hover:underline">endorsement</Link>.</p>
-                                  )}
-                                  {activity.type === 'dispute' && activity.dispute && (
-                                      <p><Link href={`/profile/${activity.user.id}`} className="font-semibold text-primary hover:underline">{activity.user.name}</Link> opened a new <Link href={`/dispute/${activity.dispute.id}`} className="font-semibold hover:underline">dispute</Link>.</p>
-                                  )}
-                              </div>
-                              <div className="text-xs text-muted-foreground">{formatDistanceToNow(activity.time, { addSuffix: true })}</div>
-                          </div>
-                      ))}
+                    {recentActivity.map((activity, index) => (
+                      <div key={index} className="flex items-center gap-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary">
+                          <RecentActivityIcon type={activity.type} />
+                        </div>
+                        <div className="flex-1 text-sm">
+                          {activity.type === 'signup' && (
+                            <p>
+                              New user{' '}
+                              <Link
+                                href={`/profile/${activity.user.id}`}
+                                className="font-semibold text-primary hover:underline"
+                              >
+                                {activity.user.name}
+                              </Link>{' '}
+                              just signed up.
+                            </p>
+                          )}
+                          {activity.type === 'post' && activity.post && (
+                            <p>
+                              <Link
+                                href={`/profile/${activity.user.id}`}
+                                className="font-semibold text-primary hover:underline"
+                              >
+                                {activity.user.name}
+                              </Link>{' '}
+                              created a new{' '}
+                              <Link
+                                href={`/post/${activity.post.id}`}
+                                className="font-semibold hover:underline"
+                              >
+                                post
+                              </Link>
+                              .
+                            </p>
+                          )}
+                          {activity.type === 'endorsement' &&
+                            activity.post && (
+                              <p>
+                                <Link
+                                  href={`/profile/${activity.user.id}`}
+                                  className="font-semibold text-primary hover:underline"
+                                >
+                                  {activity.user.name}
+                                </Link>{' '}
+                                gave an{' '}
+                                <Link
+                                  href={`/post/${activity.post.id}`}
+                                  className="font-semibold hover:underline"
+                                >
+                                  endorsement
+                                </Link>
+                                .
+                              </p>
+                            )}
+                          {activity.type === 'dispute' &&
+                            activity.dispute && (
+                              <p>
+                                <Link
+                                  href={`/profile/${activity.user.id}`}
+                                  className="font-semibold text-primary hover:underline"
+                                >
+                                  {activity.user.name}
+                                </Link>{' '}
+                                opened a new{' '}
+                                <Link
+                                  href={`/dispute/${activity.dispute.id}`}
+                                  className="font-semibold hover:underline"
+                                >
+                                  dispute
+                                </Link>
+                                .
+                              </p>
+                            )}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(activity.time, {
+                            addSuffix: true,
+                          })}
+                        </div>
+                      </div>
+                    ))}
                   </CardContent>
                 </Card>
               </div>
@@ -661,15 +770,59 @@ export default function AdminPage() {
                   <CardDescription>
                     View, manage, and take action on user accounts.
                   </CardDescription>
-                   <div className="relative pt-2">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search users by name, username, or email..."
-                            value={userSearchQuery}
-                            onChange={(e) => setUserSearchQuery(e.target.value)}
-                            className="pl-9"
-                        />
+                  <div className="flex flex-wrap items-center gap-2 pt-2">
+                    <div className="relative flex-grow">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search users..."
+                        value={userSearchQuery}
+                        onChange={(e) => setUserSearchQuery(e.target.value)}
+                        className="pl-9"
+                      />
                     </div>
+                    <Select
+                      value={userStatusFilter}
+                      onValueChange={setUserStatusFilter}
+                    >
+                      <SelectTrigger className="w-full sm:w-[160px]">
+                        <SelectValue placeholder="Filter by status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="suspended">Suspended</SelectItem>
+                        <SelectItem value="banned">Banned</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={userRoleFilter}
+                      onValueChange={setUserRoleFilter}
+                    >
+                      <SelectTrigger className="w-full sm:w-[160px]">
+                        <SelectValue placeholder="Filter by role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Roles</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="user">User</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={userVerifiedFilter}
+                      onValueChange={setUserVerifiedFilter}
+                    >
+                      <SelectTrigger className="w-full sm:w-[160px]">
+                        <SelectValue placeholder="Filter by verification" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Verification</SelectItem>
+                        <SelectItem value="verified">Verified</SelectItem>
+                        <SelectItem value="not_verified">
+                          Not Verified
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <Table>

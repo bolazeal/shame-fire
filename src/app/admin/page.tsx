@@ -30,7 +30,6 @@ import {
   Ban,
   RotateCcw,
   UserCog,
-  Broadcast,
   LayoutDashboard,
   ArrowLeft,
   ThumbsDown,
@@ -91,13 +90,13 @@ import {
   removeFlaggedItemAction,
   deletePostAndFlagsAction,
 } from '@/lib/actions/admin';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { SettingsForm } from '@/components/settings-form';
-import { userActivity, contentOverTime, recentActivity, mockUsers } from '@/lib/mock-data';
-import { ContentBreakdownChart } from '@/components/charts/content-breakdown-chart';
-import { UserActivityChart } from '@/components/charts/user-activity-chart';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { recentActivity, contentOverTime, userActivity } from '@/lib/mock-data';
 import { ContentOverTimeChart } from '@/components/charts/content-over-time-chart';
 import { formatDistanceToNow } from 'date-fns';
+import { SettingsForm } from '@/components/settings-form';
+import { UserActivityChart } from '@/components/charts/user-activity-chart';
+import { ContentBreakdownChart } from '@/components/charts/content-breakdown-chart';
 
 interface DashboardStats {
   totalUsers: number;
@@ -341,7 +340,7 @@ export default function AdminPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="h-full bg-muted/40">
+      <div className="h-screen bg-muted/40">
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/80 p-4 backdrop-blur-sm">
             <div className="flex items-center gap-2">
                 <Skeleton className="h-6 w-6 rounded-full" />
@@ -383,7 +382,7 @@ export default function AdminPage() {
     : [];
 
   return (
-    <div className="h-full bg-muted/40">
+    <div className="h-screen bg-muted/40">
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/80 p-4 backdrop-blur-sm">
         <div className='flex items-center gap-2'>
             <Shield className="h-6 w-6 text-primary" />
@@ -479,7 +478,7 @@ export default function AdminPage() {
                   <CardHeader>
                     <CardTitle>Content Volume</CardTitle>
                     <CardDescription>
-                      Volume of posts, reports, and endorsements over the past 6 months (demo).
+                      Volume of posts, reports, and endorsements over the last 30 days (demo).
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -511,7 +510,7 @@ export default function AdminPage() {
                                       <p><Link href={`/profile/${activity.user.id}`} className="font-semibold text-primary hover:underline">{activity.user.name}</Link> opened a new <Link href={`/dispute/${activity.dispute.id}`} className="font-semibold hover:underline">dispute</Link>.</p>
                                   )}
                               </div>
-                              <div className="text-xs text-muted-foreground">{activity.time}</div>
+                              <div className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(activity.time), { addSuffix: true })}</div>
                           </div>
                       ))}
                   </CardContent>
@@ -960,3 +959,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    

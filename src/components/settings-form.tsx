@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,7 +16,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -32,16 +32,16 @@ const settingsFormSchema = z.object({
   maintenanceMessage: z.string(),
   allowRegistration: z.boolean(),
   requireEmailVerification: z.boolean(),
-  defaultTrustScore: z.number().min(0).max(100),
-  minimumTrustScore: z.number().min(0).max(100),
-  maximumTrustScore: z.number().min(0).max(100),
-  maxPostLength: z.number().min(10).max(10000),
+  defaultTrustScore: z.coerce.number().min(0).max(100),
+  minimumTrustScore: z.coerce.number().min(0).max(100),
+  maximumTrustScore: z.coerce.number().min(0).max(100),
+  maxPostLength: z.coerce.number().min(10).max(10000),
   allowAnonymousPosts: z.boolean(),
   moderateNewUserContent: z.boolean(),
-  autoFlagThreshold: z.number().min(1).max(100),
+  autoFlagThreshold: z.coerce.number().min(1).max(100),
   enableAiModeration: z.boolean(),
   aiModerationSensitivity: z.enum(['low', 'medium', 'high']),
-  flaggedContentRetentionDays: z.number().min(1),
+  flaggedContentRetentionDays: z.coerce.number().min(1),
   featureShameTv: z.boolean(),
   featureVillageSquare: z.boolean(),
   featureHallOfHonour: z.boolean(),
@@ -259,7 +259,7 @@ export function SettingsForm() {
                         <FormItem>
                         <FormLabel>Default Trust Score</FormLabel>
                         <FormControl>
-                            <Input type="number" className="w-40" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}/>
+                            <Input type="number" className="w-40" {...field} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -281,7 +281,7 @@ export function SettingsForm() {
                         <FormItem>
                         <FormLabel>Maximum Post Length</FormLabel>
                         <FormControl>
-                            <Input type="number" className="w-40" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}/>
+                            <Input type="number" className="w-40" {...field} />
                         </FormControl>
                         <FormDescription>Maximum number of characters allowed in a post.</FormDescription>
                         <FormMessage />
@@ -315,7 +315,7 @@ export function SettingsForm() {
                         <FormItem>
                         <FormLabel>Auto-Flag Threshold</FormLabel>
                         <FormControl>
-                            <Input type="number" className="w-40" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}/>
+                            <Input type="number" className="w-40" {...field} />
                         </FormControl>
                         <FormDescription>Number of flags required to automatically hide content.</FormDescription>
                         <FormMessage />
@@ -381,7 +381,7 @@ export function SettingsForm() {
                         <FormItem>
                         <FormLabel>Flagged Content Retention (Days)</FormLabel>
                         <FormControl>
-                            <Input type="number" className="w-40" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}/>
+                            <Input type="number" className="w-40" {...field} />
                         </FormControl>
                         <FormDescription>How long to keep flagged content before automatic deletion.</FormDescription>
                         <FormMessage />
@@ -484,4 +484,5 @@ export function SettingsForm() {
     </Form>
   );
 }
+    
     

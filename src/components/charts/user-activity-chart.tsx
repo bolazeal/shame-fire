@@ -25,7 +25,7 @@ interface UserActivityChartProps {
 export function UserActivityChart({ data }: UserActivityChartProps) {
   return (
     <div className="h-64 w-full lg:h-80">
-      <ChartContainer config={chartConfig}>
+      <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
         <BarChart accessibilityLayer data={data}>
           <CartesianGrid vertical={false} />
           <XAxis

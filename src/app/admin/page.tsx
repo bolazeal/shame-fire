@@ -535,10 +535,10 @@ export default function AdminPage() {
               <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-7">
                 <Card className="col-span-1 lg:col-span-4">
                   <CardHeader>
-                    <CardTitle>Content Volume</CardTitle>
+                    <CardTitle>Content Volume (Demo)</CardTitle>
                     <CardDescription>
                       Volume of posts, reports, and endorsements over the last
-                      30 days (demo).
+                      30 days.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -547,9 +547,9 @@ export default function AdminPage() {
                 </Card>
                 <Card className="col-span-1 lg:col-span-3">
                   <CardHeader>
-                    <CardTitle>Recent Activity</CardTitle>
+                    <CardTitle>Recent Activity (Demo)</CardTitle>
                     <CardDescription>
-                      A live feed of important events on the platform.
+                      A feed of important events on the platform.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">

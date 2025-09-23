@@ -28,16 +28,12 @@ interface ContentBreakdownChartProps {
     data: {
         type: string;
         count: number;
+        fill: string;
     }[];
 }
 
 export function ContentBreakdownChart({ data }: ContentBreakdownChartProps) {
   const totalContent = data.reduce((acc, item) => acc + item.count, 0);
-
-  const chartData = data.map(item => ({
-      ...item,
-      fill: `var(--color-${item.type})`
-  }));
 
   return (
     <div className="h-64 w-full lg:h-80">
@@ -51,30 +47,11 @@ export function ContentBreakdownChart({ data }: ContentBreakdownChartProps) {
             content={<ChartTooltipContent hideLabel />}
           />
           <Pie
-            data={chartData}
+            data={data}
             dataKey="count"
             nameKey="type"
             innerRadius="60%"
             strokeWidth={5}
-            labelLine={false}
-            label={(props: any) => {
-              const { payload, value, cx, cy, x, y, textAnchor, dominantBaseline } =
-                props;
-              if (value === undefined || totalContent === 0) return null;
-              if (value === 0) return null; // Don't show label for 0%
-              return (
-                <text
-                  x={x}
-                  y={y}
-                  textAnchor={textAnchor}
-                  dominantBaseline={dominantBaseline}
-                  fill="hsl(var(--foreground))"
-                  className="text-xs"
-                >
-                  {`${((value / totalContent) * 100).toFixed(0)}%`}
-                </text>
-              );
-            }}
           >
             <Label
               content={({ viewBox }) => {

@@ -37,7 +37,7 @@ interface ContentOverTimeChartProps {
 export function ContentOverTimeChart({ data }: ContentOverTimeChartProps) {
   return (
     <div className="h-80 w-full">
-      <ChartContainer config={chartConfig}>
+      <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
         <LineChart accessibilityLayer data={data}>
           <CartesianGrid vertical={false} />
           <XAxis

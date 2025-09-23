@@ -397,7 +397,8 @@ export function PostCard({ post: initialPost, authUser }: PostCardProps) {
   const canEscalate =
     post.type === 'report' &&
     fullProfile &&
-    (post.entity === fullProfile.name || (fullProfile.username && post.entity === fullProfile.username)) &&
+    post.entity &&
+    (post.entity === fullProfile.name || post.entity === fullProfile.username) &&
     !post.isEscalated;
 
   const postDate = post.createdAt ? new Date(post.createdAt) : new Date();

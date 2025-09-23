@@ -592,7 +592,7 @@ export const mockFlaggedContent: FlaggedContent[] = [
 ];
 
 
-// --- Mock Data for Charts (Remains unchanged) ---
+// --- Mock Data for Charts ---
 export const userActivity = [
   { date: 'Mon', signups: 5 },
   { date: 'Tue', signups: 7 },
@@ -601,6 +601,22 @@ export const userActivity = [
   { date: 'Fri', signups: 12 },
   { date: 'Sat', signups: 15 },
   { date: 'Sun', signups: 10 },
+];
+
+export const contentOverTime = [
+  { date: 'Jan', posts: 120, reports: 40, endorsements: 25 },
+  { date: 'Feb', posts: 140, reports: 45, endorsements: 30 },
+  { date: 'Mar', posts: 180, reports: 60, endorsements: 40 },
+  { date: 'Apr', posts: 160, reports: 55, endorsements: 35 },
+  { date: 'May', posts: 210, reports: 70, endorsements: 50 },
+  { date: 'Jun', posts: 250, reports: 80, endorsements: 60 },
+];
+
+export const recentActivity = [
+    { type: 'signup', user: mockCommunityMember, time: '2h ago' },
+    { type: 'post', user: mockReportingUser, post: mockPosts[1] },
+    { type: 'endorsement', user: mockUser2, post: mockPosts[0] },
+    { type: 'dispute', user: mockDisputingUser, dispute: mockDisputes[0] },
 ];
 
 // --- Mock Data for Messages ---
@@ -704,4 +720,3 @@ export const mockConversations: Conversation[] = [
         createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
     }
 ];
-

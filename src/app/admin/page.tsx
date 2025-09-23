@@ -33,6 +33,10 @@ import {
   Broadcast,
   LayoutDashboard,
   ArrowLeft,
+  ThumbsDown,
+  Newspaper,
+  UserPlus,
+  Landmark,
 } from 'lucide-react';
 import {
   Tabs,
@@ -56,7 +60,6 @@ import {
   getFlaggedContent,
   getAllDisputes,
   getAllUsers,
-  getTrendingTopics,
 } from '@/lib/firestore';
 import { approvePostAction } from '@/lib/actions/post';
 import type { Post, Dispute, FlaggedContent, User } from '@/lib/types';
@@ -82,11 +85,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { UserAvatar } from '@/components/user-avatar';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
   toggleAdminStatusAction,
   updateUserAccountStatusAction,
   resetUserTrustScoreAction,
@@ -95,9 +93,11 @@ import {
 } from '@/lib/actions/admin';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { SettingsForm } from '@/components/settings-form';
-import { userActivity } from '@/lib/mock-data';
+import { userActivity, contentOverTime, recentActivity, mockUsers } from '@/lib/mock-data';
 import { ContentBreakdownChart } from '@/components/charts/content-breakdown-chart';
 import { UserActivityChart } from '@/components/charts/user-activity-chart';
+import { ContentOverTimeChart } from '@/components/charts/content-over-time-chart';
+import { formatDistanceToNow } from 'date-fns';
 
 interface DashboardStats {
   totalUsers: number;
@@ -106,6 +106,17 @@ interface DashboardStats {
   totalEndorsements: number;
   pendingFlags: number;
   activeDisputes: number;
+}
+
+const RecentActivityIcon = ({ type }: { type: string }) => {
+    switch (type) {
+        case 'signup': return <UserPlus className="h-4 w-4" />;
+        case 'post': return <Newspaper className="h-4 w-4" />;
+        case 'endorsement': return <ThumbsUp className="h-4 w-4" />;
+        case 'report': return <FileText className="h-4 w-4" />;
+        case 'dispute': return <Landmark className="h-4 w-4" />;
+        default: return <FileText className="h-4 w-4" />;
+    }
 }
 
 export default function AdminPage() {
@@ -330,7 +341,7 @@ export default function AdminPage() {
 
   if (authLoading || loading) {
     return (
-      <div>
+      <div className="h-full bg-muted/40">
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/80 p-4 backdrop-blur-sm">
             <div className="flex items-center gap-2">
                 <Skeleton className="h-6 w-6 rounded-full" />
@@ -338,9 +349,16 @@ export default function AdminPage() {
             </div>
             <Skeleton className="h-10 w-32" />
         </header>
-        <div className="space-y-8 p-4">
+        <div className="space-y-8 p-4 md:p-8">
           <Skeleton className="h-10 w-full" />
-          <div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Skeleton className="h-28" />
+              <Skeleton className="h-28" />
+              <Skeleton className="h-28" />
+              <Skeleton className="h-28" />
+          </div>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <Skeleton className="h-96 w-full" />
             <Skeleton className="h-96 w-full" />
           </div>
         </div>
@@ -365,7 +383,7 @@ export default function AdminPage() {
     : [];
 
   return (
-    <div className="h-full">
+    <div className="h-full bg-muted/40">
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/80 p-4 backdrop-blur-sm">
         <div className='flex items-center gap-2'>
             <Shield className="h-6 w-6 text-primary" />
@@ -379,34 +397,34 @@ export default function AdminPage() {
         </Button>
       </header>
 
-      <ScrollArea className="h-[calc(100%-60px)]">
-        <div className="p-4">
+      <ScrollArea className="h-[calc(100%-65px)]">
+        <div className="p-4 md:p-8">
           <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList>
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
               <TabsTrigger value="dashboard">
                 <LayoutDashboard className="mr-2 h-4 w-4" />
                 Dashboard
               </TabsTrigger>
               <TabsTrigger value="moderation">
                 <AlertCircle className="mr-2 h-4 w-4" />
-                Content Moderation
+                Moderation
               </TabsTrigger>
               <TabsTrigger value="users">
                 <Users className="mr-2 h-4 w-4" />
-                User Management
+                Users
               </TabsTrigger>
               <TabsTrigger value="disputes">
                 <Gavel className="mr-2 h-4 w-4" />
-                Dispute Management
+                Disputes
               </TabsTrigger>
               <TabsTrigger value="settings">
                 <Settings className="mr-2 h-4 w-4" />
-                Platform Settings
+                Settings
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="dashboard" className="mt-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <TabsContent value="dashboard" className="mt-6">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
@@ -416,27 +434,30 @@ export default function AdminPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {stats?.totalUsers ?? 0}
+                      {stats?.totalUsers.toLocaleString() ?? 0}
                     </div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
-                      Total Posts
+                      Total Reports
                     </CardTitle>
                     <FileText className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {stats
-                        ? (
-                            stats.totalPosts +
-                            stats.totalReports +
-                            stats.totalEndorsements
-                          ).toLocaleString()
-                        : 0}
+                      {stats?.totalReports.toLocaleString() ?? 0}
                     </div>
+                  </CardContent>
+                </Card>
+                 <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Endorsements</CardTitle>
+                    <ThumbsUp className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats?.totalEndorsements.toLocaleString() ?? 0}</div>
                   </CardContent>
                 </Card>
                 <Card>
@@ -447,9 +468,52 @@ export default function AdminPage() {
                     <AlertCircle className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
+                    <div className="text-2xl font-bold text-destructive">
                       {stats?.pendingFlags ?? 0}
                     </div>
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-7">
+                <Card className="col-span-1 lg:col-span-4">
+                  <CardHeader>
+                    <CardTitle>Content Volume</CardTitle>
+                    <CardDescription>
+                      Volume of posts, reports, and endorsements over the past 6 months (demo).
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ContentOverTimeChart data={contentOverTime} />
+                  </CardContent>
+                </Card>
+                <Card className="col-span-1 lg:col-span-3">
+                  <CardHeader>
+                    <CardTitle>Recent Activity</CardTitle>
+                     <CardDescription>A live feed of important events on the platform.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                      {recentActivity.map((activity, index) => (
+                          <div key={index} className="flex items-center gap-4">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary">
+                                <RecentActivityIcon type={activity.type} />
+                              </div>
+                              <div className="flex-1 text-sm">
+                                  {activity.type === 'signup' && (
+                                      <p>New user <Link href={`/profile/${activity.user.id}`} className="font-semibold text-primary hover:underline">{activity.user.name}</Link> just signed up.</p>
+                                  )}
+                                  {activity.type === 'post' && activity.post && (
+                                      <p><Link href={`/profile/${activity.user.id}`} className="font-semibold text-primary hover:underline">{activity.user.name}</Link> created a new <Link href={`/post/${activity.post.id}`} className="font-semibold hover:underline">post</Link>.</p>
+                                  )}
+                                   {activity.type === 'endorsement' && activity.post && (
+                                      <p><Link href={`/profile/${activity.user.id}`} className="font-semibold text-primary hover:underline">{activity.user.name}</Link> gave an <Link href={`/post/${activity.post.id}`} className="font-semibold hover:underline">endorsement</Link>.</p>
+                                  )}
+                                  {activity.type === 'dispute' && activity.dispute && (
+                                      <p><Link href={`/profile/${activity.user.id}`} className="font-semibold text-primary hover:underline">{activity.user.name}</Link> opened a new <Link href={`/dispute/${activity.dispute.id}`} className="font-semibold hover:underline">dispute</Link>.</p>
+                                  )}
+                              </div>
+                              <div className="text-xs text-muted-foreground">{activity.time}</div>
+                          </div>
+                      ))}
                   </CardContent>
                 </Card>
               </div>
@@ -896,5 +960,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

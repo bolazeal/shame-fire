@@ -292,5 +292,3 @@ export type PlatformSettings = {
   featureHallOfHonour: boolean;
   featureDirectMessages: boolean;
 };
-
-    

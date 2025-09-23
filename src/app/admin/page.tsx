@@ -32,10 +32,10 @@ import {
   UserCog,
   LayoutDashboard,
   ArrowLeft,
-  ThumbsDown,
   Newspaper,
   UserPlus,
   Landmark,
+  Search,
 } from 'lucide-react';
 import {
   Tabs,
@@ -80,7 +80,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { UserAvatar } from '@/components/user-avatar';
 import {
@@ -97,6 +96,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { SettingsForm } from '@/components/settings-form';
 import { UserActivityChart } from '@/components/charts/user-activity-chart';
 import { ContentBreakdownChart } from '@/components/charts/content-breakdown-chart';
+import { Input } from '@/components/ui/input';
 
 interface DashboardStats {
   totalUsers: number;
@@ -133,6 +133,8 @@ export default function AdminPage() {
     null
   );
   const [updatingAdminId, setUpdatingAdminId] = useState<string | null>(null);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+
 
   const activeDisputes = useMemo(
     () => allDisputes.filter((d) => d.status !== 'closed'),
@@ -142,6 +144,16 @@ export default function AdminPage() {
     () => allDisputes.filter((d) => d.status === 'closed'),
     [allDisputes]
   );
+  
+  const filteredUsers = useMemo(() => {
+    if (!userSearchQuery) return allUsers;
+    const lowercasedQuery = userSearchQuery.toLowerCase();
+    return allUsers.filter(user => 
+        user.name.toLowerCase().includes(lowercasedQuery) ||
+        user.username.toLowerCase().includes(lowercasedQuery) ||
+        user.email.toLowerCase().includes(lowercasedQuery)
+    );
+  }, [allUsers, userSearchQuery]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -643,11 +655,20 @@ export default function AdminPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    User Management ({allUsers.length})
+                    User Management ({filteredUsers.length})
                   </CardTitle>
                   <CardDescription>
                     View, manage, and take action on user accounts.
                   </CardDescription>
+                   <div className="relative pt-2">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search users by name, username, or email..."
+                            value={userSearchQuery}
+                            onChange={(e) => setUserSearchQuery(e.target.value)}
+                            className="pl-9"
+                        />
+                    </div>
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -665,7 +686,7 @@ export default function AdminPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {allUsers.map((user) => (
+                      {filteredUsers.map((user) => (
                         <TableRow key={user.id}>
                           <TableCell>
                             <div className="flex items-center gap-3">

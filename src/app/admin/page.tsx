@@ -80,6 +80,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { UserAvatar } from '@/components/user-avatar';
 import {

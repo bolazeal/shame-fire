@@ -628,11 +628,7 @@ export default function AdminPage() {
                               </p>
                             )}
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(activity.time, {
-                            addSuffix: true,
-                          })}
-                        </div>
+                        <div className="text-xs text-muted-foreground">{formatDistanceToNow(activity.time, { addSuffix: true })}</div>
                       </div>
                     ))}
                   </CardContent>

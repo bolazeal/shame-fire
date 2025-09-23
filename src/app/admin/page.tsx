@@ -523,7 +523,7 @@ export default function AdminPage() {
                                       <p><Link href={`/profile/${activity.user.id}`} className="font-semibold text-primary hover:underline">{activity.user.name}</Link> opened a new <Link href={`/dispute/${activity.dispute.id}`} className="font-semibold hover:underline">dispute</Link>.</p>
                                   )}
                               </div>
-                              <div className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(activity.time), { addSuffix: true })}</div>
+                              <div className="text-xs text-muted-foreground">{formatDistanceToNow(activity.time, { addSuffix: true })}</div>
                           </div>
                       ))}
                   </CardContent>

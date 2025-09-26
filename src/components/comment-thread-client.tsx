@@ -131,6 +131,7 @@ export function CommentThreadClient({ initialCommentTree, postId, postAuthorId }
             postAuthorId={postAuthorId}
             onDelete={handleDelete}
             onReplySuccess={fetchData}
+            isThreadView={true}
         />
       </div>
     </div>

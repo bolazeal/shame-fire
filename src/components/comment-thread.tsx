@@ -10,9 +10,10 @@ interface CommentThreadProps {
   postAuthorId: string;
   onDelete: (commentId: string) => Promise<void>;
   onReplySuccess: () => void;
+  isThreadView?: boolean;
 }
 
-export function CommentThread({ comment, postId, postAuthorId, onDelete, onReplySuccess }: CommentThreadProps) {
+export function CommentThread({ comment, postId, postAuthorId, onDelete, onReplySuccess, isThreadView = false }: CommentThreadProps) {
   return (
     <div className="flex flex-col gap-4">
       <CommentCard
@@ -21,6 +22,7 @@ export function CommentThread({ comment, postId, postAuthorId, onDelete, onReply
         postAuthorId={postAuthorId}
         onDelete={onDelete}
         onReplySuccess={onReplySuccess}
+        isThreadView={isThreadView}
       />
       {comment.replies && comment.replies.length > 0 && (
         <div className="ml-8 border-l-2 border-border pl-4">
@@ -32,6 +34,7 @@ export function CommentThread({ comment, postId, postAuthorId, onDelete, onReply
               postAuthorId={postAuthorId}
               onDelete={onDelete}
               onReplySuccess={onReplySuccess}
+              isThreadView={isThreadView}
             />
           ))}
         </div>

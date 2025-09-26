@@ -326,6 +326,9 @@ export async function deleteCommentAction(
     batch.update(parentCommentRef, { replyCount: increment(-1) });
   }
 
+  // Note: This simplified version does not handle deleting replies recursively.
+  // A production app would need a Cloud Function to clean up sub-threads.
+
   await batch.commit();
 }
 

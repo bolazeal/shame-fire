@@ -27,6 +27,14 @@ function buildCommentTree(comments: Comment[]): (Comment & { replies: Comment[] 
     }
   });
 
+  // Sort replies by creation date
+  commentMap.forEach(comment => {
+    comment.replies.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  });
+
+  // Sort root comments by creation date
+  rootComments.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
   return rootComments;
 }
 

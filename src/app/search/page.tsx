@@ -213,7 +213,7 @@ export default function SearchPage() {
               <div>
                 <h2 className="p-4 text-lg font-bold">Posts</h2>
                 {searchResults.posts.map((post) => (
-                  <PostCard key={post.id} post={post} />
+                  <PostCard key={post.id} post={post} authUser={authUser} />
                 ))}
               </div>
             )}

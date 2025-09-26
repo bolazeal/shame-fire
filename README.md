@@ -44,7 +44,7 @@ This project showcases a complete, production-ready application with real-time f
 -   **AI Integration**: **Google AI** & **Genkit**
 -   **Backend**: **Firebase** (Firestore, Auth)
 -   **State Management**: React Context & React Hook Form with Zod validation
--   **Deployment**: Configured for standalone production builds on Firebase App Hosting.
+-   **Deployment**: Configured for **Netlify**.
 
 ## Running in Demo Mode vs. Live Mode
 
@@ -61,12 +61,12 @@ To connect the application to your own Firebase project (**Live Mode**), you nee
 5.  Under **SDK setup and configuration**, select **Config**.
 6.  You will see your `firebaseConfig` object. Keep this page open to copy the values.
 
-### Step 2: Add Credentials to App Hosting
+### Step 2: Add Credentials to Netlify
 
-1.  In the Firebase Console, go to the **Build** > **App Hosting** section from the left-hand menu.
-2.  Click on your backend (e.g., `nextn-backend`) to open its specific dashboard.
-3.  Select the **Settings** tab for your backend.
-4.  In the **Environment variables** section, click **Edit**.
+1.  Log in to your [Netlify account](https://app.netlify.com/).
+2.  Select your site from the **Sites** list.
+3.  Go to **Site configuration** > **Build & deploy** > **Environment**.
+4.  In the **Environment variables** section, click **Edit variables**.
 5.  Add the following variables, copying the corresponding values from your `firebaseConfig` object:
     *   `NEXT_PUBLIC_ENABLE_FIREBASE` - **Set this to `true` to enable live mode.**
     *   `NEXT_PUBLIC_FIREBASE_API_KEY`
@@ -75,18 +75,16 @@ To connect the application to your own Firebase project (**Live Mode**), you nee
     *   `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
     *   `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
     *   `NEXT_PUBLIC_FIREBASE_APP_ID`
-6.  Save your changes.
 
 ### Step 3: Add Your Google AI API Key
 
 For AI features like content summarization and moderation to work, you must also provide a Google AI API Key.
 
 1.  If you don't have one, get a key from [Google AI Studio](https://aistudio.google.com/app/apikey).
-2.  Go back to your **App Hosting backend settings** where you added the Firebase variables.
-3.  Click **Edit** in the **Environment variables** section.
-4.  Add the following variable:
+2.  Go back to your **Netlify environment variables** section.
+3.  Add the following variable:
     *   **Variable Name:** `GOOGLE_API_KEY`
     *   **Value:** *Paste your API key here*
-5.  Save your changes.
+4.  Save your changes.
 
-After adding all these variables and setting `NEXT_PUBLIC_ENABLE_FIREBASE` to `true`, redeploy your application. It will now connect to your live Firebase backend and enable all AI features.
+After adding all these variables and setting `NEXT_PUBLIC_ENABLE_FIREBASE` to `true`, redeploy your application in Netlify. It will now connect to your live Firebase backend and enable all AI features.

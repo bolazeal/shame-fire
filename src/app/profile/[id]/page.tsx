@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PostCard } from '@/components/post-card';
@@ -19,6 +20,7 @@ import {
   Loader2,
   UserCog,
   MessageSquare,
+  Heart,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -34,6 +36,7 @@ import {
   hasUserNominatedForModerator,
   getFollowers,
   getFollowing,
+  getUserActivity,
 } from '@/lib/firestore';
 import { toggleFollowAction } from '@/lib/actions/interaction';
 import {
@@ -136,7 +139,14 @@ export default function ProfilePage() {
   const fetchPosts = useCallback(async () => {
     if (!profileUser?.id) return;
     setLoadingPosts(true);
-    const userPosts = await getUserPosts(profileUser.id as string, activeTab);
+
+    let userPosts;
+    if (activeTab === 'likes') {
+      userPosts = await getUserActivity(profileUser.id as string, 'upvotedBy');
+    } else {
+      userPosts = await getUserPosts(profileUser.id as string, activeTab);
+    }
+
     setPosts(userPosts);
     setLoadingPosts(false);
   }, [profileUser?.id, activeTab]);
@@ -509,11 +519,14 @@ export default function ProfilePage() {
         onValueChange={setActiveTab}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-4 rounded-none border-b border-border bg-transparent">
+        <TabsList className="grid w-full grid-cols-5 rounded-none border-b border-border bg-transparent">
           <TabsTrigger value="posts">Posts</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
           <TabsTrigger value="endorsements">Endorsements</TabsTrigger>
           <TabsTrigger value="media">Media</TabsTrigger>
+          <TabsTrigger value="likes">
+            <Heart className="mr-2 h-4 w-4" /> Likes
+          </TabsTrigger>
         </TabsList>
         <TabsContent value={activeTab}>
           {loadingPosts ? (
@@ -532,5 +545,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
